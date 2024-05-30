@@ -1,0 +1,29 @@
+{/* <Sidebar>
+        <div className="px-3 py-2 font-semibold text-gray-600">Main Menu</div>
+        <SidebarItem icon={<User size={20} />} text="Employee ID" alert />
+        <SidebarItem icon={<Ruler size={20} />} text="Unit ID" active />
+        <SidebarItem icon={<PackageSearch size={20} />} text="Product ID" />
+        <SidebarItem icon={<HeartHandshake size={20} />} text="Vendor ID" />
+        <hr className="my-3" />
+        <div className="px-3 py-2 font-semibold text-gray-600">Inventory</div>
+        <SidebarItem icon={<PackagePlus size={20} />} text="Receive Products" alert />
+        <SidebarItem icon={<PackageMinus size={20} />} text="Issue Products" />
+        <hr className="my-3" />
+        <div className="px-3 py-2 font-semibold text-gray-600">Inventory Reports</div>
+        <SidebarItem icon={<Receipt size={20} />} text="Product Report" />
+        <hr className="my-3" />
+        <SidebarItem icon={<Settings size={20} />} text="Settings" />
+        <SidebarItem icon={<HelpCircle size={20} />} text="Help" />
+      </Sidebar> */}
+
+{/* <Navbar session={session}/>
+      <div className="container mx-auto">
+        <h3>Welcome to home page</h3>
+        <hr className="my-3" />
+        <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Fugit vero porro accusantium soluta nostrum! Magnam, eius aspernatur neque accusantium deleniti tempore voluptatum velit cumque voluptatibus labore recusandae totam, consectetur maiores.</p>
+      </div> */}
+
+import Sidebar, { SidebarItem } from "./components/sidebar";
+import Navbar from "./components/Navbar";
+import { useSession } from "next-auth/react";
+import { HeartHandshake, HelpCircle, PackageMinus, PackagePlus, PackageSearch, Receipt, Ruler, Settings, User } from "lucide-react";
