@@ -1,225 +1,204 @@
-import { Search, UserPlus } from "lucide-react";
+import { useState } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { ChevronLeft, ChevronRight, Edit, Ruler, Search, Trash2, UserPlus } from "lucide-react";
+import Avatar from '@mui/material/Avatar';
+import { deepOrange } from '@mui/material/colors';
 
 const users = [
-    { name: 'Lindsay Walton', title: 'Front-end Developer', email: 'lindsay.walton@example.com', role: 'Member' },
-    { name: 'Courtney Henry', title: 'Designer', email: 'courtney.henry@example.com', role: 'Admin' },
-    { name: 'Tom Cook', title: 'Director of Product', email: 'tom.cook@example.com', role: 'Member' },
-    { name: 'Whitney Francis', title: 'Copywriter', email: 'whitney.francis@example.com', role: 'Admin' },
-    { name: 'Leonard Krasner', title: 'Senior Designer', email: 'leonard.krasner@example.com', role: 'Owner' },
-    { name: 'Floyd Miles', title: 'Principal Designer', email: 'floyd.miles@example.com', role: 'Member' },
+    { name: 'Lindsay Walton', title: 'ST99' },
+    { name: 'Courtney Henry', title: 'ST99' },
+    { name: 'Tom Cook', title: 'ST99', email: 'tom.cook@example.com', role: 'Member' },
+    { name: 'Whitney Francis', title: 'ST99' },
+    { name: 'Leonard Krasner', title: 'ST99' },
+    { name: 'Floyd Miles', title: 'ST99' },
+    { name: 'Lindsay Walton', title: 'ST99' },
+    { name: 'Courtney Henry', title: 'ST99' },
+    { name: 'Tom Cook', title: 'ST99' },
+    { name: 'Whitney Francis', title: 'ST99' },
+    { name: 'Leonard Krasner', title: 'ST99' },
+    { name: 'Floyd Miles', title: 'ST99' },
 ];
 
+const ITEMS_PER_PAGE = 5;
+
 export default function UnitTable() {
-    return (
-        <div class="font-sans overflow-x-auto">
-      <table class="min-w-full bg-white">
-        <thead class="bg-gray-100 whitespace-nowrap">
-          <tr>
-            <th class="p-4 text-left text-xs font-semibold text-gray-800">
-              Name
-            </th>
-            <th class="p-4 text-left text-xs font-semibold text-gray-800">
-              Email
-            </th>
-            <th class="p-4 text-left text-xs font-semibold text-gray-800">
-              Role
-            </th>
-            <th class="p-4 text-left text-xs font-semibold text-gray-800">
-              Joined At
-            </th>
-            <th class="p-4 text-left text-xs font-semibold text-gray-800">
-              Actions
-            </th>
-          </tr>
-        </thead>
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isOpen, setIsOpen] = useState(false);
+  const [newUser, setNewUser] = useState({ name: '', title: '', email: '', role: '' });
+  const [userList, setUserList] = useState(users);
 
-        <tbody class="whitespace-nowrap">
-          <tr class="hover:bg-gray-50">
-            <td class="p-4 text-[15px] text-gray-800">
-              John Doe
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              john@example.com
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              Admin
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              2022-05-15
-            </td>
-            <td class="p-4">
-              <button class="mr-4" title="Edit">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-blue-500 hover:fill-blue-700"
-                  viewBox="0 0 348.882 348.882">
-                  <path
-                    d="m333.988 11.758-.42-.383A43.363 43.363 0 0 0 304.258 0a43.579 43.579 0 0 0-32.104 14.153L116.803 184.231a14.993 14.993 0 0 0-3.154 5.37l-18.267 54.762c-2.112 6.331-1.052 13.333 2.835 18.729 3.918 5.438 10.23 8.685 16.886 8.685h.001c2.879 0 5.693-.592 8.362-1.76l52.89-23.138a14.985 14.985 0 0 0 5.063-3.626L336.771 73.176c16.166-17.697 14.919-45.247-2.783-61.418zM130.381 234.247l10.719-32.134.904-.99 20.316 18.556-.904.99-31.035 13.578zm184.24-181.304L182.553 197.53l-20.316-18.556L294.305 34.386c2.583-2.828 6.118-4.386 9.954-4.386 3.365 0 6.588 1.252 9.082 3.53l.419.383c5.484 5.009 5.87 13.546.861 19.03z"
-                    data-original="#000000" />
-                  <path
-                    d="M303.85 138.388c-8.284 0-15 6.716-15 15v127.347c0 21.034-17.113 38.147-38.147 38.147H68.904c-21.035 0-38.147-17.113-38.147-38.147V100.413c0-21.034 17.113-38.147 38.147-38.147h131.587c8.284 0 15-6.716 15-15s-6.716-15-15-15H68.904C31.327 32.266.757 62.837.757 100.413v180.321c0 37.576 30.571 68.147 68.147 68.147h181.798c37.576 0 68.147-30.571 68.147-68.147V153.388c.001-8.284-6.715-15-14.999-15z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-              <button class="mr-4" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-red-500 hover:fill-red-700" viewBox="0 0 24 24">
-                  <path
-                    d="M19 7a1 1 0 0 0-1 1v11.191A1.92 1.92 0 0 1 15.99 21H8.01A1.92 1.92 0 0 1 6 19.191V8a1 1 0 0 0-2 0v11.191A3.918 3.918 0 0 0 8.01 23h7.98A3.918 3.918 0 0 0 20 19.191V8a1 1 0 0 0-1-1Zm1-3h-4V2a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v2H4a1 1 0 0 0 0 2h16a1 1 0 0 0 0-2ZM10 4V3h4v1Z"
-                    data-original="#000000" />
-                  <path d="M11 17v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Zm4 0v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-            </td>
-          </tr>
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentUsers = userList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(userList.length / ITEMS_PER_PAGE);
+  const totalUser = userList.length;
 
-          <tr class="hover:bg-gray-50">
-            <td class="p-4 text-[15px] text-gray-800">
-              Jane Smith
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              jane@example.com
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              User
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              2022-07-20
-            </td>
-            <td class="p-4">
-              <button class="mr-4" title="Edit">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-blue-500 hover:fill-blue-700"
-                  viewBox="0 0 348.882 348.882">
-                  <path
-                    d="m333.988 11.758-.42-.383A43.363 43.363 0 0 0 304.258 0a43.579 43.579 0 0 0-32.104 14.153L116.803 184.231a14.993 14.993 0 0 0-3.154 5.37l-18.267 54.762c-2.112 6.331-1.052 13.333 2.835 18.729 3.918 5.438 10.23 8.685 16.886 8.685h.001c2.879 0 5.693-.592 8.362-1.76l52.89-23.138a14.985 14.985 0 0 0 5.063-3.626L336.771 73.176c16.166-17.697 14.919-45.247-2.783-61.418zM130.381 234.247l10.719-32.134.904-.99 20.316 18.556-.904.99-31.035 13.578zm184.24-181.304L182.553 197.53l-20.316-18.556L294.305 34.386c2.583-2.828 6.118-4.386 9.954-4.386 3.365 0 6.588 1.252 9.082 3.53l.419.383c5.484 5.009 5.87 13.546.861 19.03z"
-                    data-original="#000000" />
-                  <path
-                    d="M303.85 138.388c-8.284 0-15 6.716-15 15v127.347c0 21.034-17.113 38.147-38.147 38.147H68.904c-21.035 0-38.147-17.113-38.147-38.147V100.413c0-21.034 17.113-38.147 38.147-38.147h131.587c8.284 0 15-6.716 15-15s-6.716-15-15-15H68.904C31.327 32.266.757 62.837.757 100.413v180.321c0 37.576 30.571 68.147 68.147 68.147h181.798c37.576 0 68.147-30.571 68.147-68.147V153.388c.001-8.284-6.715-15-14.999-15z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-              <button class="mr-4" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-red-500 hover:fill-red-700" viewBox="0 0 24 24">
-                  <path
-                    d="M19 7a1 1 0 0 0-1 1v11.191A1.92 1.92 0 0 1 15.99 21H8.01A1.92 1.92 0 0 1 6 19.191V8a1 1 0 0 0-2 0v11.191A3.918 3.918 0 0 0 8.01 23h7.98A3.918 3.918 0 0 0 20 19.191V8a1 1 0 0 0-1-1Zm1-3h-4V2a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v2H4a1 1 0 0 0 0 2h16a1 1 0 0 0 0-2ZM10 4V3h4v1Z"
-                    data-original="#000000" />
-                  <path d="M11 17v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Zm4 0v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-            </td>
-          </tr>
+  const handlePrevPage = () => {
+      setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
 
-          <tr class="hover:bg-gray-50">
-            <td class="p-4 text-[15px] text-gray-800">
-              Alen Doe
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              alen@example.com
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              User
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              2022-07-21
-            </td>
-            <td class="p-4">
-              <button class="mr-4" title="Edit">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-blue-500 hover:fill-blue-700"
-                  viewBox="0 0 348.882 348.882">
-                  <path
-                    d="m333.988 11.758-.42-.383A43.363 43.363 0 0 0 304.258 0a43.579 43.579 0 0 0-32.104 14.153L116.803 184.231a14.993 14.993 0 0 0-3.154 5.37l-18.267 54.762c-2.112 6.331-1.052 13.333 2.835 18.729 3.918 5.438 10.23 8.685 16.886 8.685h.001c2.879 0 5.693-.592 8.362-1.76l52.89-23.138a14.985 14.985 0 0 0 5.063-3.626L336.771 73.176c16.166-17.697 14.919-45.247-2.783-61.418zM130.381 234.247l10.719-32.134.904-.99 20.316 18.556-.904.99-31.035 13.578zm184.24-181.304L182.553 197.53l-20.316-18.556L294.305 34.386c2.583-2.828 6.118-4.386 9.954-4.386 3.365 0 6.588 1.252 9.082 3.53l.419.383c5.484 5.009 5.87 13.546.861 19.03z"
-                    data-original="#000000" />
-                  <path
-                    d="M303.85 138.388c-8.284 0-15 6.716-15 15v127.347c0 21.034-17.113 38.147-38.147 38.147H68.904c-21.035 0-38.147-17.113-38.147-38.147V100.413c0-21.034 17.113-38.147 38.147-38.147h131.587c8.284 0 15-6.716 15-15s-6.716-15-15-15H68.904C31.327 32.266.757 62.837.757 100.413v180.321c0 37.576 30.571 68.147 68.147 68.147h181.798c37.576 0 68.147-30.571 68.147-68.147V153.388c.001-8.284-6.715-15-14.999-15z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-              <button class="mr-4" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-red-500 hover:fill-red-700" viewBox="0 0 24 24">
-                  <path
-                    d="M19 7a1 1 0 0 0-1 1v11.191A1.92 1.92 0 0 1 15.99 21H8.01A1.92 1.92 0 0 1 6 19.191V8a1 1 0 0 0-2 0v11.191A3.918 3.918 0 0 0 8.01 23h7.98A3.918 3.918 0 0 0 20 19.191V8a1 1 0 0 0-1-1Zm1-3h-4V2a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v2H4a1 1 0 0 0 0 2h16a1 1 0 0 0 0-2ZM10 4V3h4v1Z"
-                    data-original="#000000" />
-                  <path d="M11 17v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Zm4 0v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-            </td>
-          </tr>
+  const handleNextPage = () => {
+      setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
 
-          <tr class="hover:bg-gray-50">
-            <td class="p-4 text-[15px] text-gray-800">
-              Kelwin mark
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              kelwin@example.com
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              User
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              2020-07-06
-            </td>
-            <td class="p-4">
-              <button class="mr-4" title="Edit">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-blue-500 hover:fill-blue-700"
-                  viewBox="0 0 348.882 348.882">
-                  <path
-                    d="m333.988 11.758-.42-.383A43.363 43.363 0 0 0 304.258 0a43.579 43.579 0 0 0-32.104 14.153L116.803 184.231a14.993 14.993 0 0 0-3.154 5.37l-18.267 54.762c-2.112 6.331-1.052 13.333 2.835 18.729 3.918 5.438 10.23 8.685 16.886 8.685h.001c2.879 0 5.693-.592 8.362-1.76l52.89-23.138a14.985 14.985 0 0 0 5.063-3.626L336.771 73.176c16.166-17.697 14.919-45.247-2.783-61.418zM130.381 234.247l10.719-32.134.904-.99 20.316 18.556-.904.99-31.035 13.578zm184.24-181.304L182.553 197.53l-20.316-18.556L294.305 34.386c2.583-2.828 6.118-4.386 9.954-4.386 3.365 0 6.588 1.252 9.082 3.53l.419.383c5.484 5.009 5.87 13.546.861 19.03z"
-                    data-original="#000000" />
-                  <path
-                    d="M303.85 138.388c-8.284 0-15 6.716-15 15v127.347c0 21.034-17.113 38.147-38.147 38.147H68.904c-21.035 0-38.147-17.113-38.147-38.147V100.413c0-21.034 17.113-38.147 38.147-38.147h131.587c8.284 0 15-6.716 15-15s-6.716-15-15-15H68.904C31.327 32.266.757 62.837.757 100.413v180.321c0 37.576 30.571 68.147 68.147 68.147h181.798c37.576 0 68.147-30.571 68.147-68.147V153.388c.001-8.284-6.715-15-14.999-15z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-              <button class="mr-4" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-red-500 hover:fill-red-700" viewBox="0 0 24 24">
-                  <path
-                    d="M19 7a1 1 0 0 0-1 1v11.191A1.92 1.92 0 0 1 15.99 21H8.01A1.92 1.92 0 0 1 6 19.191V8a1 1 0 0 0-2 0v11.191A3.918 3.918 0 0 0 8.01 23h7.98A3.918 3.918 0 0 0 20 19.191V8a1 1 0 0 0-1-1Zm1-3h-4V2a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v2H4a1 1 0 0 0 0 2h16a1 1 0 0 0 0-2ZM10 4V3h4v1Z"
-                    data-original="#000000" />
-                  <path d="M11 17v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Zm4 0v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-            </td>
-          </tr>
+  const openModal = () => {
+      setIsOpen(true);
+  };
 
-          <tr class="hover:bg-gray-50">
-            <td class="p-4 text-[15px] text-gray-800">
-              Dustin
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              dustin@example.com
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              User
-            </td>
-            <td class="p-4 text-[15px] text-gray-800">
-              2021-07-06
-            </td>
-            <td class="p-4">
-              <button class="mr-4" title="Edit">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-blue-500 hover:fill-blue-700"
-                  viewBox="0 0 348.882 348.882">
-                  <path
-                    d="m333.988 11.758-.42-.383A43.363 43.363 0 0 0 304.258 0a43.579 43.579 0 0 0-32.104 14.153L116.803 184.231a14.993 14.993 0 0 0-3.154 5.37l-18.267 54.762c-2.112 6.331-1.052 13.333 2.835 18.729 3.918 5.438 10.23 8.685 16.886 8.685h.001c2.879 0 5.693-.592 8.362-1.76l52.89-23.138a14.985 14.985 0 0 0 5.063-3.626L336.771 73.176c16.166-17.697 14.919-45.247-2.783-61.418zM130.381 234.247l10.719-32.134.904-.99 20.316 18.556-.904.99-31.035 13.578zm184.24-181.304L182.553 197.53l-20.316-18.556L294.305 34.386c2.583-2.828 6.118-4.386 9.954-4.386 3.365 0 6.588 1.252 9.082 3.53l.419.383c5.484 5.009 5.87 13.546.861 19.03z"
-                    data-original="#000000" />
-                  <path
-                    d="M303.85 138.388c-8.284 0-15 6.716-15 15v127.347c0 21.034-17.113 38.147-38.147 38.147H68.904c-21.035 0-38.147-17.113-38.147-38.147V100.413c0-21.034 17.113-38.147 38.147-38.147h131.587c8.284 0 15-6.716 15-15s-6.716-15-15-15H68.904C31.327 32.266.757 62.837.757 100.413v180.321c0 37.576 30.571 68.147 68.147 68.147h181.798c37.576 0 68.147-30.571 68.147-68.147V153.388c.001-8.284-6.715-15-14.999-15z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-              <button class="mr-4" title="Delete">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 fill-red-500 hover:fill-red-700" viewBox="0 0 24 24">
-                  <path
-                    d="M19 7a1 1 0 0 0-1 1v11.191A1.92 1.92 0 0 1 15.99 21H8.01A1.92 1.92 0 0 1 6 19.191V8a1 1 0 0 0-2 0v11.191A3.918 3.918 0 0 0 8.01 23h7.98A3.918 3.918 0 0 0 20 19.191V8a1 1 0 0 0-1-1Zm1-3h-4V2a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v2H4a1 1 0 0 0 0 2h16a1 1 0 0 0 0-2ZM10 4V3h4v1Z"
-                    data-original="#000000" />
-                  <path d="M11 17v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Zm4 0v-7a1 1 0 0 0-2 0v7a1 1 0 0 0 2 0Z"
-                    data-original="#000000" />
-                </svg>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    );
+  const closeModal = () => {
+      setIsOpen(false);
+  };
+
+  const handleInputChange = (e) => {
+      const { name, value } = e.target;
+      setNewUser((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddUser = () => {
+      setUserList((prev) => [...prev, newUser]);
+      setNewUser({ name: '', title: '', email: '', role: '' });
+      closeModal();
+  };
+
+  return (
+      <div className="flex-1 p-4">
+          <div >
+              <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                  <div className="p-6">
+                      <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">กำหนดรหัสหน่วยนับสินค้า</h2>
+                      <div className="flex justify-between items-center mb-4">
+                          <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-[#8146FF] overflow-hidden max-w-2xl w-full font-[sans-serif]">
+                              <input type="text" placeholder="Search Something..." className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm" />
+                              <Search size={16} className="text-gray-600 " />
+                          </div>
+                          <button onClick={openModal} className="flex items-center bg-[#8146FF] hover:bg-purple-700 text-white px-4 py-2 rounded-lg ml-4">
+                              <Ruler size={20} className="mr-2" />
+                              Add Unit
+                          </button>
+                      </div>
+                      <table className="min-w-full bg-white">
+                          <thead>
+                              <tr>
+                                  <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tl-md">Unit ID</th>
+                                  <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left">Unit Name</th>
+                                  <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">Action</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              {currentUsers.map((user, index) => (
+                                  <tr key={index} className="border-t">
+                                      <td className="py-4 px-1 text-center">{user.title}</td>
+                                      <td className="py-4 px-4 flex items-center">
+                                          <Avatar sx={{ bgcolor: deepOrange[500], marginRight: '20px' }} variant="rounded-md">
+                                              {user.name.charAt(0).toUpperCase()}
+                                          </Avatar>
+                                          {user.name}
+                                      </td>
+                                      <td className="py-4 px-4 text-center">
+                                          <div className="flex justify-center space-x-2">
+                                              <Edit size={20} className="text-indigo-600 hover:text-[#8146FF] cursor-pointer" />
+                                              <Trash2 size={20} className="text-red-400 hover:text-red-600 cursor-pointer" />
+                                          </div>
+                                      </td>
+                                  </tr>
+                              ))}
+                          </tbody>
+                      </table>
+                      <div className="flex justify-between items-center pt-3 border-t">
+                          <div className="flex">
+                              <span>{currentPage} of {totalPages}</span>
+                          </div>
+                          <div className="flex space-x-4">
+                              <button
+                                  onClick={handlePrevPage}
+                                  disabled={currentPage === 1}
+                              >
+                                  <ChevronLeft size={20} className="text-gray-400 hover:text-gray-600 cursor-pointer" />
+                              </button>
+                              <button
+                                  onClick={handleNextPage}
+                                  disabled={currentPage === totalPages}
+                              >
+                                  <ChevronRight size={20} className="text-gray-400 hover:text-gray-600 cursor-pointer" />
+                              </button>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+          {/* Add User Modal */}
+          <Transition appear show={isOpen} as="div">
+              <Dialog as="div" className="relative z-10" onClose={closeModal}>
+                  <Transition.Child
+                      as="div"
+                      enter="ease-out duration-300"
+                      enterFrom="opacity-0"
+                      enterTo="opacity-100"
+                      leave="ease-in duration-200"
+                      leaveFrom="opacity-100"
+                      leaveTo="opacity-0"
+                  >
+                      <div className="fixed inset-0 bg-black bg-opacity-25" />
+                  </Transition.Child>
+                  <div className="fixed inset-0 overflow-y-auto">
+                      <div className="flex min-h-full items-center justify-center p-4 text-center">
+                          <Transition.Child
+                              as="div"
+                              enter="ease-out duration-300"
+                              enterFrom="opacity-0 scale-95"
+                              enterTo="opacity-100 scale-100"
+                              leave="ease-in duration-200"
+                              leaveFrom="opacity-100 scale-100"
+                              leaveTo="opacity-0 scale-95"
+                          >
+                              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                                      Add New Unit
+                                  </Dialog.Title>
+                                  <div className="mt-2">
+                                      <div className="mt-4">
+                                          <input
+                                              type="text"
+                                              name="name"
+                                              placeholder="Unit ID"
+                                              value={newUser.name}
+                                              onChange={handleInputChange}
+                                              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                                          />
+                                      </div>
+                                      <div className="mt-4">
+                                          <input
+                                              type="text"
+                                              name="title"
+                                              placeholder="Unit Name"
+                                              value={newUser.title}
+                                              onChange={handleInputChange}
+                                              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+                                          />
+                                      </div>
+                                  </div>
+                                  <div className="mt-4 flex justify-end">
+                                      <button
+                                          type="button"
+                                          className="inline-flex justify-center px-4 py-2 text-sm font-medium text-blue-900 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200"
+                                          onClick={handleAddUser}
+                                      >
+                                          Add
+                                      </button>
+                                      <button
+                                          type="button"
+                                          className="inline-flex justify-center px-4 py-2 ml-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200"
+                                          onClick={closeModal}
+                                      >
+                                          Cancel
+                                      </button>
+                                  </div>
+                              </Dialog.Panel>
+                          </Transition.Child>
+                      </div>
+                  </div>
+              </Dialog>
+          </Transition>
+      </div>
+  );
 }

@@ -6,14 +6,14 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import CardList from '../components/CardList'; // Import CardList
 import styled from 'styled-components';
-import UserTable from '../components/EmployeeTable';
+import ProductTable from '../components/ProductTable';
 
 const PageContainer = styled.div`
   display: flex;
   background-color: #F6F6F6; /* Apply background color here */
 `;
 
-function EmployeeID() {
+function ProductID() {
   const { data: session } = useSession();
   console.log(session);
 
@@ -27,10 +27,10 @@ function EmployeeID() {
       <Sidebar session={session} />
       <div className='flex-1'>
         <div className="bg-white h-16 px-4 shadow-sm"></div>
-        <div className="p-4"><UserTable /></div>
+        <div className="p-4"><ProductTable /></div>
       </div>
     </PageContainer>
   );
 }
 
-export default EmployeeID;
+export default ProductID;

@@ -1,4 +1,5 @@
 import { useContext, createContext, useState, useEffect, useRef } from "react";
+import { usePathname } from 'next/navigation';
 import { MoreVertical, ChevronLast, ChevronFirst, LogOut, User, Ruler, PackageSearch, HeartHandshake, PackagePlus, PackageMinus, Receipt, Settings, HelpCircle } from "lucide-react";
 import Avatar from '@mui/material/Avatar';
 import { deepOrange } from '@mui/material/colors';
@@ -8,13 +9,14 @@ import Link from 'next/link';
 // Create a context for the sidebar
 const SidebarContext = createContext();
 
-function SidebarItem({ icon, text, active, alert, onClick, href }) {
+function SidebarItem({ icon, text, href }) {
   const { expanded } = useContext(SidebarContext);
+  const pathname = usePathname();
+  const active = pathname === href;
 
   return (
     <Link href={href}>
       <li
-        onClick={onClick}
         className={`
           relative flex items-center py-2 px-3 my-1
           font-medium rounded-md cursor-pointer
@@ -26,7 +28,6 @@ function SidebarItem({ icon, text, active, alert, onClick, href }) {
         <span className={`overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}`}>
           {text}
         </span>
-        {alert && <div className={`absolute right-2 w-2 h-2 rounded bg-indigo-400 ${expanded ? "" : "top-2"}`} />}
         {!expanded && (
           <div className={`
             absolute left-full rounded-md px-2 py-1 ml-6
@@ -42,11 +43,20 @@ function SidebarItem({ icon, text, active, alert, onClick, href }) {
   );
 }
 
+function SidebarHeader({ text, expanded }) {
+  if (!expanded) {
+    return null;
+  }
+  return (
+    <div className="my-3 text-gray-600 font-bold text-xs uppercase px-3">
+      {text}
+    </div>
+  );
+}
+
 export default function Sidebar({ session, children }) {
   const [expanded, setExpanded] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [activeItem, setActiveItem] = useState("");
-
   const dropdownRef = useRef(null);
 
   // Extract the first letter of the user's name
@@ -80,71 +90,57 @@ export default function Sidebar({ session, children }) {
           </div>
 
           <SidebarContext.Provider value={{ expanded }}>
-            <ul className="flex-1 px-3">
+            <ul className="flex-1 px-3 mt-4">
+              <SidebarHeader text="Employee Management" expanded={expanded} />
               <SidebarItem 
                 icon={<User size={20} />} 
                 text="Employee ID" 
-                active={activeItem === "Employee ID"} 
-                onClick={() => setActiveItem("Employee ID")} 
                 href="/employee"
               />
               <SidebarItem 
                 icon={<Ruler size={20} />} 
                 text="Unit ID" 
-                active={activeItem === "Unit ID"} 
-                onClick={() => setActiveItem("Unit ID")} 
                 href="/unit"
               />
               <SidebarItem 
                 icon={<PackageSearch size={20} />} 
                 text="Product ID" 
-                active={activeItem === "Product ID"} 
-                onClick={() => setActiveItem("Product ID")} 
-                href="/product-id"
+                href="/product"
               />
               <SidebarItem 
                 icon={<HeartHandshake size={20} />} 
                 text="Vendor ID" 
-                active={activeItem === "Vendor ID"} 
-                onClick={() => setActiveItem("Vendor ID")} 
                 href="/vendor-id"
               />
               <hr className="my-3" />
+              <SidebarHeader text="Product Management" expanded={expanded} />
               <SidebarItem 
                 icon={<PackagePlus size={20} />} 
                 text="Import Products" 
-                active={activeItem === "Import Products"} 
-                onClick={() => setActiveItem("Import Products")} 
                 href="/import-products"
               />
               <SidebarItem 
                 icon={<PackageMinus size={20} />} 
                 text="Export Products" 
-                active={activeItem === "Export Products"} 
-                onClick={() => setActiveItem("Export Products")} 
                 href="/export-products"
               />
               <hr className="my-3" />
+              <SidebarHeader text="Analytics" expanded={expanded} />
               <SidebarItem 
                 icon={<Receipt size={20} />} 
                 text="Reports" 
-                active={activeItem === "Reports"} 
-                onClick={() => setActiveItem("Reports")} 
                 href="/reports"
               />
               <hr className="my-3" />
+              <SidebarHeader text="Settings" expanded={expanded} />
               <SidebarItem 
                 icon={<Settings size={20} />} 
                 text="Settings" 
-                active={activeItem === "Settings"} 
-                onClick={() => setActiveItem("Settings")} 
                 href="/settings"
               />
               <SidebarItem 
                 icon={<HelpCircle size={20} />} 
                 text="Help" 
-                active={activeItem === "Help"} 
-                onClick={() => setActiveItem("Help")} 
                 href="/help"
               />
             </ul>
@@ -175,7 +171,7 @@ export default function Sidebar({ session, children }) {
         </nav>
       </aside>
 
-      <main className="flex-1 p-2">
+      <main className="flex-1">
         {children}
       </main>
     </div>

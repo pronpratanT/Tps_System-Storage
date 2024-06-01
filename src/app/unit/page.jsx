@@ -25,8 +25,10 @@ function UnitID() {
   return (
     <PageContainer>
       <Sidebar session={session} />
-        <UnitTable/>
-        
+      <div className='flex-1'>
+        <div className="bg-white h-16 px-4 shadow-sm"></div>
+        <div className="p-4"><UnitTable /></div>
+      </div>
     </PageContainer>
   );
 }
