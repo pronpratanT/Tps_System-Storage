@@ -29,6 +29,8 @@ const units = [
 const ITEMS_PER_PAGE = 5;
 
 export default function ProductTable() {
+    
+
     const [currentPage, setCurrentPage] = useState(1);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -192,139 +194,139 @@ export default function ProductTable() {
                 </div>
             </div>
 
-            {/* Add Modal */}
+            {/* TODO: Add Modal */}
             <Transition appear show={isAddModalOpen} as={Fragment}>
-                <Dialog as="div" className="relative z-10" onClose={closeAddModal}>
-                    <Transition.Child
-                        as={Fragment}
-                        enter="ease-out duration-300"
-                        enterFrom="opacity-0 scale-100"
-                        enterTo="opacity-100 scale-100"
-                        leave="ease-in duration-200"
-                        leaveFrom="opacity-100 scale-100"
-                        leaveTo="opacity-0 scale-95"
-                    >
-                        <div className="fixed inset-0 bg-black bg-opacity-25" />
-                    </Transition.Child>
+        <Dialog as="div" className="relative z-10" onClose={closeAddModal}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0 scale-95"
+            enterTo="opacity-100 scale-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100 scale-100"
+            leaveTo="opacity-0 scale-95"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
 
-                    <div className="fixed inset-0 overflow-y-auto">
-                        <div className="flex items-center justify-center min-h-full p-4 text-center">
-                            <Transition.Child
-                                as={Fragment}
-                                enter="ease-out duration-300"
-                                enterFrom="opacity-0 scale-95"
-                                enterTo="opacity-100 scale-100"
-                                leave="ease-in duration-200"
-                                leaveFrom="opacity-100 scale-100"
-                                leaveTo="opacity-0 scale-95"
-                            >
-                                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                                    <Dialog.Title
-                                        as="h3"
-                                        className="text-lg font-medium leading-6 text-gray-900"
-                                    >
-                                        Add New User
-                                    </Dialog.Title>
-                                    <div className="mt-2">
-                                        <p className="text-sm text-gray-500">
-                                            Fill in the details of the new user below.
-                                        </p>
-                                    </div>
-                                    <div className="mt-4">
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-                                                Product ID
-                                            </label>
-                                            <input
-                                                name="title"
-                                                value={newUser.title}
-                                                onChange={handleInputChange}
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                                id="title"
-                                                type="text"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-                                                Product Name
-                                            </label>
-                                            <input
-                                                name="name"
-                                                value={newUser.name}
-                                                onChange={handleInputChange}
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                                id="name"
-                                                type="text"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-                                                Unit
-                                            </label>
-                                            <select
-                                                name="email"
-                                                value={newUser.email}
-                                                onChange={handleInputChange}
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                                id="email"
-                                            >
-                                                <option value="เมตร">เมตร</option>
-                                                <option value="กิโลกรัม">กิโลกรัม</option>
-                                                <option value="ลิตร">ลิตร</option>
-                                                <option value="หน่วย">หน่วย</option>
-                                            </select>
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
-                                                StoreHouse
-                                            </label>
-                                            <input
-                                                name="role"
-                                                value={newUser.role}
-                                                onChange={handleInputChange}
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                                id="role"
-                                                type="text"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="total">
-                                                Total
-                                            </label>
-                                            <input
-                                                name="total"
-                                                value={newUser.total}
-                                                onChange={handleInputChange}
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                                id="total"
-                                                type="text"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="mt-4">
-                                        <button
-                                            type="button"
-                                            className="inline-flex justify-center rounded-md border border-transparent bg-[#8146FF] px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
-                                            onClick={handleAddUser}
-                                        >
-                                            Add
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="ml-2 inline-flex justify-center rounded-md border border-transparent bg-gray-300 px-4 py-2 text-sm font-medium text-black hover:bg-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-                                            onClick={closeAddModal}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </Dialog.Panel>
-                            </Transition.Child>
-                        </div>
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-full p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900"
+                  >
+                    Add Vendor Form
+                  </Dialog.Title>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Add the details of the Vendor below.
+                    </p>
+                  </div>
+                  <div className="mt-4">
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+                        Product ID
+                      </label>
+                      <input
+                        name="title"
+                        value={localUser.title || ''}
+                        onChange={handleInputChange}
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="title"
+                        type="text"
+                      />
                     </div>
-                </Dialog>
-            </Transition>
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+                        Product Name
+                      </label>
+                      <input
+                        name="name"
+                        value={localUser.name || ''}
+                        onChange={handleInputChange}
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="name"
+                        type="text"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
+                        StoreHouse
+                      </label>
+                      <input
+                        name="role"
+                        value={localUser.role || ''}
+                        onChange={handleInputChange}
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="role"
+                        type="text"
+                      />
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <div className="flex-1 mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="total">
+                          Total
+                        </label>
+                        <input
+                          name="total"
+                          value={localUser.total || ''}
+                          onChange={handleInputChange}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-right"
+                          id="total"
+                          type="text"
+                        />
+                      </div>
+                      <div className="flex-1 mb-4 relative">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="unit">
+                          Unit
+                        </label>
+                        <div className="relative">
+                          <select
+                            name="email"
+                            value={localUser.units || ''}
+                            onChange={handleInputChange}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pr-10"
+                            id="email"
+                          >
+                            <option value="">Select Unit</option>
+                            {/* {units.map((unit) => (
+                                                            <option key={unit.unitid} value={unit.unitid}>
+                                                                {unit.unitname}
+                                                            </option>
+                                                        ))} */}
+                          </select>
+                          <ChevronDown size={20} className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 py-2">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      onClick={handleAddUser}
+                    >
+                      Add Vendor
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
 
-            {/* Edit Modal */}
+            {/* TODO: Edit Modal */}
             <Transition appear show={isEditModalOpen} as={Fragment}>
                 <Dialog as="div" className="relative z-10" onClose={closeEditModal}>
                     <Transition.Child

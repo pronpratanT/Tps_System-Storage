@@ -1,23 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { ChevronLeft, ChevronRight, Edit, Search, Trash2, UserPlus } from "lucide-react";
 import Avatar from '@mui/material/Avatar';
 import { deepOrange } from '@mui/material/colors';
-
-const users = [
-    { name: 'Lindsay Walton', title: 'ST99', email: 'lindsay.walton@example.com', role: 'Member' },
-    { name: 'Courtney Henry', title: 'ST99', email: 'courtney.henry@example.com', role: 'Admin' },
-    { name: 'Tom Cook', title: 'ST99', email: 'tom.cook@example.com', role: 'Member' },
-    { name: 'Whitney Francis', title: 'ST99', email: 'whitney.francis@example.com', role: 'Admin' },
-    { name: 'Leonard Krasner', title: 'ST99', email: 'leonard.krasner@example.com', role: 'Owner' },
-    { name: 'Floyd Miles', title: 'ST99', email: 'floyd.miles@example.com', role: 'Member' },
-    { name: 'Lindsay Walton', title: 'ST99', email: 'lindsay.walton@example.com', role: 'Member' },
-    { name: 'Courtney Henry', title: 'ST99', email: 'courtney.henry@example.com', role: 'Admin' },
-    { name: 'Tom Cook', title: 'ST99', email: 'tom.cook@example.com', role: 'Member' },
-    { name: 'Whitney Francis', title: 'ST99', email: 'whitney.francis@example.com', role: 'Admin' },
-    { name: 'Leonard Krasner', title: 'ST99', email: 'leonard.krasner@example.com', role: 'Owner' },
-    { name: 'Floyd Miles', title: 'ST99', email: 'floyd.miles@example.com', role: 'Member' },
-];
+import users from "../data/user";
 
 const ITEMS_PER_PAGE = 5;
 

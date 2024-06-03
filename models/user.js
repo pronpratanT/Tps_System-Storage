@@ -2,6 +2,11 @@ import mongoose, {Schema} from 'mongoose'
 
 const userSchema = new Schema(
     {
+        userid: {
+            type: String,
+            required: false,
+            default: "NONE",
+        },
         name: {
             type: String,
             required: true,
@@ -17,7 +22,7 @@ const userSchema = new Schema(
         role: {
             type: String,
             required: false,
-            default: "user",
+            default: "member",
         },
     },
     {timestamps: true}

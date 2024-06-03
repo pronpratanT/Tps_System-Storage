@@ -13,7 +13,7 @@ const PageContainer = styled.div`
   background-color: #F6F6F6; /* Apply background color here */
 `;
 
-function UnitID() {
+export default function UnitID() {
   const { data: session } = useSession();
   console.log(session);
 
@@ -32,5 +32,3 @@ function UnitID() {
     </PageContainer>
   );
 }
-
-export default UnitID;

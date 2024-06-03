@@ -110,7 +110,7 @@ export default function Sidebar({ session, children }) {
               <SidebarItem 
                 icon={<HeartHandshake size={20} />} 
                 text="Vendor ID" 
-                href="/vendor-id"
+                href="/vendor"
               />
               <hr className="my-3" />
               <SidebarHeader text="Product Management" expanded={expanded} />

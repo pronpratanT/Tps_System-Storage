@@ -10,7 +10,7 @@ import ProductTable from '../components/ProductTable';
 
 const PageContainer = styled.div`
   display: flex;
-  background-color: #F6F6F6; /* Apply background color here */
+  background-color: #F6F6F6;
 `;
 
 function ProductID() {

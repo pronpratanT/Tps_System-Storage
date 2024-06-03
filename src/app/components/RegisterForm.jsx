@@ -62,7 +62,7 @@ export default function RegisterForm() {
                 setSuccess("User registration successfully!");
                 form.reset();
             } else {
-                comsole.log("User registration failed.");
+                console.log("User registration failed.");
             }
 
         } catch (error) {
@@ -100,21 +100,22 @@ export default function RegisterForm() {
                         placeholder="Confirm Password"
                         onChange={(e) => setConfirmPassword(e.target.value)}
                     />
-                    <button className="bg-[#8146FF] text-white font-bold cursor-pointer px-6 py-3 rounded-md" type='submit'>
-                        Sign Up
-                    </button>
 
+                    {/* TODO: Error & Success */}
                     {error &&(
-                        <div className="bg-red-500 text-white w-fit text-sm py-1 px-3 rounded-md mt-2">
+                        <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
                         {error}
                     </div>
                     )}
                     {success &&(
-                        <div className="bg-green-500 text-white w-fit text-sm py-1 px-3 rounded-md mt-2">
+                        <div className="px-4 py-2 text-sm font-medium text-green-900 bg-green-100 border border-transparent rounded-md hover:bg-green-200">
                         {success}
                     </div>
                     )}
                     
+                    <button className="bg-[#8146FF] text-white font-bold cursor-pointer px-6 py-3 rounded-md" type='submit'>
+                        Sign Up
+                    </button>
 
                     <Link className="text-sm mt-3 text-right" href={'/login'}>
                         Already have an account? <span className="underline text-[#8146FF]">Sign in</span>
