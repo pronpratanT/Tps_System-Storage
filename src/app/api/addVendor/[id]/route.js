@@ -14,5 +14,5 @@ export async function GET(request, {params}){
     const {id} = params;
     await connectMongoDB();
     const vendor = await Vendor.findOne({_id: id});
-    return NextResponse.json({message: "Vendor deleted"}, {status: 200});
+    return NextResponse.json({vendor}, {status: 200});
 }
