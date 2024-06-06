@@ -143,6 +143,11 @@ export default function Sidebar({ session, children }) {
                 text="Help" 
                 href="/help"
               />
+              <SidebarItem 
+                icon={<LogOut size={20} />} 
+                text="Sign out" 
+                href="/help"
+              />
             </ul>
           </SidebarContext.Provider>
 

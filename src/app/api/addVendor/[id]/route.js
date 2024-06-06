@@ -4,9 +4,9 @@ import Vendor from "../../../../../models/vendor";
 
 export async function PUT(request, {params}){
     const {id} = params;
-    const {newVendorId: vendorId, newVendorName: vendorName} = await request.json();
+    const {newVendorId: vendorId, newVendorName: vendorName, newVendorCountry: vendorCountry} = await request.json();
     await connectMongoDB();
-    await Vendor.findByIdAndUpdate(id, {vendorId, vendorName});
+    await Vendor.findByIdAndUpdate(id, {vendorId, vendorName, vendorCountry});
     return NextResponse.json({message: "Vendor updated"}, {status: 200});
 }
 

@@ -4,6 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 function VendorDel({ isVisible, onClose, vendor, refreshVendors }) {
   const [delId, setDelId] = useState("");
   const [delName, setDelName] = useState("");
+  const [delCountry, setDelCountry] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -11,6 +12,7 @@ function VendorDel({ isVisible, onClose, vendor, refreshVendors }) {
     if (vendor) {
       setDelId(vendor.vendorId);
       setDelName(vendor.vendorName);
+      setDelCountry(vendor.vendorCountry);
     }
   }, [vendor]);
 
@@ -109,6 +111,21 @@ function VendorDel({ isVisible, onClose, vendor, refreshVendors }) {
                           id="vendorName"
                           type="text"
                           value={delName}
+                          readOnly
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="vendorName"
+                        >
+                          Country
+                        </label>
+                        <input
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="vendorName"
+                          type="text"
+                          value={delCountry}
                           readOnly
                         />
                       </div>

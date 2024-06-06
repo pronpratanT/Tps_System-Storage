@@ -1,18 +1,26 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { Edit, Search, Trash2, UserPlus } from "lucide-react";
+import {
+  Edit,
+  Search,
+  Trash2,
+  HeartHandshake,
+  User,
+  Ruler,
+  Package,
+} from "lucide-react";
 import Avatar from "@mui/material/Avatar";
-import { deepOrange } from "@mui/material/colors";
+import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import VendorEdit from "./VendorEdit";
 import VendorDel from "./VendorDel";
 
 function VendorTable() {
-
   //? State
   const [vendorId, setVendorId] = useState("");
   const [vendorName, setVendorName] = useState("");
+  const [vendorCountry, setVendorCountry] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -31,8 +39,22 @@ function VendorTable() {
       if (!res_get.ok) {
         throw new Error("Failed to fetch Vendor");
       }
-      const data = await res_get.json();
-      setVendors(data);
+
+      const newVendors = await res_get.json();
+
+      // Check for duplicates
+      const uniqueVendors = newVendors.filter(
+        (vendor, index, self) =>
+          index === self.findIndex((t) => t.vendorId === vendor.vendorId)
+      );
+
+      // Sort vendors by vendorId in alphabetical order
+      const sortedVendors = uniqueVendors.sort((a, b) =>
+        a.vendorId.localeCompare(b.vendorId)
+      );
+
+      setVendors(sortedVendors);
+      console.log(sortedVendors);
     } catch (error) {
       console.log("Error loading Vendors: ", error);
     }
@@ -43,14 +65,36 @@ function VendorTable() {
     getVendors();
   }, []);
 
+  //TODO <Function Search Vendor Id
+  const filterVendorsByID = (vendors, searchID) => {
+    if (!searchID) return vendors; // Return all vendors if searchID is empty
+
+    // Filter unique vendors based on searchID
+    const filteredVendors = vendors.filter(
+      (vendor, index, self) =>
+        vendor.vendorId.toLowerCase().includes(searchID.toLowerCase()) &&
+        index === self.findIndex((t) => t.vendorId === vendor.vendorId)
+    );
+
+    return filteredVendors;
+  };
+
   //TODO < Function Get Vendor by Id send to VendorEdit >
   const [selectedVendor, setSelectedVendor] = useState(null); // Initialize with null
 
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    getVendors(); // Fetch vendors after closing the edit modal
+  };
+
   const getVendorById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/addVendor/${id}`, {
-        cache: "no-store",
-      });
+      const res_byid = await fetch(
+        `http://localhost:3000/api/addVendor/${id}`,
+        {
+          cache: "no-store",
+        }
+      );
 
       if (!res_byid.ok) {
         throw new Error("Failed to fetch Vendor");
@@ -80,24 +124,28 @@ function VendorTable() {
 
   const closeAddModal = () => {
     setIsAddModalOpen(false);
+    getVendors();
   };
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
 
-    if (!vendorId || !vendorName) {
+    if (!vendorId || !vendorName || !vendorCountry) {
       setError("Please complete Vendor details!");
       return;
     }
 
     try {
-      const resCheckVendor = await fetch("http://localhost:3000/api/checkVendor", {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify({ vendorId }),
-      });
+      const resCheckVendor = await fetch(
+        "http://localhost:3000/api/checkVendor",
+        {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({ vendorId }),
+        }
+      );
       const { vendor } = await resCheckVendor.json();
       if (vendor) {
         setError("Vendor id already exists!");
@@ -110,7 +158,7 @@ function VendorTable() {
         headers: {
           "Content-type": "application/json",
         },
-        body: JSON.stringify({ vendorId, vendorName }),
+        body: JSON.stringify({ vendorId, vendorName, vendorCountry }),
       });
 
       if (!res_add.ok) {
@@ -136,9 +184,12 @@ function VendorTable() {
   //TODO < Function Delete Vendor >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/addVendor/${id}`, {
-        cache: "no-store",
-      });
+      const res_byid = await fetch(
+        `http://localhost:3000/api/addVendor/${id}`,
+        {
+          cache: "no-store",
+        }
+      );
 
       if (!res_byid.ok) {
         throw new Error("Failed to fetch Vendor");
@@ -164,15 +215,54 @@ function VendorTable() {
   return (
     <div className="flex-1 p-4">
       <div className="flex justify-between items-center mb-6 space-x-5">
+        {/* //? Stat */}
+        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
+          <div className="text-lg font-semibold text-gray-600 my-1">Users</div>
+          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+            <User size={32} />
+            <span className="text-2xl font-bold">12</span>{" "}
+          </div>
+        </div>
+
+        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
+          <div className="text-lg font-semibold text-gray-600 my-1">Units</div>
+          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+            <Ruler size={32} />
+            <span className="text-2xl font-bold">12</span>{" "}
+          </div>
+        </div>
+
+        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
+          <div className="text-lg font-semibold text-gray-600 my-1">
+            Products
+          </div>
+          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+            <Package size={32} />
+            <span className="text-2xl font-bold">12</span>{" "}
+          </div>
+        </div>
+
+        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
+          <div className="text-lg font-semibold text-gray-600 my-1">
+            Vendors
+          </div>
+          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+            <HeartHandshake size={32} />
+            <span className="text-2xl font-bold">{vendors.length}</span>{" "}
+          </div>
+        </div>
       </div>
+
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
-          <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">กำหนดรหัสสินค้า</h2>
+          <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">
+            กำหนดรหัส Vendor
+          </h2>
           <div className="flex justify-between items-center mb-4">
             <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
               <input
                 type="text"
-                placeholder="Search Something..."
+                placeholder="Search Vendor ID..."
                 className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
                 value={searchID}
                 onChange={(event) => setSearchID(event.target.value)}
@@ -183,18 +273,23 @@ function VendorTable() {
               onClick={openAddModal}
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
-              <UserPlus size={20} className="mr-2" />
-              Add User
+              <HeartHandshake size={20} className="mr-2" />
+              Add Vendor
             </button>
           </div>
+
+          {/* //? Table */}
           <table className="min-w-full bg-white">
             <thead>
               <tr>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tl-md">
+                <th className="py-3 pr-4 pl-20 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-3/12">
                   Vendor ID
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left">
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-4/12">
                   Vendor Name
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
+                  Country
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">
                   Action
@@ -202,19 +297,20 @@ function VendorTable() {
               </tr>
             </thead>
             <tbody>
-              {vendors.map((vendor) => (
+              {filterVendorsByID(vendors, searchID).map((vendor) => (
                 <tr key={vendor.vendorId} className="border-t">
-                  <td className="py-4 px-4 text-center">{vendor.vendorId}</td>
-                  <td className="py-4 px-4 flex items-center">
+                  <td className="py-4 pr-4 pl-20 flex items-center w-auto">
                     <Avatar
-                      sx={{ bgcolor: deepOrange[500], marginRight: "20px" }}
+                      sx={{ bgcolor: indigo[800], marginRight: "20px" }}
                       variant="rounded-md"
                     >
-                      {vendor.vendorName.charAt(0).toUpperCase()}
+                      {vendor.vendorId.charAt(0).toUpperCase()}
                     </Avatar>
-                    {vendor.vendorName}
+                    {vendor.vendorId}
                   </td>
-                  <td className="py-4 px-4 text-center">
+                  <td className="py-4 px-4">{vendor.vendorName}</td>
+                  <td className="py-4 px-4">{vendor.vendorCountry}</td>
+                  <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
                     <button
                       onClick={() => getValue(vendor._id)}
                       type="button"
@@ -222,11 +318,9 @@ function VendorTable() {
                     >
                       <Edit size={23} />
                     </button>
-
                     <button
-                      // onClick={() => removeVendor(vendor._id)}
-                      onClick={() => { getDelValue(vendor._id) }}
-                      className="text-red-500 hover:text-red-700 ml-2"
+                      onClick={() => getDelValue(vendor._id)}
+                      className="text-red-500 hover:text-red-700"
                     >
                       <Trash2 size={23} />
                     </button>
@@ -307,6 +401,21 @@ function VendorTable() {
                           type="text"
                         />
                       </div>
+                      <div className="mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="name"
+                        >
+                          Country
+                        </label>
+                        <input
+                          onChange={(e) => setVendorCountry(e.target.value)}
+                          value={vendorCountry}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="name"
+                          type="text"
+                        />
+                      </div>
                     </div>
 
                     {/* // TODO : Error & Success */}
@@ -340,7 +449,7 @@ function VendorTable() {
       {/* // TODO : Edit Vendor Modal */}
       <VendorEdit
         isVisible={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={handleEditModalClose}
         vendor={selectedVendor}
         refreshVendors={getVendors}
       />
@@ -352,7 +461,6 @@ function VendorTable() {
         vendor={selectedVendor}
         refreshVendors={getVendors}
       />
-
     </div>
   );
 }

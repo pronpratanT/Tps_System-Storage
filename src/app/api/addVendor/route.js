@@ -3,9 +3,9 @@ import { connectMongoDB } from "../../../../lib/mongodb";
 import Vendor from "../../../../models/vendor";
 
 export async function POST(request) {
-  const { vendorId, vendorName } = await request.json();
+  const { vendorId, vendorName, vendorCountry } = await request.json();
   await connectMongoDB();
-  await Vendor.create({ vendorId, vendorName });
+  await Vendor.create({ vendorId, vendorName, vendorCountry });
   return NextResponse.json({ message: "Vendor Created" }, { status: 201 });
 }
 

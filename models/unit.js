@@ -2,11 +2,11 @@ import mongoose, {Schema} from 'mongoose'
 
 const unitSchema = new Schema(
     {
-        unitid: {
+        unitId: {
             type: String,
             required: true,
         },
-        unitname: {
+        unitName: {
             type: String,
             required: true,
         }

@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import CardList from '../components/CardList'; // Import CardList
 import styled from 'styled-components';
 import UserTable from '../components/EmployeeTable';
+import UserProfile from '../components/header';
 
 const PageContainer = styled.div`
   display: flex;
@@ -25,9 +26,12 @@ function EmployeeID() {
   return (
     <PageContainer>
       <Sidebar session={session} />
-      <div className='flex-1'>
-        <div className="bg-white h-16 px-4 shadow-sm"></div>
-        <div className="p-4"><UserTable /></div>
+      <div className="flex-1">
+        {/* <div className="bg-white h-16 px-4 shadow-sm"></div> */}
+        <UserProfile session={session} />
+        <div className="p-4">
+          <UserTable />
+        </div>
       </div>
     </PageContainer>
   );

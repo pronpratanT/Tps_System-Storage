@@ -4,6 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
   const [newVendorId, setNewVendorId] = useState("");
   const [newVendorName, setNewVendorName] = useState("");
+  const [newVendorCountry, setNewVendorCountry] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -11,51 +12,65 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
     if (vendor) {
       setNewVendorId(vendor.vendorId);
       setNewVendorName(vendor.vendorName);
+      setNewVendorCountry(vendor.vendorCountry);
     }
   }, [vendor]);
 
+  // TODO : Check update duplicate Vendor
+  const checkDuplicateVendorId = async (newVendorId, currentVendorId) => {
+    try {
+      const res = await fetch("http://localhost:3000/api/addVendor");
+      const vendors = await res.json();
+  
+      // Check if newVendorId already exists in the vendors list, excluding the current vendor
+      return vendors.some(
+        (vendor) =>
+          vendor.vendorId === newVendorId && vendor._id !== currentVendorId
+      );
+    } catch (error) {
+      console.error("Error checking duplicate vendor ID:", error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!newVendorId || !newVendorName) {
+  
+    if (!newVendorId || !newVendorName || !newVendorCountry) {
       setError("Please complete Vendor details!");
       return;
     }
-    
+  
+    //? Check for duplicate Vendor Id
+    const isDuplicate = await checkDuplicateVendorId(
+      newVendorId,
+      vendor?._id || ""
+    );
+    if (isDuplicate) {
+      setError("Vendor ID already exists!");
+      return;
+    }
+  
     try {
-      //* Check for duplicate Vendor Id.
-      const resCheckVendor = await fetch("http://localhost:3000/api/checkVendor", {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify({ newVendorId }),
-      });
-      const { vendor } = await resCheckVendor.json();
-      if (vendor) {
-        setError("Vendor id already exists!");
-        return;
-      }
-
-      //* Update Vendor
+      //? Update Vendor
       const res = await fetch(
-        `http://localhost:3000/api/addVendor/${vendor._id}`,
+        `http://localhost:3000/api/addVendor/${vendor?._id || ""}`,
         {
           method: "PUT",
           headers: {
             "Content-type": "application/json",
           },
-          body: JSON.stringify({ newVendorId, newVendorName }),
+          body: JSON.stringify({ newVendorId, newVendorName, newVendorCountry }),
         }
       );
-
+  
       if (!res.ok) {
         throw new Error("Failed to update Vendor");
       }
-
+  
       setError("");
-      setSuccess("Vendor has been update successfully!");
- 
+      setSuccess("Vendor has been updated successfully!");
+  
       setTimeout(() => {
         onClose(); // Close the modal after successful update
         setSuccess("");
@@ -134,6 +149,21 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
                         id="vendorName"
                         type="text"
                         value={newVendorName}
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label
+                        className="block text-gray-700 text-sm font-bold mb-2"
+                        htmlFor="vendorName"
+                      >
+                        Country
+                      </label>
+                      <input
+                        onChange={(e) => setNewVendorCountry(e.target.value)}
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="vendorName"
+                        type="text"
+                        value={newVendorCountry}
                       />
                     </div>
                   </div>

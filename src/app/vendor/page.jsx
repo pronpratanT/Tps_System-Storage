@@ -6,6 +6,7 @@ import styled from "styled-components";
 import VendorTable from "../components/VendorTable";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import UserProfile from "../components/header";
 
 const PageContainer = styled.div`
   display: flex;
@@ -24,7 +25,8 @@ export default function VendorPage() {
     <PageContainer>
       <Sidebar session={session} />
       <div className="flex-1">
-        <div className="bg-white h-16 px-4 shadow-sm"></div>
+        {/* <div className="bg-white h-16 px-4 shadow-sm"></div> */}
+        <UserProfile session={session} />
         <div className="p-4">
           <VendorTable />
         </div>
