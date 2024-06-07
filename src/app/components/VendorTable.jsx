@@ -28,6 +28,7 @@ function VendorTable() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchID, setSearchID] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState(null);
 
   //TODO < Function to fetch vendors to table >
   const getVendors = async () => {
@@ -80,8 +81,6 @@ function VendorTable() {
   };
 
   //TODO < Function Get Vendor by Id send to VendorEdit >
-  const [selectedVendor, setSelectedVendor] = useState(null); // Initialize with null
-
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
     getVendors(); // Fetch vendors after closing the edit modal
@@ -148,7 +147,7 @@ function VendorTable() {
       );
       const { vendor } = await resCheckVendor.json();
       if (vendor) {
-        setError("Vendor id already exists!");
+        setError("Vendor ID already exists!");
         return;
       }
 
@@ -205,7 +204,7 @@ function VendorTable() {
   const getDelValue = async (id) => {
     try {
       const vendor = await getDelById(id);
-      setSelectedVendor(vendor); // Set the selected vendor
+      setSelectedVendor(vendor);
       setIsDeleteModalOpen(true);
     } catch (error) {
       console.error("Failed to get vendor:", error);

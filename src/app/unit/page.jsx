@@ -27,7 +27,7 @@ export default function UnitID() {
       <Sidebar session={session} />
       <div className='flex-1'>
         <div className="bg-white h-16 px-4 shadow-sm"></div>
-        <div className="p-4"><UnitTable /></div>
+        <div className="p-4"><UnitTable session={session}/></div>
       </div>
     </PageContainer>
   );

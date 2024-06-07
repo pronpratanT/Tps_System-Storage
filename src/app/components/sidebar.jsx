@@ -1,8 +1,8 @@
 import { useContext, createContext, useState, useEffect, useRef } from "react";
 import { usePathname } from 'next/navigation';
-import { MoreVertical, ChevronLast, ChevronFirst, LogOut, User, Ruler, PackageSearch, HeartHandshake, PackagePlus, PackageMinus, Receipt, Settings, HelpCircle } from "lucide-react";
+import { ChevronLast, ChevronFirst, LogOut, User, Ruler, PackageSearch, HeartHandshake, PackagePlus, PackageMinus, Receipt, Settings, HelpCircle } from "lucide-react";
 import Avatar from '@mui/material/Avatar';
-import { deepOrange } from '@mui/material/colors';
+import { indigo } from '@mui/material/colors';
 import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 
@@ -145,14 +145,14 @@ export default function Sidebar({ session, children }) {
               />
               <SidebarItem 
                 icon={<LogOut size={20} />} 
-                text="Sign out" 
+                text="Sign out"
                 href="/help"
               />
             </ul>
           </SidebarContext.Provider>
 
           <div className="border-t flex p-3 relative">
-            <Avatar sx={{ bgcolor: deepOrange[500] }} variant="rounded">
+            <Avatar sx={{ bgcolor: indigo[800] }} variant="rounded">
               {userInitial}
             </Avatar>
             <div className={`flex justify-between items-center overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}`}>
@@ -160,18 +160,18 @@ export default function Sidebar({ session, children }) {
                 <h4 className="font-semibold">{session?.user?.name}</h4>
                 <span className="text-xs text-gray-600">{session?.user?.email}</span>
               </div>
-              <button onClick={() => setDropdownOpen(!dropdownOpen)} className="p-1.5 rounded-lg hover:bg-gray-100">
+              {/* <button onClick={() => setDropdownOpen(!dropdownOpen)} className="p-1.5 rounded-lg hover:bg-gray-100">
                 <MoreVertical size={20} />
-              </button>
+              </button> */}
             </div>
 
-            {dropdownOpen && (
+            {/* {dropdownOpen && (
               <div ref={dropdownRef} className="absolute bottom-12 right-4 w-48 bg-white border rounded shadow-md">
                 <button className="w-full flex items-center text-left px-4 py-2 text-red-600 hover:bg-gray-100" onClick={() => { signOut() }}>
                   <LogOut className="mr-2" size={20} /> Sign out
                 </button>
               </div>
-            )}
+            )} */}
           </div>
         </nav>
       </aside>

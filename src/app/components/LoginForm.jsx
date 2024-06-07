@@ -58,18 +58,19 @@ export default function LoginForm() {
             placeholder="Password"
             onChange={(e) => setPassword(e.target.value)}
           />
-          <button
-            className="bg-[#8146FF] text-white font-bold cursor-pointer px-6 py-3 rounded-md"
-            type="submit"
-          >
-            Sign in
-          </button>
           {/* // TODO : Error & Success */}
           {error && (
             <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
               {error}
             </div>
           )}
+
+          <button
+            className="bg-[#8146FF] text-white font-bold cursor-pointer px-6 py-3 rounded-md"
+            type="submit"
+          >
+            Sign in
+          </button>
 
           <Link className="text-sm mt-3 text-right" href={"/register"}>
             Don't have an account?{" "}

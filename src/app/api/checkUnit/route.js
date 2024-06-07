@@ -5,10 +5,8 @@ import Unit from "../../../../models/unit";
 export async function POST(req){
     try{
         await connectMongoDB();
-        const {unitid} = await req.json();
-        const unit = await Unit.findOne({unitid}).select("_id");
-        console.log("Unit: ", unit);
-
+        const {unitId} = await req.json();
+        const unit = await Unit.findOne({unitId}).select("_id");
 
         return NextResponse.json({unit});
         
