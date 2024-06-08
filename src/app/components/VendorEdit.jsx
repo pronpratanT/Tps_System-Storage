@@ -16,7 +16,7 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
     }
   }, [vendor]);
 
-  // TODO : Check update duplicate Vendor
+  // TODO : Check update duplicate Vendor ID
   const checkDuplicateVendorId = async (newVendorId, currentVendorId) => {
     try {
       const res = await fetch("http://localhost:3000/api/addVendor");

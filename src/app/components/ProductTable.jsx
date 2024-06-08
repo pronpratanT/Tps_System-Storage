@@ -1,201 +1,391 @@
-import { useState, useEffect } from "react";
+"use client";
+
+import { useState, useEffect, Fragment } from "react";
+import {
+  Edit,
+  Search,
+  Trash2,
+  HeartHandshake,
+  User,
+  Ruler,
+  Package,
+} from "lucide-react";
+import Avatar from "@mui/material/Avatar";
+import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
-import { ChevronDown, ChevronLeft, ChevronRight, Edit, Search, Trash2, UserPlus } from "lucide-react";
-import Avatar from '@mui/material/Avatar';
-import { deepOrange } from '@mui/material/colors';
-import { Fragment } from "react";
-
-const users = [
-    { name: 'Lindsay Walton', title: 'ST99', email: 'เมตร', role: 'Member', total: '9' },
-    { name: 'Courtney Henry', title: 'ST99', email: 'แผ่น', role: 'Admin', total: '99' },
-    { name: 'Tom Cook', title: 'ST99', email: 'เมตร', role: 'Member', total: '999' },
-    { name: 'Whitney Francis', title: 'ST99', email: 'เมตร', role: 'Admin', total: '9,999' },
-    { name: 'Leonard Krasner', title: 'ST99', email: 'เมตร', role: 'Owner', total: '99,999' },
-    { name: 'Floyd Miles', title: 'ST99', email: 'เมตร', role: 'Member', total: '999' },
-    { name: 'Lindsay Walton', title: 'ST99', email: 'เมตร', role: 'Member', total: '99' },
-    { name: 'Courtney Henry', title: 'ST99', email: 'เมตร', role: 'Admin', total: '9,999' },
-    { name: 'Tom Cook', title: 'ST99', email: 'เมตร', role: 'Member', total: '9' },
-    { name: 'Whitney Francis', title: 'ST99', email: 'เมตร', role: 'Admin', total: '999' },
-    { name: 'Leonard Krasner', title: 'ST99', email: 'เมตร', role: 'Owner', total: '9' },
-    { name: 'Floyd Miles', title: 'ST99', email: 'เมตร', role: 'Member', total: '9' },
-];
-
-const units = [
-    { unitid: 'PAN', unitname: 'แผ่น' },
-    { unitid: 'PAN', unitname: 'เมตร' },
-    { unitid: 'PAN', unitname: 'เซ็น' },
-];
-
-const ITEMS_PER_PAGE = 5;
+import ProductEdit from "./ProductEdit";
 
 export default function ProductTable() {
-    
+  //? State
+  const [productId, setProductId] = useState("");
+  const [productName, setProductName] = useState("");
+  const [productUnit, setProductUnit] = useState("");
+  const [storeHouse, setStoreHouse] = useState("");
+  const [amount, setAmount] = useState("");
+  const [products, setProducts] = useState([]);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [searchID, setSearchID] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [units, setUnits] = useState([]);
 
-    const [currentPage, setCurrentPage] = useState(1);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    
-    const [newUser, setNewUser] = useState({ name: '', title: '', email: '', role: '', total: '' });
-    const [userList, setUserList] = useState(users);
+  //TODO < Function to fetch product to table >
+  const getProducts = async () => {
+    try {
+      const res_get = await fetch("http://localhost:3000/api/Product", {
+        cache: "no-store",
+      });
 
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const currentUsers = userList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    const totalPages = Math.ceil(userList.length / ITEMS_PER_PAGE);
-    const totalUser = userList.length;
+      if (!res_get.ok) {
+        throw new Error("Failed to fetch Product");
+      }
 
-    const [selectedUser, setSelectedUser] = useState(null);
-    const [localUser, setLocalUser] = useState(selectedUser || {});
+      const newProducts = await res_get.json();
 
-    const [selectedUnit, setSelectedUnit] = useState(null);
-    const [localUnit, setLocalUnit] = useState(selectedUnit || {});
+      // Check for duplicates
+      const uniqueProducts = newProducts.filter(
+        (product, index, self) =>
+          index === self.findIndex((t) => t.productId === product.productId)
+      );
 
-    useEffect(() => {
-        setLocalUser(selectedUser || {});
-        setLocalUnit(selectedUnit || {});
-    }, [selectedUser]);
+      // Sort Products by vendorId in alphabetical order
+      const sortedProducts = uniqueProducts.sort((a, b) =>
+        a.productId.localeCompare(b.productId)
+      );
 
-    const handlePrevPage = () => {
-        setCurrentPage((prev) => Math.max(prev - 1, 1));
-    };
+      setProducts(sortedProducts);
+      console.log(sortedProducts);
+    } catch (error) {
+      console.log("Error loading Products: ", error);
+    }
+  };
 
-    const handleNextPage = () => {
-        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-    };
+  //? Reload Products table
+  useEffect(() => {
+    getProducts();
+  }, []);
 
-    const openAddModal = () => {
-        setIsAddModalOpen(true);
-    };
+  //TODO < Function to fetch units to table >
+  const getUnits = async () => {
+    try {
+      const resGetUnit = await fetch("http://localhost:3000/api/Unit", {
+        cache: "no-store",
+      });
 
-    const closeAddModal = () => {
-        setIsAddModalOpen(false);
-    };
+      if (!resGetUnit.ok) {
+        throw new Error("Failed to fetch Vendor");
+      }
 
-    const openEditModal = (user) => {
-        setSelectedUser(user);
-        setIsEditModalOpen(true);
-    };
+      const newUnits = await resGetUnit.json();
 
-    const closeEditModal = () => {
-        setIsEditModalOpen(false);
-        setSelectedUser(null);
-    };
+      // Check for duplicates
+      const uniqueUnits = newUnits.filter(
+        (unit, index, self) =>
+          index === self.findIndex((t) => t.unitId === unit.unitId)
+      );
 
-    const openDeleteModal = (user) => {
-        setSelectedUser(user);
-        setIsDeleteModalOpen(true);
-    };
+      // Sort units by vendorId in alphabetical order
+      const sortedUnits = uniqueUnits.sort((a, b) =>
+        a.unitId.localeCompare(b.unitId)
+      );
 
-    const closeDeleteModal = () => {
-        setIsDeleteModalOpen(false);
-        setSelectedUser(null);
-    };
+      setUnits(sortedUnits);
+      console.log(sortedUnits);
+    } catch (error) {
+      console.log("Error loading Vendors: ", error);
+    }
+  };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setLocalUser((prev) => ({ ...prev, [name]: value }));
-    };
+  //? Reload Units table
+  useEffect(() => {
+    getUnits();
+  }, []);
 
-    const handleAddUser = () => {
-        setUserList((prev) => [...prev, newUser]);
-        setNewUser({ name: '', title: '', email: '', role: '', total: '' });
+  //TODO <Function Search Product Id
+  const filterProductsByID = (products, searchID) => {
+    if (!searchID) return products; // Return all products if searchID is empty
+
+    // Filter unique products based on searchID
+    const filteredProducts = products.filter(
+      (product, index, self) =>
+        product.productId.toLowerCase().includes(searchID.toLowerCase()) &&
+        index === self.findIndex((t) => t.productId === product.productId)
+    );
+
+    return filterProductsByID;
+  };
+
+  //TODO < Function Get Product by Id send to ProductEdit >
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    getProducts();
+  };
+
+  const getProductById = async (id) => {
+    try {
+      const res_byid = await fetch(`http://localhost:3000/api/Product/${id}`, {
+        cache: "no-store",
+      });
+
+      if (!res_byid.ok) {
+        throw new Error("Failed to fetch Product");
+      }
+
+      const data = await res_byid.json();
+      return data.product; // Ensure you return the correct data structure
+    } catch (error) {
+      console.error("Failed to fetch Product:", error);
+    }
+  };
+
+  const getValue = async (id) => {
+    try {
+      const product = await getProductById(id);
+      setSelectedProduct(product); // Set the selected product
+      setIsEditModalOpen(true);
+    } catch (error) {
+      console.error("Failed to get product:", error);
+    }
+  };
+
+  //TODO < Function Add Product >
+  const openAddModal = () => {
+    setIsAddModalOpen(true);
+  };
+
+  const closeAddModal = () => {
+    setIsAddModalOpen(false);
+    getProducts();
+  };
+
+  const handleAddSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!productId || !productName || !productUnit || !storeHouse || !amount) {
+      setError("Please complete Product details!");
+      return;
+    }
+
+    try {
+      const resCheckProduct = await fetch(
+        "http://localhost:3000/api/checkProduct",
+        {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({ productId }),
+        }
+      );
+      const { product } = await resCheckProduct.json();
+      if (product) {
+        setError("Unit ID already exists!");
+        return;
+      }
+
+      //* Add Product to DB
+      const res_add = await fetch("http://localhost:3000/api/Product", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({
+          productId,
+          productName,
+          productUnit,
+          storeHouse,
+          amount,
+        }),
+      });
+
+      if (!res_add.ok) {
+        throw new Error("Failed to add Product");
+      }
+
+      setError("");
+      setSuccess("Product has been added successfully!");
+      getProducts();
+
+      setTimeout(() => {
         closeAddModal();
-    };
+        setSuccess("");
+        setProductId("");
+        setProductName("");
+        setProductUnit("");
+        setStoreHouse("");
+        setAmount("");
+      }, 2000);
+    } catch (error) {
+      console.log(error);
+      setError("Failed to add product");
+    }
+  };
 
-    const handleEditUser = () => {
-        updateUser(localUser);
-        closeEditModal();
-    };
+  //TODO < Function Delete Product >
+  const getDelById = async (id) => {
+    try {
+      const res_byid = await fetch(`http://localhost:3000/api/Product/${id}`, {
+        cache: "no-store",
+      });
 
-    const handleDeleteUser = () => {
-        setUserList((prev) => prev.filter(user => user !== selectedUser));
-        closeDeleteModal();
-    };
+      if (!res_byid.ok) {
+        throw new Error("Failed to fetch Product");
+      }
 
-    return (
-        <div className="flex-1 p-4">
-            <div >
-                <div className="flex justify-between items-center mb-6 space-x-5">
-                    <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-                        <div className="text-lg font-semibold text-gray-600">Total Product</div>
-                        <div className="text-2xl font-bold text-[#8146FF]">{totalUser}</div>
-                    </div>
-                    <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-                        <div className="text-lg font-bold">Avg. Open Rate</div>
-                        <div className="text-2xl font-bold text-green-500">58.16% <span className="text-sm text-green-500">▲ 5.4%</span></div>
-                        <a href="#" className="text-indigo-600 hover:underline">View all</a>
-                    </div>
-                    <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-                        <div className="text-lg font-bold">Avg. Click Rate</div>
-                        <div className="text-2xl font-bold text-red-500">24.57% <span className="text-sm text-red-500">▼ 3.2%</span></div>
-                        <a href="#" className="text-indigo-600 hover:underline">View all</a>
-                    </div>
-                </div>
-                <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                    <div className="p-6">
-                        <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">กำหนดรหัสสินค้า</h2>
-                        <div className="flex justify-between items-center mb-4">
-                            <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-[#8146FF] overflow-hidden max-w-2xl w-full font-[sans-serif]">
-                                <input type="text" placeholder="Search Something..." className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm" />
-                                <Search size={16} className="text-gray-600 " />
-                            </div>
-                            <button onClick={openAddModal} className="flex items-center bg-[#8146FF] hover:bg-purple-700 text-white px-4 py-2 rounded-lg ml-4">
-                                <UserPlus size={20} className="mr-2" />
-                                Add User
-                            </button>
-                        </div>
-                        {/* Table */}
-                        <table className="min-w-full bg-white">
-                            <thead>
-                                <tr>
-                                    <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tl-md">Product ID</th>
-                                    <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left">Product Name</th>
-                                    <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left">Unit</th>
-                                    <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left">StoreHouse</th>
-                                    <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-right">Total</th>
-                                    <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentUsers.map((user, index) => (
-                                    <tr key={index} className="border-t">
-                                        <td className="py-4 px-4 text-center">{user.title}</td>
-                                        <td className="py-4 px-4 flex items-center">
-                                            <Avatar sx={{ bgcolor: deepOrange[500], marginRight: '20px' }} variant="rounded-md">
-                                                {user.name.charAt(0).toUpperCase()}
-                                            </Avatar>
-                                            {user.name}
-                                        </td>
-                                        <td className="py-4 px-4">{user.email}</td>
-                                        <td className="py-4 px-4">{user.role}</td>
-                                        <td className="py-4 px-4 text-right">{user.total}</td>
-                                        <td className="py-4 px-4 text-center">
-                                            <button onClick={() => openEditModal(user)} className="text-blue-500 hover:text-blue-700">
-                                                <Edit size={16} />
-                                            </button>
-                                            <button onClick={() => openDeleteModal(user)} className="text-red-500 hover:text-red-700 ml-2">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div className="flex justify-between items-center mt-4">
-                            <button onClick={handlePrevPage} className="bg-white text-gray-700 py-2 px-4 rounded-md hover:bg-gray-100" disabled={currentPage === 1}>
-                                <ChevronLeft size={16} />
-                            </button>
-                            <span>{`Page ${currentPage} of ${totalPages}`}</span>
-                            <button onClick={handleNextPage} className="bg-white text-gray-700 py-2 px-4 rounded-md hover:bg-gray-100" disabled={currentPage === totalPages}>
-                                <ChevronRight size={16} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
+      const data = await res_byid.json();
+      return data.product; // Ensure you return the correct data structure
+    } catch (error) {
+      console.error("Failed to fetch Product:", error);
+    }
+  };
+
+  const getDelValue = async (id) => {
+    try {
+      const product = await getDelById(id);
+      setSelectedProduct(product);
+      setIsDeleteModalOpen(true);
+    } catch (error) {
+      console.error("Failed to get product:", error);
+    }
+  };
+
+  return (
+    <div className="flex-1 p-4">
+      <div className="flex justify-between items-center mb-6 space-x-5">
+        {/* //? Stat */}
+        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
+          <div className="text-lg font-semibold text-gray-600 my-1">Users</div>
+          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+            <User size={32} />
+            <span className="text-2xl font-bold">12</span>{" "}
+          </div>
+        </div>
+
+        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
+          <div className="text-lg font-semibold text-gray-600 my-1">Units</div>
+          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+            <Ruler size={32} />
+            <span className="text-2xl font-bold">
+              {/* {units.length} */}
+            </span>{" "}
+          </div>
+        </div>
+
+        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
+          <div className="text-lg font-semibold text-gray-600 my-1">
+            Products
+          </div>
+          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+            <Package size={32} />
+            <span className="text-2xl font-bold">{products.length}</span>{" "}
+          </div>
+        </div>
+
+        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
+          <div className="text-lg font-semibold text-gray-600 my-1">
+            Vendors
+          </div>
+          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+            <HeartHandshake size={32} />
+            <span className="text-2xl font-bold">
+              {/* {vendors.length} */}
+            </span>{" "}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+        <div className="p-6">
+          <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">
+            กำหนดรหัสสินค้า
+          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
+              <input
+                type="text"
+                placeholder="Search Product ID..."
+                className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
+                value={searchID}
+                onChange={(event) => setSearchID(event.target.value)}
+              />
+              <Search size={16} className="text-gray-600 " />
             </div>
+            <button
+              onClick={openAddModal}
+              className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
+            >
+              <Ruler size={20} className="mr-2" />
+              Add Product
+            </button>
+          </div>
 
-            {/* TODO: Add Modal */}
-            <Transition appear show={isAddModalOpen} as={Fragment}>
+          {/* //? Table */}
+          <table className="min-w-full bg-white">
+            <thead>
+              <tr>
+                <th className="py-3 pr-4 pl-20 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-3/12">
+                  Product ID
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-4/12">
+                  Product Name
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
+                  Unit
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
+                  StoreHouse
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-right w-1/12">
+                  Amount
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filterProductsByID(products, searchID).map((product) => (
+                <tr key={product.productId} className="border-t">
+                  <td className="py-4 pr-4 pl-20 flex items-center w-auto">
+                    <Avatar
+                      sx={{ bgcolor: indigo[800], marginRight: "20px" }}
+                      variant="rounded-md"
+                    >
+                      {product.productId.charAt(0).toUpperCase()}
+                    </Avatar>
+                    {product.productId}
+                  </td>
+                  <td className="py-4 px-4">{product.productName}</td>
+                  <td className="py-4 px-4">{product.productUnit}</td>
+                  <td className="py-4 px-4">{product.storeHouse}</td>
+                  <td className="py-4 px-4 text-right">{product.amount}</td>
+                  <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
+                    <button
+                      onClick={() => getValue(product._id)}
+                      type="button"
+                      className="text-indigo-600 hover:text-indigo-800"
+                    >
+                      <Edit size={23} />
+                    </button>
+                    <button
+                      onClick={() => getDelValue(product._id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={23} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* // TODO : Add Unit Modal */}
+      <Transition appear show={isAddModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeAddModal}>
           <Transition.Child
             as={Fragment}
@@ -208,324 +398,154 @@ export default function ProductTable() {
           >
             <div className="fixed inset-0 bg-black bg-opacity-25" />
           </Transition.Child>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex items-center justify-center min-h-full p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
-                  >
-                    Add Vendor Form
-                  </Dialog.Title>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">
-                      Add the details of the Vendor below.
-                    </p>
-                  </div>
-                  <div className="mt-4">
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-                        Product ID
-                      </label>
-                      <input
-                        name="title"
-                        value={localUser.title || ''}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="title"
-                        type="text"
-                      />
+          <form onSubmit={handleAddSubmit}>
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex items-center justify-center min-h-full p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-medium leading-6 text-gray-900"
+                    >
+                      Add Product Form
+                    </Dialog.Title>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        Add the details of the Product below.
+                      </p>
                     </div>
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-                        Product Name
-                      </label>
-                      <input
-                        name="name"
-                        value={localUser.name || ''}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="name"
-                        type="text"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
-                        StoreHouse
-                      </label>
-                      <input
-                        name="role"
-                        value={localUser.role || ''}
-                        onChange={handleInputChange}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="role"
-                        type="text"
-                      />
-                    </div>
-                    <div className="flex justify-between gap-4">
-                      <div className="flex-1 mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="total">
-                          Total
+                    <div className="mt-4">
+                      <div className="mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="name"
+                        >
+                          Product ID
                         </label>
                         <input
-                          name="total"
-                          value={localUser.total || ''}
-                          onChange={handleInputChange}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-right"
-                          id="total"
+                          onChange={(e) => setProductId(e.target.value)}
+                          value={productId}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="title"
                           type="text"
                         />
                       </div>
-                      <div className="flex-1 mb-4 relative">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="unit">
-                          Unit
+                      <div className="mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="name"
+                        >
+                          Product Name
                         </label>
-                        <div className="relative">
-                          <select
-                            name="email"
-                            value={localUser.units || ''}
-                            onChange={handleInputChange}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pr-10"
-                            id="email"
+                        <input
+                          onChange={(e) => setProductName(e.target.value)}
+                          value={productName}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="name"
+                          type="text"
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="name"
+                        >
+                          StoreHouse
+                        </label>
+                        <input
+                          onChange={(e) => setStoreHouse(e.target.value)}
+                          value={storeHouse}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="name"
+                          type="text"
+                        />
+                      </div>
+                      <div className="flex justify-between mb-4">
+                        <div className="flex-1 mr-1">
+                          <label
+                            className="block text-gray-700 text-sm font-bold mb-2"
+                            htmlFor="amount"
                           >
-                            <option value="">Select Unit</option>
-                            {/* {units.map((unit) => (
-                                                            <option key={unit.unitid} value={unit.unitid}>
-                                                                {unit.unitname}
-                                                            </option>
-                                                        ))} */}
+                            Amount
+                          </label>
+                          <input
+                            onChange={(e) => setAmount(e.target.value)}
+                            value={amount}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="amount"
+                            type="number"
+                          />
+                        </div>
+                        <div className="flex-1 ml-1">
+                          <div className="mb-2">
+                            <label
+                              htmlFor="unit"
+                              className="block text-gray-700 text-sm font-bold"
+                            >
+                              Unit
+                            </label>
+                          </div>
+                          <select
+                            id="unit"
+                            onChange={(e) =>
+                              setProductUnit(e.target.selectedOptions[0].text)
+                            }
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          >
+                            <option value="">Select a unit</option>
+                            {units.map((unit) => (
+                              <option key={unit.unitId} value={unit.unitName}>
+                                {unit.unitName}
+                              </option>
+                            ))}
                           </select>
-                          <ChevronDown size={20} className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" />
                         </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-4 py-2">
-                    <button
-                      type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
-                      onClick={handleAddUser}
-                    >
-                      Add Vendor
-                    </button>
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
+
+                    {/* // TODO : Error & Success */}
+                    {error && (
+                      <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
+                        {error}
+                      </div>
+                    )}
+                    {success && (
+                      <div className="px-4 py-2 text-sm font-medium text-green-900 bg-green-100 border border-transparent rounded-md hover:bg-green-200">
+                        {success}
+                      </div>
+                    )}
+
+                    <div className="mt-4 py-2">
+                      <button
+                        type="submit"
+                        className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      >
+                        Add Product
+                      </button>
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
             </div>
-          </div>
+          </form>
         </Dialog>
       </Transition>
 
-            {/* TODO: Edit Modal */}
-            <Transition appear show={isEditModalOpen} as={Fragment}>
-                <Dialog as="div" className="relative z-10" onClose={closeEditModal}>
-                    <Transition.Child
-                        as={Fragment}
-                        enter="ease-out duration-300"
-                        enterFrom="opacity-0 scale-95"
-                        enterTo="opacity-100 scale-100"
-                        leave="ease-in duration-200"
-                        leaveFrom="opacity-100 scale-100"
-                        leaveTo="opacity-0 scale-95"
-                    >
-                        <div className="fixed inset-0 bg-black bg-opacity-25" />
-                    </Transition.Child>
-
-                    <div className="fixed inset-0 overflow-y-auto">
-                        <div className="flex items-center justify-center min-h-full p-4 text-center">
-                            <Transition.Child
-                                as={Fragment}
-                                enter="ease-out duration-300"
-                                enterFrom="opacity-0 scale-95"
-                                enterTo="opacity-100 scale-100"
-                                leave="ease-in duration-200"
-                                leaveFrom="opacity-100 scale-100"
-                                leaveTo="opacity-0 scale-95"
-                            >
-                                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                                    <Dialog.Title
-                                        as="h3"
-                                        className="text-lg font-medium leading-6 text-gray-900"
-                                    >
-                                        Edit User
-                                    </Dialog.Title>
-                                    <div className="mt-2">
-                                        <p className="text-sm text-gray-500">
-                                            Update the details of the user below.
-                                        </p>
-                                    </div>
-                                    <div className="mt-4">
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-                                                Product ID
-                                            </label>
-                                            <input
-                                                name="title"
-                                                value={localUser.title || ''}
-                                                onChange={handleInputChange}
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                                id="title"
-                                                type="text"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
-                                                Product Name
-                                            </label>
-                                            <input
-                                                name="name"
-                                                value={localUser.name || ''}
-                                                onChange={handleInputChange}
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                                id="name"
-                                                type="text"
-                                            />
-                                        </div>
-                                        <div className="mb-4">
-                                            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
-                                                StoreHouse
-                                            </label>
-                                            <input
-                                                name="role"
-                                                value={localUser.role || ''}
-                                                onChange={handleInputChange}
-                                                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                                id="role"
-                                                type="text"
-                                            />
-                                        </div>
-                                        <div className="flex justify-between gap-4">
-                                            <div className="flex-1 mb-4">
-                                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="total">
-                                                    Total
-                                                </label>
-                                                <input
-                                                    name="total"
-                                                    value={localUser.total || ''}
-                                                    onChange={handleInputChange}
-                                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-right"
-                                                    id="total"
-                                                    type="text"
-                                                />
-                                            </div>
-                                            <div className="flex-1 mb-4 relative">
-                                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="unit">
-                                                    Unit
-                                                </label>
-                                                <div className="relative">
-                                                    <select
-                                                        name="email"
-                                                        value={localUser.units || ''}
-                                                        onChange={handleInputChange}
-                                                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pr-10"
-                                                        id="email"
-                                                    >
-                                                        <option value="">Select Unit</option>
-                                                        {units.map((unit) => (
-                                                            <option key={unit.unitid} value={unit.unitid}>
-                                                                {unit.unitname}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                    <ChevronDown size={20} className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="mt-4">
-                                        <button
-                                            type="button"
-                                            className="inline-flex justify-center rounded-md border border-transparent bg-[#8146FF] px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
-                                            onClick={handleEditUser}
-                                        >
-                                            Update
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="ml-2 inline-flex justify-center rounded-md border border-transparent bg-gray-300 px-4 py-2 text-sm font-medium text-black hover:bg-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-                                            onClick={closeEditModal}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </Dialog.Panel>
-                            </Transition.Child>
-                        </div>
-                    </div>
-                </Dialog>
-            </Transition>
-
-            {/* Delete Modal */}
-            <Transition appear show={isDeleteModalOpen} as={Fragment}>
-                <Dialog as="div" className="relative z-10" onClose={closeDeleteModal}>
-                    <Transition.Child
-                        as={Fragment}
-                        enter="ease-out duration-300"
-                        enterFrom="opacity-0 scale-95"
-                        enterTo="opacity-100 scale-100"
-                        leave="ease-in duration-200"
-                        leaveFrom="opacity-100 scale-100"
-                        leaveTo="opacity-0 scale-95"
-                    >
-                        <div className="fixed inset-0 bg-black bg-opacity-25" />
-                    </Transition.Child>
-
-                    <div className="fixed inset-0 overflow-y-auto">
-                        <div className="flex items-center justify-center min-h-full p-4 text-center">
-                            <Transition.Child
-                                as={Fragment}
-                                enter="ease-out duration-300"
-                                enterFrom="opacity-0 scale-95"
-                                enterTo="opacity-100 scale-100"
-                                leave="ease-in duration-200"
-                                leaveFrom="opacity-100 scale-100"
-                                leaveTo="opacity-0 scale-95"
-                            >
-                                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                                    <Dialog.Title
-                                        as="h3"
-                                        className="text-lg font-medium leading-6 text-gray-900"
-                                    >
-                                        Delete User
-                                    </Dialog.Title>
-                                    <div className="mt-2">
-                                        <p className="text-sm text-gray-500">
-                                            Are you sure you want to delete this user? This action cannot be undone.
-                                        </p>
-                                    </div>
-
-                                    <div className="mt-4">
-                                        <button
-                                            type="button"
-                                            className="inline-flex justify-center rounded-md border border-transparent bg-red-500 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                                            onClick={handleDeleteUser}
-                                        >
-                                            Delete
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="ml-2 inline-flex justify-center rounded-md border border-transparent bg-gray-300 px-4 py-2 text-sm font-medium text-black hover:bg-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-                                            onClick={closeDeleteModal}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </Dialog.Panel>
-                            </Transition.Child>
-                        </div>
-                    </div>
-                </Dialog>
-            </Transition>
-        </div>
-    );
+      {/* // TODO : Edit Product Modal */}
+      <ProductEdit
+        isVisible={isEditModalOpen}
+        onClose={handleEditModalClose}
+        product={selectedProduct}
+        refreshProducts={getProducts}
+      />
+    </div>
+  );
 }

@@ -133,16 +133,13 @@ export default function UnitTable(session, children) {
     }
 
     try {
-      const resCheckUnit = await fetch(
-        "http://localhost:3000/api/checkUnit",
-        {
-          method: "POST",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({ unitId }),
-        }
-      );
+      const resCheckUnit = await fetch("http://localhost:3000/api/checkUnit", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({ unitId }),
+      });
       const { unit } = await resCheckUnit.json();
       if (unit) {
         setError("Unit ID already exists!");
