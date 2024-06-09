@@ -4,7 +4,6 @@ import Sidebar from '../components/Sidebar';
 import React from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import CardList from '../components/CardList'; // Import CardList
 import styled from 'styled-components';
 import ProductTable from '../components/ProductTable';
 

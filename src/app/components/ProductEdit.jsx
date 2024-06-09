@@ -225,9 +225,14 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
                         <select
                           id="unit"
                           value={newProductUnit}
-                          onChange={(e) =>
-                            setNewProductUnit(e.target.selectedOptions[0].text)
-                          }
+                          onChange={(e) => {
+                            const selectedValue = e.target.value;
+                            const selectedText =
+                              e.target.selectedOptions[0].text;
+                            setNewProductUnit(
+                              selectedValue === "" ? "" : selectedText
+                            );
+                          }}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         >
                           <option value="">Select a unit</option>

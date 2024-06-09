@@ -1,47 +1,45 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function ProductDel({ isVisible, onClose, product, refreshProducts }) {
+function EmployeeDel({ isVisible, onClose, user, refreshUsers }) {
   const [delId, setDelId] = useState("");
   const [delName, setDelName] = useState("");
-  const [delUnit, setDelUnit] = useState("");
-  const [delStoreHouse, setDelStoreHouse] = useState("");
-  const [delAmount, setDelAmount] = useState("");
+  const [delEmail, setDelEmail] = useState("");
+  const [delRole, setDelRole] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    if (product) {
-      setDelId(product.productId);
-      setDelName(product.productName);
-      setDelUnit(product.productUnit);
-      setDelStoreHouse(product.storeHouse);
-      setDelAmount(product.amount);
+    if (user) {
+      setDelId(user.userid);
+      setDelName(user.name);
+      setDelEmail(user.email);
+      setDelRole(user.role);
     }
-  }, [product]);
+  }, [user]);
 
-  const removeProduct = async (event) => {
+  const removeUser = async (event) => {
     event.preventDefault();
 
     try {
       const resDelete = await fetch(
-        `http://localhost:3000/api/Product?id=${product._id}`,
+        `http://localhost:3000/api/User?id=${user._id}`,
         {
           method: "DELETE",
         }
       );
       if (!resDelete.ok) {
-        throw new Error("Failed to delete Product");
+        throw new Error("Failed to delete User");
       }
       setError("");
-      setSuccess("Product has been deleted successfully!");
+      setSuccess("Employee has been deleted successfully!");
       setTimeout(() => {
         onClose();
         setSuccess("");
-        refreshProducts();
+        refreshUsers();
       }, 2000);
     } catch (error) {
-      setError("Failed to delete product");
+      setError("Failed to delete employee");
     }
   };
 
@@ -60,7 +58,7 @@ function ProductDel({ isVisible, onClose, product, refreshProducts }) {
           >
             <div className="fixed inset-0 bg-black bg-opacity-25" />
           </Transition.Child>
-          <form onSubmit={removeProduct}>
+          <form onSubmit={removeUser}>
             <div className="fixed inset-0 overflow-y-auto">
               <div className="flex items-center justify-center min-h-full p-4 text-center">
                 <Transition.Child
@@ -77,17 +75,17 @@ function ProductDel({ isVisible, onClose, product, refreshProducts }) {
                       as="h3"
                       className="text-lg font-medium leading-6 text-gray-900"
                     >
-                      Delete Product Form
+                      Delete Employee Form
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Detail of the Product to be removed are below.
+                        Detail of the Employee to be removed are below.
                       </p>
                     </div>
                     <div className="mt-4">
                       <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-bold mb-2">
-                          Product ID
+                          Employee ID
                         </label>
                         <input
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -99,7 +97,7 @@ function ProductDel({ isVisible, onClose, product, refreshProducts }) {
                       </div>
                       <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-bold mb-2">
-                          Product Name
+                          Employee Name
                         </label>
                         <input
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
@@ -111,42 +109,34 @@ function ProductDel({ isVisible, onClose, product, refreshProducts }) {
                       </div>
                       <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-bold mb-2">
-                          StoreHouse
+                          Email
                         </label>
                         <input
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           id="StoreHouse"
                           type="text"
-                          value={delStoreHouse}
+                          value={delEmail}
                           readOnly
                         />
                       </div>
-                      <div className="flex justify-between mb-4">
-                        <div className="flex-1 mr-1">
-                          <label className="block text-gray-700 text-sm font-bold mb-2">
-                            Amount
-                          </label>
-                          <input
-                            value={delAmount}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="amount"
-                            type="number"
-                            readOnly
-                          />
-                        </div>
-                        <div className="flex-1 mr-1">
-                          <label className="block text-gray-700 text-sm font-bold mb-2">
-                            Unit
-                          </label>
-                          <input
-                            value={delUnit}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="Unit"
-                            readOnly
-                          />
-                        </div>
+                      {/* <div className="flex justify-between mb-4"> */}
+                      <div className="flex-1 mr-1 mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="role"
+                        >
+                          Role
+                        </label>
+                        <input
+                          value={delRole}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="role"
+                          type="text"
+                          readOnly
+                        />
                       </div>
                     </div>
+                    {/* </div> */}
 
                     {error && (
                       <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
@@ -163,7 +153,7 @@ function ProductDel({ isVisible, onClose, product, refreshProducts }) {
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                       >
-                        Delete Product
+                        Delete Employee
                       </button>
                     </div>
                   </Dialog.Panel>
@@ -177,4 +167,4 @@ function ProductDel({ isVisible, onClose, product, refreshProducts }) {
   );
 }
 
-export default ProductDel;
+export default EmployeeDel;

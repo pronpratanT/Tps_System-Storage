@@ -72,7 +72,7 @@ export default function RegisterForm() {
 
     return (
         <div className="grid place-items-center h-screen">
-            <div className="shadow-lg p-8 rounded-lg border-t-4 border-[#8146FF] w-[450px]">
+            <div className="shadow-lg p-8 rounded-lg border-t-4 border-indigo-800 w-[450px]">
                 <h1 className="text-2xl font-bold my-4 text-center">Create your account</h1>
 
                 <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -113,12 +113,12 @@ export default function RegisterForm() {
                     </div>
                     )}
                     
-                    <button className="bg-[#8146FF] text-white font-bold cursor-pointer px-6 py-3 rounded-md" type='submit'>
+                    <button className="bg-indigo-600 hover:bg-indigo-800 text-white font-bold cursor-pointer px-6 py-3 rounded-md" type='submit'>
                         Sign Up
                     </button>
 
                     <Link className="text-sm mt-3 text-right" href={'/login'}>
-                        Already have an account? <span className="underline text-[#8146FF]">Sign in</span>
+                        Already have an account? <span className="underline  text-indigo-600 hover:text-indigo-800">Sign in</span>
                     </Link>
                 </form>
             </div>

@@ -117,7 +117,7 @@ export default function Sidebar({ session, children }) {
               <SidebarItem 
                 icon={<PackagePlus size={20} />} 
                 text="Import Products" 
-                href="/import-products"
+                href="/import"
               />
               <SidebarItem 
                 icon={<PackageMinus size={20} />} 

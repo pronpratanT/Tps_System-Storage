@@ -14,6 +14,7 @@ import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import ProductEdit from "./ProductEdit";
+import ProductDel from "./ProductDel";
 
 export default function ProductTable() {
   //? State
@@ -115,7 +116,7 @@ export default function ProductTable() {
         index === self.findIndex((t) => t.productId === product.productId)
     );
 
-    return filterProductsByID;
+    return filteredProducts;
   };
 
   //TODO < Function Get Product by Id send to ProductEdit >
@@ -317,7 +318,7 @@ export default function ProductTable() {
               onClick={openAddModal}
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
-              <Ruler size={20} className="mr-2" />
+              <Package size={20} className="mr-2" />
               Add Product
             </button>
           </div>
@@ -543,6 +544,14 @@ export default function ProductTable() {
       <ProductEdit
         isVisible={isEditModalOpen}
         onClose={handleEditModalClose}
+        product={selectedProduct}
+        refreshProducts={getProducts}
+      />
+
+      {/* // TODO : Delete Product Modal */}
+      <ProductDel
+        isVisible={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
         product={selectedProduct}
         refreshProducts={getProducts}
       />

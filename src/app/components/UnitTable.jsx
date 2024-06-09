@@ -78,7 +78,7 @@ export default function UnitTable(session, children) {
         index === self.findIndex((t) => t.unitId === unit.unitId)
     );
 
-    return filterUnitsByID;
+    return filteredUnits;
   };
 
   //TODO < Function Get Unit by Id send to UnitEdit >
