@@ -10,63 +10,64 @@ import {
   Ruler,
   Package,
   PackagePlus,
+  PackageMinus,
 } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
-import ImportEdit from "./ImportEdit";
-import ImportDel from "./ImportDel";
+import ExportEdit from "./ExportEdit";
+import ExportDel from "./ExportDel";
 
-function ImportTable() {
+function ExportTable() {
   //? State
-  const [dateImport, setDateImport] = useState("");
+  const [dateExport, setDateExport] = useState("");
   const [documentId, setDocumentId] = useState("");
-  const [importVen, setImportVen] = useState("");
-  const [importEm, setImportEm] = useState("");
-  const [imports, setImports] = useState([]);
+  const [exportVen, setExportVen] = useState("");
+  const [exportEm, setExportEm] = useState("");
+  const [exports, setExports] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [searchID, setSearchID] = useState("");
-  const [selectedImport, setSelectedImport] = useState(null);
+  const [selectedExport, setSelectedExport] = useState(null);
   const [vendors, setVendors] = useState([]);
   const [users, setUsers] = useState([]);
 
-  //TODO < Function to fetch Import to table >
-  const getImport = async () => {
+  //TODO < Function to fetch Export to table >
+  const getExport = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/Import", {
+      const res_get = await fetch("http://localhost:3000/api/Export", {
         cache: "no-store",
       });
 
       if (!res_get.ok) {
-        throw new Error("Failed to fetch Import");
+        throw new Error("Failed to fetch Export");
       }
 
-      const newImports = await res_get.json();
+      const newExports = await res_get.json();
 
       // Check for duplicates
-      const uniqueImports = newImports.filter(
-        (importPd, index, self) =>
-          index === self.findIndex((t) => t.documentId === importPd.documentId)
+      const uniqueExports = newExports.filter(
+        (exportPd, index, self) =>
+          index === self.findIndex((t) => t.documentId === exportPd.documentId)
       );
 
       // Sort Products by vendorId in alphabetical order
-      const sortedImports = uniqueImports.sort((a, b) =>
+      const sortedExports = uniqueExports.sort((a, b) =>
         a.documentId.localeCompare(b.documentId)
       );
 
-      setImports(sortedImports);
-      console.log(sortedImports);
+      setExports(sortedExports);
+      console.log(sortedExports);
     } catch (error) {
       console.log("Error loading Products: ", error);
     }
   };
   //? Reload Products table
   useEffect(() => {
-    getImport();
+    getExport();
   }, []);
 
   //TODO < Function to fetch vendors to table >
@@ -142,75 +143,75 @@ function ImportTable() {
   }, []);
 
   //TODO <Function Search Document Id
-  const filterImportsByID = (importPds, searchID) => {
-    if (!searchID) return importPds; // Return all products if searchID is empty
+  const filterExportsByID = (exportPds, searchID) => {
+    if (!searchID) return exportPds; // Return all products if searchID is empty
 
     // Filter unique products based on searchID
-    const filteredImports = importPds.filter(
-      (importPd, index, self) =>
-        importPd.documentId.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.documentId === importPd.documentId)
+    const filteredExports = exportPds.filter(
+      (exportPd, index, self) =>
+        exportPd.documentId.toLowerCase().includes(searchID.toLowerCase()) &&
+        index === self.findIndex((t) => t.documentId === exportPd.documentId)
     );
 
-    return filteredImports;
+    return filteredExports;
   };
 
   //TODO < Function Get Product by Id send to ProductEdit >
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
-    getImport();
+    getExport();
   };
 
-  const getImportById = async (id) => {
+  const getExportById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Import/${id}`, {
+      const res_byid = await fetch(`http://localhost:3000/api/Export/${id}`, {
         cache: "no-store",
       });
 
       if (!res_byid.ok) {
-        throw new Error("Failed to fetch Import");
+        throw new Error("Failed to fetch Export");
       }
 
       const data = await res_byid.json();
-      console.log("Data:", data.importPD);
-      return data.importPD; // Ensure you return the correct data structure
+      console.log("Data:", data.exportPD);
+      return data.exportPD; // Ensure you return the correct data structure
     } catch (error) {
-      console.error("Failed to fetch Import:", error);
+      console.error("Failed to fetch Export:", error);
     }
   };
 
   const getValue = async (id) => {
     try {
-      const importPD = await getImportById(id);
-      setSelectedImport(importPD); // Set the selected product
+      const exportPD = await getExportById(id);
+      setSelectedExport(exportPD); // Set the selected product
       setIsEditModalOpen(true);
-      console.log("importPd: ", importPD);
+      console.log("exportPd: ", exportPD);
     } catch (error) {
-      console.error("Failed to get import:", error);
+      console.error("Failed to get Export:", error);
     }
   };
 
-  //TODO < Function Add Import >
+  //TODO < Function Add Export >
   const openAddModal = () => {
     setIsAddModalOpen(true);
   };
 
   const closeAddModal = () => {
     setIsAddModalOpen(false);
-    getImport();
+    getExport();
   };
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
 
-    if (!dateImport || !documentId || !importVen) {
-      setError("Please complete Import Product details!");
+    if (!dateExport || !documentId || !exportVen) {
+      setError("Please complete Export Product details!");
       return;
     }
 
     try {
-      const resCheckImport = await fetch(
-        "http://localhost:3000/api/checkImport",
+      const resCheckExport = await fetch(
+        "http://localhost:3000/api/checkExport",
         {
           method: "POST",
           headers: {
@@ -219,73 +220,73 @@ function ImportTable() {
           body: JSON.stringify({ documentId }),
         }
       );
-      const { importPd } = await resCheckImport.json();
-      if (importPd) {
+      const { exportPd } = await resCheckExport.json();
+      if (exportPd) {
         setError("Document ID already exists!");
         return;
       }
 
       //* Add Product to DB
-      const res_add = await fetch("http://localhost:3000/api/Import", {
+      const res_add = await fetch("http://localhost:3000/api/Export", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
         },
         body: JSON.stringify({
-          dateImport,
+          dateExport,
           documentId,
-          importVen,
-          importEm,
+          exportVen,
+          exportEm,
         }),
       });
 
       if (!res_add.ok) {
-        throw new Error("Failed to add Import");
+        throw new Error("Failed to add Export");
       }
 
       setError("");
-      setSuccess("Import Product has been added successfully!");
-      getImport();
+      setSuccess("Export Product has been added successfully!");
+      getExport();
 
       setTimeout(() => {
         closeAddModal();
         setSuccess("");
-        setDateImport("");
+        setDateExport("");
         setDocumentId("");
-        setImportVen("");
-        setImportEm("");
+        setExportVen("");
+        setExportEm("");
       }, 2000);
     } catch (error) {
       console.log(error);
-      setError("Failed to add Import Product");
+      setError("Failed to add Export Product");
     }
   };
 
-  //TODO < Function Delete Import >
+  //TODO < Function Delete Export >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Import/${id}`, {
+      const res_byid = await fetch(`http://localhost:3000/api/Export/${id}`, {
         cache: "no-store",
       });
 
       if (!res_byid.ok) {
-        throw new Error("Failed to fetch Import");
+        throw new Error("Failed to fetch Export");
       }
 
       const data = await res_byid.json();
-      return data.importPD; // Ensure you return the correct data structure
+      return data.exportPD; // Ensure you return the correct data structure
     } catch (error) {
-      console.error("Failed to fetch Import:", error);
+      console.error("Failed to fetch Export:", error);
     }
   };
 
   const getDelValue = async (id) => {
     try {
-      const importPD = await getDelById(id);
-      setSelectedImport(importPD);
+      const exportPD = await getDelById(id);
+      setSelectedExport(exportPD);
       setIsDeleteModalOpen(true);
     } catch (error) {
-      console.error("Failed to get Import:", error);
+      console.error("Failed to get Export:", error);
     }
   };
 
@@ -339,7 +340,7 @@ function ImportTable() {
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
           <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">
-            รับสินค้าเข้า
+            เบิกสินค้าออก
           </h2>
           <div className="flex justify-between items-center mb-4">
             <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
@@ -356,8 +357,8 @@ function ImportTable() {
               onClick={openAddModal}
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
-              <PackagePlus size={20} className="mr-2" />
-              Add Import
+              <PackageMinus size={20} className="mr-2" />
+              Add Export
             </button>
           </div>
 
@@ -383,32 +384,32 @@ function ImportTable() {
               </tr>
             </thead>
             <tbody>
-              {filterImportsByID(imports, searchID).map((importPd) => (
-                <tr key={importPd.documentId} className="border-t">
+              {filterExportsByID(exports, searchID).map((exportPd) => (
+                <tr key={exportPd.documentId} className="border-t">
                   <td className="py-4 pr-4 pl-10 w-auto">
-                    {importPd.dateImport}
+                    {exportPd.dateExport}
                   </td>
                   <td className="py-4 px-4 flex items-center w-auto">
                     <Avatar
                       sx={{ bgcolor: indigo[800], marginRight: "20px" }}
                       variant="rounded-md"
                     >
-                      {importPd.documentId.charAt(0).toUpperCase()}
+                      {exportPd.documentId.charAt(0).toUpperCase()}
                     </Avatar>
-                    {importPd.documentId}
+                    {exportPd.documentId}
                   </td>
-                  <td className="py-4 px-4">{importPd.importVen}</td>
-                  <td className="py-4 px-4">{importPd.importEm}</td>
+                  <td className="py-4 px-4">{exportPd.exportVen}</td>
+                  <td className="py-4 px-4">{exportPd.exportEm}</td>
                   <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
                     <button
-                      onClick={() => getValue(importPd._id)}
+                      onClick={() => getValue(exportPd._id)}
                       type="button"
                       className="text-indigo-600 hover:text-indigo-800"
                     >
                       <Edit size={23} />
                     </button>
                     <button
-                      onClick={() => getDelValue(importPd._id)}
+                      onClick={() => getDelValue(exportPd._id)}
                       className="text-red-500 hover:text-red-700"
                     >
                       <Trash2 size={23} />
@@ -452,11 +453,11 @@ function ImportTable() {
                       as="h3"
                       className="text-lg font-medium leading-6 text-gray-900"
                     >
-                      Add Import Product Form
+                      Add Export Product Form
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Add the details of the Import Product below.
+                        Add the details of the Export Product below.
                       </p>
                     </div>
                     <div className="mt-4">
@@ -468,8 +469,8 @@ function ImportTable() {
                           Date
                         </label>
                         <input
-                          onChange={(e) => setDateImport(e.target.value)}
-                          value={dateImport}
+                          onChange={(e) => setDateExport(e.target.value)}
+                          value={dateExport}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           id="dateImport"
                           type="text"
@@ -503,7 +504,7 @@ function ImportTable() {
                             const selectedValue = e.target.value;
                             const selectedText =
                               e.target.selectedOptions[0].text;
-                            setImportVen(
+                            setExportVen(
                               selectedValue === "" ? "" : selectedText
                             );
                           }}
@@ -533,7 +534,7 @@ function ImportTable() {
                             const selectedValue = e.target.value;
                             const selectedText =
                               e.target.selectedOptions[0].text;
-                            setImportEm(
+                            setExportEm(
                               selectedValue === "" ? "" : selectedText
                             );
                           }}
@@ -566,7 +567,7 @@ function ImportTable() {
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                       >
-                        Add Import Product
+                        Add Export Product
                       </button>
                     </div>
                   </Dialog.Panel>
@@ -578,22 +579,22 @@ function ImportTable() {
       </Transition>
 
       {/* // TODO : Edit Product Modal */}
-      <ImportEdit
+      <ExportEdit
         isVisible={isEditModalOpen}
         onClose={handleEditModalClose}
-        importPd={selectedImport}
-        refreshImports={getImport}
+        exportPd={selectedExport}
+        refreshExports={getExport}
       />
 
       {/* // TODO : Delete Product Modal */}
-      <ImportDel
+      <ExportDel
         isVisible={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        importPd={selectedImport}
-        refreshImports={getImport}
+        exportPd={selectedExport}
+        refreshExports={getExport}
       />
     </div>
   );
 }
 
-export default ImportTable;
+export default ExportTable;

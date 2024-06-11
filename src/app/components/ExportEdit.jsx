@@ -1,32 +1,33 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
-  const [newDateImport, setNewDateImport] = useState("");
+function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
+  const [newDateExport, setNewDateExport] = useState("");
   const [newDocumentId, setNewDocumentId] = useState("");
-  const [newImportVen, setNewImportVen] = useState("");
-  const [newImportEm, setNewImportEm] = useState("");
+  const [newExportVen, setNewExportVen] = useState("");
+  const [newExportEm, setNewExportEm] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [vendors, setVendors] = useState([]);
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    if (importPd) {
-      setNewDateImport(importPd.dateImport);
-      setNewDocumentId(importPd.documentId);
-      setNewImportVen(importPd.importVen);
-      setNewImportEm(importPd.importEm);
+    if (exportPd) {
+      setNewDateExport(exportPd.dateExport);
+      setNewDocumentId(exportPd.documentId);
+      setNewExportVen(exportPd.exportVen);
+      setNewExportEm(exportPd.exportEm);
     }
-  }, [importPd]);
+  }, [exportPd]);
 
   const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
     try {
-      const res = await fetch("http://localhost:3000/api/Import");
-      const imports = await res.json();
-      return imports.some(
-        (importPd) =>
-          importPd.documentId === newDocumentId && importPd._id !== currentDocumentId
+      const res = await fetch("http://localhost:3000/api/Export");
+      const exports = await res.json();
+      return exports.some(
+        (exportPd) =>
+          exportPd.documentId === newDocumentId &&
+          exportPd._id !== currentDocumentId
       );
     } catch (error) {
       console.error("Error checking duplicate Document ID:", error);
@@ -37,14 +38,14 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!newDateImport || !newDocumentId || !newImportVen) {
-      setError("Please complete Import Product details!");
+    if (!newDateExport || !newDocumentId || !newExportVen) {
+      setError("Please complete Export Product details!");
       return;
     }
 
     const isDuplicate = await checkDuplicateDocumentId(
       newDocumentId,
-      importPd?._id || ""
+      exportPd?._id || ""
     );
     if (isDuplicate) {
       setError("Document ID already exists!");
@@ -53,36 +54,36 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/Import/${importPd?._id || ""}`,
+        `http://localhost:3000/api/Export/${exportPd?._id || ""}`,
         {
           method: "PUT",
           headers: {
             "Content-type": "application/json",
           },
           body: JSON.stringify({
-            newDateImport,
+            newDateExport,
             newDocumentId,
-            newImportVen,
-            newImportEm,
+            newExportVen,
+            newExportEm,
           }),
         }
       );
 
       if (!res.ok) {
-        throw new Error("Failed to update Import Product");
+        throw new Error("Failed to update Export Product");
       }
 
       setError("");
-      setSuccess("Import Product has been updated successfully!");
+      setSuccess("Export Product has been updated successfully!");
 
       setTimeout(() => {
         onClose();
         setSuccess("");
-        refreshImports();
+        refreshExports();
       }, 2000);
     } catch (error) {
       console.log(error);
-      setError("Failed to update Import Product");
+      setError("Failed to update Export Product");
     }
   };
 
@@ -189,11 +190,11 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Update Import Product Form
+                    Update Export Product Form
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Update the details of the Import Product below.
+                      Update the details of the Export Product below.
                     </p>
                   </div>
                   <div className="mt-4">
@@ -205,8 +206,8 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                         Date
                       </label>
                       <input
-                        onChange={(e) => setNewDateImport(e.target.value)}
-                        value={newDateImport}
+                        onChange={(e) => setNewDateExport(e.target.value)}
+                        value={newDateExport}
                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         id="dateImport"
                         type="text"
@@ -236,11 +237,11 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                       </label>
                       <select
                         id="unit"
-                        value={newImportVen}
+                        value={newExportVen}
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           const selectedText = e.target.selectedOptions[0].text;
-                          setNewImportVen(
+                          setNewExportVen(
                             selectedValue === "" ? "" : selectedText
                           );
                         }}
@@ -260,17 +261,17 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                     <div className="mb-4">
                       <label
                         className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="importEm"
+                        htmlFor="exportEm"
                       >
                         Employee
                       </label>
                       <select
-                        id="importEm"
-                        value={newImportEm}
+                        id="exportEm"
+                        value={newExportEm}
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           const selectedText = e.target.selectedOptions[0].text;
-                          setNewImportEm(
+                          setNewExportEm(
                             selectedValue === "" ? "" : selectedText
                           );
                         }}
@@ -303,7 +304,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                     >
-                      Update Import Product
+                      Update Export Product
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -316,4 +317,4 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   );
 }
 
-export default ImportEdit;
+export default ExportEdit;

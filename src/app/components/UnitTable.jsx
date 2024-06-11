@@ -15,10 +15,9 @@ import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import UnitEdit from "./UnitEdit";
 import UnitDel from "./UnitDel";
+import CountStat from "./CountStat";
 
-export default function UnitTable(session, children) {
-  //? session
-
+export default function UnitTable() {
   //? State
   const [unitId, setUnitId] = useState("");
   const [unitName, setUnitName] = useState("");
@@ -30,6 +29,7 @@ export default function UnitTable(session, children) {
   const [searchID, setSearchID] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState(null);
+  const [refresh, setRefresh] = useState(false);
 
   //TODO < Function to fetch units to table >
   const getUnits = async () => {
@@ -168,6 +168,7 @@ export default function UnitTable(session, children) {
         setSuccess("");
         setUnitId("");
         setUnitName("");
+        refresh();
       }, 2000);
     } catch (error) {
       console.log(error);
@@ -203,49 +204,17 @@ export default function UnitTable(session, children) {
     }
   };
 
+  //TODO Refresh CountStat
+  const handleRefresh = () => {
+    setRefresh(!refresh);
+  };
+
   return (
     <div className="flex-1 p-4">
-      <div className="flex justify-between items-center mb-6 space-x-5">
-        {/* //? Stat */}
-        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-          <div className="text-lg font-semibold text-gray-600 my-1">Users</div>
-          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
-            <User size={32} />
-            <span className="text-2xl font-bold">12</span>{" "}
-          </div>
-        </div>
-
-        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-          <div className="text-lg font-semibold text-gray-600 my-1">Units</div>
-          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
-            <Ruler size={32} />
-            <span className="text-2xl font-bold">{units.length}</span>{" "}
-          </div>
-        </div>
-
-        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-          <div className="text-lg font-semibold text-gray-600 my-1">
-            Products
-          </div>
-          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
-            <Package size={32} />
-            <span className="text-2xl font-bold">12</span>{" "}
-          </div>
-        </div>
-
-        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-          <div className="text-lg font-semibold text-gray-600 my-1">
-            Vendors
-          </div>
-          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
-            <HeartHandshake size={32} />
-            <span className="text-2xl font-bold">
-              {/* {vendors.length} */}
-            </span>{" "}
-          </div>
-        </div>
+      <div>
+        <button onClick={handleRefresh}>Refresh CountStat</button>
+        <CountStat refresh={refresh} />
       </div>
-
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
           <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">

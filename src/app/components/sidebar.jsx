@@ -122,14 +122,14 @@ export default function Sidebar({ session, children }) {
               <SidebarItem 
                 icon={<PackageMinus size={20} />} 
                 text="Export Products" 
-                href="/export-products"
+                href="/export"
               />
               <hr className="my-3" />
               <SidebarHeader text="Analytics" expanded={expanded} />
               <SidebarItem 
                 icon={<Receipt size={20} />} 
                 text="Reports" 
-                href="/reports"
+                href="/report"
               />
               <hr className="my-3" />
               <SidebarHeader text="Settings" expanded={expanded} />
