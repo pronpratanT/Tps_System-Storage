@@ -6,7 +6,7 @@ import React from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import styled from 'styled-components';
-import ProductTable from '../components1/ProductTable';
+import ProductTable from '../componentsอันนี้คืออันเดิมสามรถลบได้/ProductTable';
 
 const PageContainer = styled.div`
   display: flex;

@@ -1,81 +1,46 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
-  const [newUnitId, setNewUnitId] = useState("");
-  const [newUnitName, setNewUnitName] = useState("");
+function ImportDel({ isVisible, onClose, importPd, refreshImports, refreshCount }) {
+  const [delDate, setDelDate] = useState("");
+  const [delDocumentId, setDelDocumentId] = useState("");
+  const [delImportVen, setDelImportVen] = useState("");
+  const [delImportEm, setDelImportEm] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    if (unit) {
-      setNewUnitId(unit.unitId);
-      setNewUnitName(unit.unitName);
+    if (importPd) {
+      setDelDate(importPd.dateImport);
+      setDelDocumentId(importPd.documentId);
+      setDelImportVen(importPd.importVen);
+      setDelImportEm(importPd.importEm);
     }
-  }, [unit]);
+  }, [importPd]);
 
-  // TODO : Check update duplicate Unit
-  const checkDuplicateUnitId = async (newUnitId, currentUnitId) => {
-    try {
-      const res = await fetch("http://localhost:3000/api/Unit");
-      const units = await res.json();
-
-      // Check if newUnitId already exists in the units list, excluding the current unit
-      return units.some(
-        (unit) => unit.unitId === newUnitId && unit._id !== currentUnitId
-      );
-    } catch (error) {
-      console.error("Error checking duplicate unit ID:", error);
-      return false;
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!newUnitId || !newUnitName) {
-      setError("Please complete Unit details!");
-      return;
-    }
-
-    //? Check for duplicate Unit Id
-    const isDuplicate = await checkDuplicateUnitId(newUnitId, unit?._id || "");
-    if (isDuplicate) {
-      setError("Unit ID already exists!");
-      return;
-    }
+  const removeImport = async (event) => {
+    event.preventDefault();
 
     try {
-      //? Update Unit
-      const res = await fetch(
-        `http://localhost:3000/api/Unit/${unit?._id || ""}`,
+      const resDelete = await fetch(
+        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import?id=${importPd._id}`,
         {
-          method: "PUT",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({
-            newUnitId,
-            newUnitName,
-          }),
+          method: "DELETE",
         }
       );
-
-      if (!res.ok) {
-        throw new Error("Failed to update Unit");
+      if (!resDelete.ok) {
+        throw new Error("Failed to delete Import Product");
       }
-
       setError("");
-      setSuccess("Unit has been updated successfully!");
-
+      setSuccess("Import Product has been deleted successfully!");
       setTimeout(() => {
-        onClose(); // Close the modal after successful update
+        onClose();
         setSuccess("");
-        refreshUnits(); // Refresh the unit list
+        refreshImports();
+        refreshCount();
       }, 2000);
     } catch (error) {
-      console.log(error);
-      setError("Failed to update unit");
+      setError("Failed to delete Import product");
     }
   };
 
@@ -93,7 +58,7 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
         >
           <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={removeImport}>
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex items-center justify-center min-h-full p-4 text-center">
               <Transition.Child
@@ -110,47 +75,81 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Update Unit Form
+                    Delete Import Product Form
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Update the details of the Unit below.
+                      Delete the details of the Import Product below.
                     </p>
                   </div>
                   <div className="mt-4">
                     <div className="mb-4">
                       <label
                         className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="unitId"
+                        htmlFor="dateImport"
                       >
-                        Unit ID
+                        Date
                       </label>
                       <input
-                        onChange={(e) => setNewUnitId(e.target.value)}
+                        onChange={(e) => setDelDate(e.target.value)}
+                        value={delDate}
                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="unitId"
+                        id="dateImport"
                         type="text"
-                        value={newUnitId}
+                        readOnly
                       />
                     </div>
                     <div className="mb-4">
                       <label
                         className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="unitName"
+                        htmlFor="documentId"
                       >
-                        Unit Name
+                        Document ID
                       </label>
                       <input
-                        onChange={(e) => setNewUnitName(e.target.value)}
+                        onChange={(e) => setDelDocumentId(e.target.value)}
+                        value={delDocumentId}
                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="unitName"
+                        id="documentId"
                         type="text"
-                        value={newUnitName}
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label
+                        className="block text-gray-700 text-sm font-bold mb-2"
+                        htmlFor="documentId"
+                      >
+                        Vendor
+                      </label>
+                      <input
+                        onChange={(e) => setDelImportVen(e.target.value)}
+                        value={delImportVen}
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="documentId"
+                        type="text"
+                        readOnly
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label
+                        className="block text-gray-700 text-sm font-bold mb-2"
+                        htmlFor="documentId"
+                      >
+                        Employee
+                      </label>
+                      <input
+                        onChange={(e) => setDelImportEm(e.target.value)}
+                        value={delImportEm}
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        id="documentId"
+                        type="text"
+                        readOnly
                       />
                     </div>
                   </div>
 
-                  {/* TODO: Error & Success */}
+                  {/* // TODO : Error & Success */}
                   {error && (
                     <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
                       {error}
@@ -165,9 +164,9 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
                   <div className="mt-4 py-2">
                     <button
                       type="submit"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                     >
-                      Update Unit
+                      Delete Import Product
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -178,6 +177,6 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
       </Dialog>
     </Transition>
   );
-};
+}
 
-export default UnitEdit;
+export default ImportDel;

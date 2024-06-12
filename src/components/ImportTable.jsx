@@ -31,7 +31,7 @@ function ImportTable() {
   //TODO < Function to fetch Import to table >
   const getImport = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/Import", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import", {
         cache: "no-store",
       });
 
@@ -66,7 +66,7 @@ function ImportTable() {
   //TODO < Function to fetch vendors to table >
   const getVendors = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/addVendor", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
         cache: "no-store",
       });
 
@@ -102,7 +102,7 @@ function ImportTable() {
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/User", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
         cache: "no-store",
       });
 
@@ -157,7 +157,7 @@ function ImportTable() {
 
   const getImportById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Import/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import/${id}`, {
         cache: "no-store",
       });
 
@@ -204,7 +204,7 @@ function ImportTable() {
 
     try {
       const resCheckImport = await fetch(
-        "http://localhost:3000/api/checkImport",
+        "https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkImport",
         {
           method: "POST",
           headers: {
@@ -220,7 +220,7 @@ function ImportTable() {
       }
 
       //* Add Product to DB
-      const res_add = await fetch("http://localhost:3000/api/Import", {
+      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -259,7 +259,7 @@ function ImportTable() {
   //TODO < Function Delete Import >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Import/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import/${id}`, {
         cache: "no-store",
       });
 

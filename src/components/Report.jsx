@@ -9,7 +9,7 @@ function Report() {
 
   const getProducts = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/Product", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Product", {
         cache: "no-store",
       });
 

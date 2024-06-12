@@ -17,7 +17,7 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
   // TODO : Check update duplicate Unit
   const checkDuplicateUnitId = async (newUnitId, currentUnitId) => {
     try {
-      const res = await fetch("http://localhost:3000/api/Unit");
+      const res = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Unit");
       const units = await res.json();
 
       // Check if newUnitId already exists in the units list, excluding the current unit
@@ -48,7 +48,7 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
     try {
       //? Update Unit
       const res = await fetch(
-        `http://localhost:3000/api/Unit/${unit?._id || ""}`,
+        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Unit/${unit?._id || ""}`,
         {
           method: "PUT",
           headers: {

@@ -1,251 +1,217 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { Edit, Search, Trash2, Package } from "lucide-react";
+import {
+  Edit,
+  Search,
+  Trash2,
+  HeartHandshake,
+  User,
+  Ruler,
+  Package,
+} from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
-import ProductEdit from "./ProductEdit";
-import ProductDel from "./ProductDel";
+import VendorEdit from "./VendorEdit";
+import VendorDel from "./VendorDel";
 import CountStat from "./CountStat";
 
-export default function ProductTable() {
+function VendorTable() {
   //? State
-  const [productId, setProductId] = useState("");
-  const [productName, setProductName] = useState("");
-  const [productUnit, setProductUnit] = useState("");
-  const [storeHouse, setStoreHouse] = useState("");
-  const [amount, setAmount] = useState("");
-  const [products, setProducts] = useState([]);
+  const [vendorId, setVendorId] = useState("");
+  const [vendorName, setVendorName] = useState("");
+  const [vendorCountry, setVendorCountry] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [vendors, setVendors] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [searchID, setSearchID] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [units, setUnits] = useState([]);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedVendor, setSelectedVendor] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
 
-  //TODO < Function to fetch product to table >
-  const getProducts = async () => {
+  //TODO < Function to fetch vendors to table >
+  const getVendors = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/Product", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
         cache: "no-store",
       });
 
       if (!res_get.ok) {
-        throw new Error("Failed to fetch Product");
-      }
-
-      const newProducts = await res_get.json();
-
-      // Check for duplicates
-      const uniqueProducts = newProducts.filter(
-        (product, index, self) =>
-          index === self.findIndex((t) => t.productId === product.productId)
-      );
-
-      // Sort Products by vendorId in alphabetical order
-      const sortedProducts = uniqueProducts.sort((a, b) =>
-        a.productId.localeCompare(b.productId)
-      );
-
-      setProducts(sortedProducts);
-      console.log(sortedProducts);
-    } catch (error) {
-      console.log("Error loading Products: ", error);
-    }
-  };
-
-  //? Reload Products table
-  useEffect(() => {
-    getProducts();
-  }, []);
-
-  //TODO < Function to fetch units to table >
-  const getUnits = async () => {
-    try {
-      const resGetUnit = await fetch("http://localhost:3000/api/Unit", {
-        cache: "no-store",
-      });
-
-      if (!resGetUnit.ok) {
         throw new Error("Failed to fetch Vendor");
       }
 
-      const newUnits = await resGetUnit.json();
+      const newVendors = await res_get.json();
 
       // Check for duplicates
-      const uniqueUnits = newUnits.filter(
-        (unit, index, self) =>
-          index === self.findIndex((t) => t.unitId === unit.unitId)
+      const uniqueVendors = newVendors.filter(
+        (vendor, index, self) =>
+          index === self.findIndex((t) => t.vendorId === vendor.vendorId)
       );
 
-      // Sort units by vendorId in alphabetical order
-      const sortedUnits = uniqueUnits.sort((a, b) =>
-        a.unitId.localeCompare(b.unitId)
+      // Sort vendors by vendorId in alphabetical order
+      const sortedVendors = uniqueVendors.sort((a, b) =>
+        a.vendorId.localeCompare(b.vendorId)
       );
 
-      setUnits(sortedUnits);
-      console.log(sortedUnits);
+      setVendors(sortedVendors);
+      console.log(sortedVendors);
     } catch (error) {
       console.log("Error loading Vendors: ", error);
     }
   };
 
-  //? Reload Units table
+  //? Reload Vendors table
   useEffect(() => {
-    getUnits();
+    getVendors();
   }, []);
 
-  //TODO <Function Search Product Id
-  const filterProductsByID = (products, searchID) => {
-    if (!searchID) return products; // Return all products if searchID is empty
+  //TODO <Function Search Vendor Id
+  const filterVendorsByID = (vendors, searchID) => {
+    if (!searchID) return vendors; // Return all vendors if searchID is empty
 
-    // Filter unique products based on searchID
-    const filteredProducts = products.filter(
-      (product, index, self) =>
-        product.productId.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.productId === product.productId)
+    // Filter unique vendors based on searchID
+    const filteredVendors = vendors.filter(
+      (vendor, index, self) =>
+        vendor.vendorId.toLowerCase().includes(searchID.toLowerCase()) &&
+        index === self.findIndex((t) => t.vendorId === vendor.vendorId)
     );
 
-    return filteredProducts;
+    return filteredVendors;
   };
 
-  //TODO < Function Get Product by Id send to ProductEdit >
+  //TODO < Function Get Vendor by Id send to VendorEdit >
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
-    getProducts();
+    getVendors(); // Fetch vendors after closing the edit modal
   };
 
-  const getProductById = async (id) => {
+  const getVendorById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Product/${id}`, {
-        cache: "no-store",
-      });
+      const res_byid = await fetch(
+        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor/${id}`,
+        {
+          cache: "no-store",
+        }
+      );
 
       if (!res_byid.ok) {
-        throw new Error("Failed to fetch Product");
+        throw new Error("Failed to fetch Vendor");
       }
 
       const data = await res_byid.json();
-      return data.product; // Ensure you return the correct data structure
+      return data.vendor; // Ensure you return the correct data structure
     } catch (error) {
-      console.error("Failed to fetch Product:", error);
+      console.error("Failed to fetch Vendor:", error);
     }
   };
 
   const getValue = async (id) => {
     try {
-      const product = await getProductById(id);
-      setSelectedProduct(product); // Set the selected product
+      const vendor = await getVendorById(id);
+      setSelectedVendor(vendor); // Set the selected vendor
       setIsEditModalOpen(true);
     } catch (error) {
-      console.error("Failed to get product:", error);
+      console.error("Failed to get vendor:", error);
     }
   };
 
-  //TODO < Function Add Product >
+  //TODO < Function Add Vendor >
   const openAddModal = () => {
     setIsAddModalOpen(true);
   };
 
   const closeAddModal = () => {
     setIsAddModalOpen(false);
-    getProducts();
+    getVendors();
   };
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
 
-    if (!productId || !productName || !productUnit || !storeHouse || !amount) {
-      setError("Please complete Product details!");
+    if (!vendorId || !vendorName || !vendorCountry) {
+      setError("Please complete Vendor details!");
       return;
     }
 
     try {
-      const resCheckProduct = await fetch(
-        "http://localhost:3000/api/checkProduct",
+      const resCheckVendor = await fetch(
+        "https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkVendor",
         {
           method: "POST",
           headers: {
             "Content-type": "application/json",
           },
-          body: JSON.stringify({ productId }),
+          body: JSON.stringify({ vendorId }),
         }
       );
-      const { product } = await resCheckProduct.json();
-      if (product) {
-        setError("Unit ID already exists!");
+      const { vendor } = await resCheckVendor.json();
+      if (vendor) {
+        setError("Vendor ID already exists!");
         return;
       }
 
-      //* Add Product to DB
-      const res_add = await fetch("http://localhost:3000/api/Product", {
+      //* Add Vendor to DB
+      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
         },
-        body: JSON.stringify({
-          productId,
-          productName,
-          productUnit,
-          storeHouse,
-          amount,
-        }),
+        body: JSON.stringify({ vendorId, vendorName, vendorCountry }),
       });
 
       if (!res_add.ok) {
-        throw new Error("Failed to add Product");
+        throw new Error("Failed to add vendor");
       }
 
       setError("");
-      setSuccess("Product has been added successfully!");
-      getProducts();
+      setSuccess("Vendor has been added successfully!");
+      getVendors();
 
       setTimeout(() => {
+        setRefresh(!refresh);
         closeAddModal();
         setSuccess("");
-        setProductId("");
-        setProductName("");
-        setProductUnit("");
-        setStoreHouse("");
-        setAmount("");
-        setRefresh(!refresh);
+        setVendorId("");
+        setVendorName("");
       }, 2000);
     } catch (error) {
       console.log(error);
-      setError("Failed to add product");
+      setError("Failed to add vendor");
     }
   };
 
-  //TODO < Function Delete Product >
+  //TODO < Function Delete Vendor >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Product/${id}`, {
-        cache: "no-store",
-      });
+      const res_byid = await fetch(
+        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor/${id}`,
+        {
+          cache: "no-store",
+        }
+      );
 
       if (!res_byid.ok) {
-        throw new Error("Failed to fetch Product");
+        throw new Error("Failed to fetch Vendor");
       }
 
       const data = await res_byid.json();
-      return data.product; // Ensure you return the correct data structure
+      return data.vendor; // Ensure you return the correct data structure
     } catch (error) {
-      console.error("Failed to fetch Product:", error);
+      console.error("Failed to fetch Vendor:", error);
     }
   };
 
   const getDelValue = async (id) => {
     try {
-      const product = await getDelById(id);
-      setSelectedProduct(product);
+      const vendor = await getDelById(id);
+      setSelectedVendor(vendor);
       setIsDeleteModalOpen(true);
     } catch (error) {
-      console.error("Failed to get product:", error);
+      console.error("Failed to get vendor:", error);
     }
   };
 
@@ -261,13 +227,13 @@ export default function ProductTable() {
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
           <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">
-            กำหนดรหัสสินค้า
+            กำหนดรหัส Vendor
           </h2>
           <div className="flex justify-between items-center mb-4">
             <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
               <input
                 type="text"
-                placeholder="Search Product ID..."
+                placeholder="Search Vendor ID..."
                 className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
                 value={searchID}
                 onChange={(event) => setSearchID(event.target.value)}
@@ -278,8 +244,8 @@ export default function ProductTable() {
               onClick={openAddModal}
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
-              <Package size={20} className="mr-2" />
-              Add Product
+              <HeartHandshake size={20} className="mr-2" />
+              Add Vendor
             </button>
           </div>
 
@@ -288,19 +254,13 @@ export default function ProductTable() {
             <thead>
               <tr>
                 <th className="py-3 pr-4 pl-20 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-3/12">
-                  Product ID
+                  Vendor ID
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-4/12">
-                  Product Name
+                  Vendor Name
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
-                  Unit
-                </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
-                  StoreHouse
-                </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-right w-1/12">
-                  Amount
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
+                  Country
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">
                   Action
@@ -308,31 +268,29 @@ export default function ProductTable() {
               </tr>
             </thead>
             <tbody>
-              {filterProductsByID(products, searchID).map((product) => (
-                <tr key={product.productId} className="border-t">
+              {filterVendorsByID(vendors, searchID).map((vendor) => (
+                <tr key={vendor.vendorId} className="border-t">
                   <td className="py-4 pr-4 pl-20 flex items-center w-auto">
                     <Avatar
                       sx={{ bgcolor: indigo[800], marginRight: "20px" }}
                       variant="rounded-md"
                     >
-                      {product.productId.charAt(0).toUpperCase()}
+                      {vendor.vendorId.charAt(0).toUpperCase()}
                     </Avatar>
-                    {product.productId}
+                    {vendor.vendorId}
                   </td>
-                  <td className="py-4 px-4">{product.productName}</td>
-                  <td className="py-4 px-4">{product.productUnit}</td>
-                  <td className="py-4 px-4">{product.storeHouse}</td>
-                  <td className="py-4 px-4 text-right">{product.amount}</td>
+                  <td className="py-4 px-4">{vendor.vendorName}</td>
+                  <td className="py-4 px-4">{vendor.vendorCountry}</td>
                   <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
                     <button
-                      onClick={() => getValue(product._id)}
+                      onClick={() => getValue(vendor._id)}
                       type="button"
                       className="text-indigo-600 hover:text-indigo-800"
                     >
                       <Edit size={23} />
                     </button>
                     <button
-                      onClick={() => getDelValue(product._id)}
+                      onClick={() => getDelValue(vendor._id)}
                       className="text-red-500 hover:text-red-700"
                     >
                       <Trash2 size={23} />
@@ -345,7 +303,7 @@ export default function ProductTable() {
         </div>
       </div>
 
-      {/* // TODO : Add Unit Modal */}
+      {/* // TODO : Add Vendor Modal */}
       <Transition appear show={isAddModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeAddModal}>
           <Transition.Child
@@ -376,11 +334,11 @@ export default function ProductTable() {
                       as="h3"
                       className="text-lg font-medium leading-6 text-gray-900"
                     >
-                      Add Product Form
+                      Add Vendor Form
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Add the details of the Product below.
+                        Add the details of the Vendor below.
                       </p>
                     </div>
                     <div className="mt-4">
@@ -389,11 +347,11 @@ export default function ProductTable() {
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="name"
                         >
-                          Product ID
+                          Vendor ID
                         </label>
                         <input
-                          onChange={(e) => setProductId(e.target.value)}
-                          value={productId}
+                          onChange={(e) => setVendorId(e.target.value)}
+                          value={vendorId}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           id="title"
                           type="text"
@@ -404,11 +362,11 @@ export default function ProductTable() {
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="name"
                         >
-                          Product Name
+                          Vendor Name
                         </label>
                         <input
-                          onChange={(e) => setProductName(e.target.value)}
-                          value={productName}
+                          onChange={(e) => setVendorName(e.target.value)}
+                          value={vendorName}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           id="name"
                           type="text"
@@ -419,56 +377,15 @@ export default function ProductTable() {
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="name"
                         >
-                          StoreHouse
+                          Country
                         </label>
                         <input
-                          onChange={(e) => setStoreHouse(e.target.value)}
-                          value={storeHouse}
+                          onChange={(e) => setVendorCountry(e.target.value)}
+                          value={vendorCountry}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           id="name"
                           type="text"
                         />
-                      </div>
-                      <div className="flex justify-between mb-4">
-                        <div className="flex-1 mr-1">
-                          <label
-                            className="block text-gray-700 text-sm font-bold mb-2"
-                            htmlFor="amount"
-                          >
-                            Amount
-                          </label>
-                          <input
-                            onChange={(e) => setAmount(e.target.value)}
-                            value={amount}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="amount"
-                            type="number"
-                          />
-                        </div>
-                        <div className="flex-1 ml-1">
-                          <div className="mb-2">
-                            <label
-                              htmlFor="unit"
-                              className="block text-gray-700 text-sm font-bold"
-                            >
-                              Unit
-                            </label>
-                          </div>
-                          <select
-                            id="unit"
-                            onChange={(e) =>
-                              setProductUnit(e.target.selectedOptions[0].text)
-                            }
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          >
-                            <option value="">Select a unit</option>
-                            {units.map((unit) => (
-                              <option key={unit.unitId} value={unit.unitName}>
-                                {unit.unitName}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
                       </div>
                     </div>
 
@@ -489,7 +406,7 @@ export default function ProductTable() {
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                       >
-                        Add Product
+                        Add Vendor
                       </button>
                     </div>
                   </Dialog.Panel>
@@ -500,22 +417,24 @@ export default function ProductTable() {
         </Dialog>
       </Transition>
 
-      {/* // TODO : Edit Product Modal */}
-      <ProductEdit
+      {/* // TODO : Edit Vendor Modal */}
+      <VendorEdit
         isVisible={isEditModalOpen}
         onClose={handleEditModalClose}
-        product={selectedProduct}
-        refreshProducts={getProducts}
+        vendor={selectedVendor}
+        refreshVendors={getVendors}
       />
 
-      {/* // TODO : Delete Product Modal */}
-      <ProductDel
+      {/* // TODO : Delete Vendor Modal */}
+      <VendorDel
         isVisible={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        product={selectedProduct}
-        refreshProducts={getProducts}
+        vendor={selectedVendor}
+        refreshVendors={getVendors}
         refreshCount={handleRefresh}
       />
     </div>
   );
 }
+
+export default VendorTable;

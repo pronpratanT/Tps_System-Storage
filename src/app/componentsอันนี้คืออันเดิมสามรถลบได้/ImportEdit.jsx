@@ -1,33 +1,32 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
-  const [newDateExport, setNewDateExport] = useState("");
+function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
+  const [newDateImport, setNewDateImport] = useState("");
   const [newDocumentId, setNewDocumentId] = useState("");
-  const [newExportVen, setNewExportVen] = useState("");
-  const [newExportEm, setNewExportEm] = useState("");
+  const [newImportVen, setNewImportVen] = useState("");
+  const [newImportEm, setNewImportEm] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [vendors, setVendors] = useState([]);
   const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    if (exportPd) {
-      setNewDateExport(exportPd.dateExport);
-      setNewDocumentId(exportPd.documentId);
-      setNewExportVen(exportPd.exportVen);
-      setNewExportEm(exportPd.exportEm);
+    if (importPd) {
+      setNewDateImport(importPd.dateImport);
+      setNewDocumentId(importPd.documentId);
+      setNewImportVen(importPd.importVen);
+      setNewImportEm(importPd.importEm);
     }
-  }, [exportPd]);
+  }, [importPd]);
 
   const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
     try {
-      const res = await fetch("http://localhost:3000/api/Export");
-      const exports = await res.json();
-      return exports.some(
-        (exportPd) =>
-          exportPd.documentId === newDocumentId &&
-          exportPd._id !== currentDocumentId
+      const res = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import");
+      const imports = await res.json();
+      return imports.some(
+        (importPd) =>
+          importPd.documentId === newDocumentId && importPd._id !== currentDocumentId
       );
     } catch (error) {
       console.error("Error checking duplicate Document ID:", error);
@@ -38,14 +37,14 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!newDateExport || !newDocumentId || !newExportVen) {
-      setError("Please complete Export Product details!");
+    if (!newDateImport || !newDocumentId || !newImportVen) {
+      setError("Please complete Import Product details!");
       return;
     }
 
     const isDuplicate = await checkDuplicateDocumentId(
       newDocumentId,
-      exportPd?._id || ""
+      importPd?._id || ""
     );
     if (isDuplicate) {
       setError("Document ID already exists!");
@@ -54,43 +53,43 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/Export/${exportPd?._id || ""}`,
+        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import/${importPd?._id || ""}`,
         {
           method: "PUT",
           headers: {
             "Content-type": "application/json",
           },
           body: JSON.stringify({
-            newDateExport,
+            newDateImport,
             newDocumentId,
-            newExportVen,
-            newExportEm,
+            newImportVen,
+            newImportEm,
           }),
         }
       );
 
       if (!res.ok) {
-        throw new Error("Failed to update Export Product");
+        throw new Error("Failed to update Import Product");
       }
 
       setError("");
-      setSuccess("Export Product has been updated successfully!");
+      setSuccess("Import Product has been updated successfully!");
 
       setTimeout(() => {
         onClose();
         setSuccess("");
-        refreshExports();
+        refreshImports();
       }, 2000);
     } catch (error) {
       console.log(error);
-      setError("Failed to update Export Product");
+      setError("Failed to update Import Product");
     }
   };
 
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/User", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
         cache: "no-store",
       });
 
@@ -126,7 +125,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   //TODO < Function to fetch vendors to table >
   const getVendors = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/addVendor", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
         cache: "no-store",
       });
 
@@ -190,11 +189,11 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Update Export Product Form
+                    Update Import Product Form
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Update the details of the Export Product below.
+                      Update the details of the Import Product below.
                     </p>
                   </div>
                   <div className="mt-4">
@@ -206,8 +205,8 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                         Date
                       </label>
                       <input
-                        onChange={(e) => setNewDateExport(e.target.value)}
-                        value={newDateExport}
+                        onChange={(e) => setNewDateImport(e.target.value)}
+                        value={newDateImport}
                         className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                         id="dateImport"
                         type="text"
@@ -237,11 +236,11 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                       </label>
                       <select
                         id="unit"
-                        value={newExportVen}
+                        value={newImportVen}
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           const selectedText = e.target.selectedOptions[0].text;
-                          setNewExportVen(
+                          setNewImportVen(
                             selectedValue === "" ? "" : selectedText
                           );
                         }}
@@ -261,17 +260,17 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                     <div className="mb-4">
                       <label
                         className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="exportEm"
+                        htmlFor="importEm"
                       >
                         Employee
                       </label>
                       <select
-                        id="exportEm"
-                        value={newExportEm}
+                        id="importEm"
+                        value={newImportEm}
                         onChange={(e) => {
                           const selectedValue = e.target.value;
                           const selectedText = e.target.selectedOptions[0].text;
-                          setNewExportEm(
+                          setNewImportEm(
                             selectedValue === "" ? "" : selectedText
                           );
                         }}
@@ -304,7 +303,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                     >
-                      Update Export Product
+                      Update Import Product
                     </button>
                   </div>
                 </Dialog.Panel>
@@ -317,4 +316,4 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   );
 }
 
-export default ExportEdit;
+export default ImportEdit;

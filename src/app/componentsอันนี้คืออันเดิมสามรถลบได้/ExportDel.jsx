@@ -23,7 +23,7 @@ function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount 
 
     try {
       const resDelete = await fetch(
-        `http://localhost:3000/api/Export?id=${exportPd._id}`,
+        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Export?id=${exportPd._id}`,
         {
           method: "DELETE",
         }

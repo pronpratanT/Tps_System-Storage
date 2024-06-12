@@ -1,217 +1,208 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import {
-  Edit,
-  Search,
-  Trash2,
-  HeartHandshake,
-  User,
-  Ruler,
-  Package,
-} from "lucide-react";
+import { Edit, Search, Trash2 } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
-import VendorEdit from "./VendorEdit";
-import VendorDel from "./VendorDel";
+import EmployeeEdit from "./EmployeeEdit";
+import EmployeeDel from "./EmployeeDel";
 import CountStat from "./CountStat";
 
-function VendorTable() {
+export default function UserTable() {
   //? State
-  const [vendorId, setVendorId] = useState("");
-  const [vendorName, setVendorName] = useState("");
-  const [vendorCountry, setVendorCountry] = useState("");
+  const [userId, setUserId] = useState("");
+  const [userName, setUserName] = useState("");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("");
+  const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [vendors, setVendors] = useState([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [searchID, setSearchID] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [searchID, setSearchID] = useState("");
+  const [selectedUser, setSelectedUser] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
 
-  //TODO < Function to fetch vendors to table >
-  const getVendors = async () => {
+  //TODO < Function to fetch user to table >
+  const getUsers = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/addVendor", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
         cache: "no-store",
       });
 
       if (!res_get.ok) {
-        throw new Error("Failed to fetch Vendor");
+        throw new Error("Failed to fetch User");
       }
 
-      const newVendors = await res_get.json();
+      const newUsers = await res_get.json();
 
       // Check for duplicates
-      const uniqueVendors = newVendors.filter(
-        (vendor, index, self) =>
-          index === self.findIndex((t) => t.vendorId === vendor.vendorId)
+      const uniqueUsers = newUsers.filter(
+        (user, index, self) =>
+          index === self.findIndex((t) => t.email === user.email)
       );
 
-      // Sort vendors by vendorId in alphabetical order
-      const sortedVendors = uniqueVendors.sort((a, b) =>
-        a.vendorId.localeCompare(b.vendorId)
+      // Sort Users by vendorId in alphabetical order
+      const sortedUsers = uniqueUsers.sort((a, b) =>
+        a.email.localeCompare(b.email)
       );
 
-      setVendors(sortedVendors);
-      console.log(sortedVendors);
+      setUsers(sortedUsers);
+      console.log("SortedUsers: ", sortedUsers);
     } catch (error) {
-      console.log("Error loading Vendors: ", error);
+      console.log("Error loading Users: ", error);
     }
   };
 
-  //? Reload Vendors table
+  //? Reload users table
   useEffect(() => {
-    getVendors();
+    getUsers();
   }, []);
 
-  //TODO <Function Search Vendor Id
-  const filterVendorsByID = (vendors, searchID) => {
-    if (!searchID) return vendors; // Return all vendors if searchID is empty
+  //TODO <Function Search Product Id
+  const filterUsersById = (users, searchID) => {
+    if (!searchID) return users; // Return all products if searchID is empty
 
-    // Filter unique vendors based on searchID
-    const filteredVendors = vendors.filter(
-      (vendor, index, self) =>
-        vendor.vendorId.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.vendorId === vendor.vendorId)
+    // Filter unique products based on searchID
+    const filteredUsers = users.filter(
+      (user, index, self) =>
+        user.userid.toLowerCase().includes(searchID.toLowerCase()) &&
+        index === self.findIndex((t) => t.userid === user.userid)
     );
 
-    return filteredVendors;
+    return filteredUsers;
   };
 
-  //TODO < Function Get Vendor by Id send to VendorEdit >
+  //TODO < Function Get User by Id send to UserEdit >
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
-    getVendors(); // Fetch vendors after closing the edit modal
+    getUsers();
   };
 
-  const getVendorById = async (id) => {
+  const getUserById = async (id) => {
     try {
-      const res_byid = await fetch(
-        `http://localhost:3000/api/addVendor/${id}`,
-        {
-          cache: "no-store",
-        }
-      );
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User/${id}`, {
+        cache: "no-store",
+      });
 
       if (!res_byid.ok) {
-        throw new Error("Failed to fetch Vendor");
+        throw new Error("Failed to fetch User");
       }
 
       const data = await res_byid.json();
-      return data.vendor; // Ensure you return the correct data structure
+      return data.user; // Ensure you return the correct data structure
     } catch (error) {
-      console.error("Failed to fetch Vendor:", error);
+      console.error("Failed to fetch User:", error);
     }
   };
 
   const getValue = async (id) => {
     try {
-      const vendor = await getVendorById(id);
-      setSelectedVendor(vendor); // Set the selected vendor
+      const user = await getUserById(id);
+      setSelectedUser(user); // Set the selected product
       setIsEditModalOpen(true);
     } catch (error) {
-      console.error("Failed to get vendor:", error);
+      console.error("Failed to get user:", error);
     }
   };
 
-  //TODO < Function Add Vendor >
+  //TODO < Function Add User >
   const openAddModal = () => {
     setIsAddModalOpen(true);
   };
 
   const closeAddModal = () => {
     setIsAddModalOpen(false);
-    getVendors();
+    getUsers();
   };
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
 
-    if (!vendorId || !vendorName || !vendorCountry) {
-      setError("Please complete Vendor details!");
+    if (!userId || !userName || !email || !role) {
+      setError("Please complete User details!");
       return;
     }
 
     try {
-      const resCheckVendor = await fetch(
-        "http://localhost:3000/api/checkVendor",
-        {
-          method: "POST",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({ vendorId }),
-        }
-      );
-      const { vendor } = await resCheckVendor.json();
-      if (vendor) {
-        setError("Vendor ID already exists!");
-        return;
-      }
-
-      //* Add Vendor to DB
-      const res_add = await fetch("http://localhost:3000/api/addVendor", {
+      const resCheckUser = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkUser", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
         },
-        body: JSON.stringify({ vendorId, vendorName, vendorCountry }),
+        body: JSON.stringify({ userId }),
+      });
+      const { user } = await resCheckUser.json();
+      if (user) {
+        setError("User ID already exists!");
+        return;
+      }
+
+      //* Add User to DB
+      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          userName,
+          email,
+          role,
+        }),
       });
 
       if (!res_add.ok) {
-        throw new Error("Failed to add vendor");
+        throw new Error("Failed to add User");
       }
 
       setError("");
-      setSuccess("Vendor has been added successfully!");
-      getVendors();
+      setSuccess("User has been added successfully!");
+      getUsers();
 
       setTimeout(() => {
-        setRefresh(!refresh);
         closeAddModal();
         setSuccess("");
-        setVendorId("");
-        setVendorName("");
+        setUserId("");
+        setUserName("");
+        setEmail("");
+        setRole("");
+        setRefresh(!refresh);
       }, 2000);
     } catch (error) {
       console.log(error);
-      setError("Failed to add vendor");
+      setError("Failed to add user");
     }
   };
 
-  //TODO < Function Delete Vendor >
+  //TODO < Function Delete User >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(
-        `http://localhost:3000/api/addVendor/${id}`,
-        {
-          cache: "no-store",
-        }
-      );
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User/${id}`, {
+        cache: "no-store",
+      });
 
       if (!res_byid.ok) {
-        throw new Error("Failed to fetch Vendor");
+        throw new Error("Failed to fetch User");
       }
 
       const data = await res_byid.json();
-      return data.vendor; // Ensure you return the correct data structure
+      return data.user; // Ensure you return the correct data structure
     } catch (error) {
-      console.error("Failed to fetch Vendor:", error);
+      console.error("Failed to fetch User:", error);
     }
   };
 
   const getDelValue = async (id) => {
     try {
-      const vendor = await getDelById(id);
-      setSelectedVendor(vendor);
+      const user = await getDelById(id);
+      setSelectedUser(user);
       setIsDeleteModalOpen(true);
     } catch (error) {
-      console.error("Failed to get vendor:", error);
+      console.error("Failed to get user:", error);
     }
   };
 
@@ -227,40 +218,43 @@ function VendorTable() {
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
           <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">
-            กำหนดรหัส Vendor
+            กำหนดรหัสพนักงาน
           </h2>
           <div className="flex justify-between items-center mb-4">
             <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
               <input
                 type="text"
-                placeholder="Search Vendor ID..."
+                placeholder="Search Employee ID..."
                 className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
                 value={searchID}
                 onChange={(event) => setSearchID(event.target.value)}
               />
               <Search size={16} className="text-gray-600 " />
             </div>
-            <button
+            {/* <button
               onClick={openAddModal}
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
-              <HeartHandshake size={20} className="mr-2" />
-              Add Vendor
-            </button>
+              <UserPlus size={20} className="mr-2" />
+              Add Role
+            </button> */}
           </div>
 
           {/* //? Table */}
           <table className="min-w-full bg-white">
             <thead>
               <tr>
-                <th className="py-3 pr-4 pl-20 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-3/12">
-                  Vendor ID
-                </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-4/12">
-                  Vendor Name
+                <th className="py-3 pr-4 pl-20 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-2/12">
+                  Employee ID
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
-                  Country
+                  Employee Name
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-4/12">
+                  Email
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
+                  Role
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">
                   Action
@@ -268,29 +262,30 @@ function VendorTable() {
               </tr>
             </thead>
             <tbody>
-              {filterVendorsByID(vendors, searchID).map((vendor) => (
-                <tr key={vendor.vendorId} className="border-t">
-                  <td className="py-4 pr-4 pl-20 flex items-center w-auto">
+              {filterUsersById(users, searchID).map((user) => (
+                <tr key={user.email} className="border-t">
+                  <td className="py-4 px-4 pl-20">{user.userid}</td>
+                  <td className="py-4 px-4 flex items-center w-auto">
                     <Avatar
                       sx={{ bgcolor: indigo[800], marginRight: "20px" }}
                       variant="rounded-md"
                     >
-                      {vendor.vendorId.charAt(0).toUpperCase()}
+                      {user.name.charAt(0).toUpperCase()}
                     </Avatar>
-                    {vendor.vendorId}
+                    {user.name}
                   </td>
-                  <td className="py-4 px-4">{vendor.vendorName}</td>
-                  <td className="py-4 px-4">{vendor.vendorCountry}</td>
+                  <td className="py-4 px-4">{user.email}</td>
+                  <td className="py-4 px-4">{user.role}</td>
                   <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
                     <button
-                      onClick={() => getValue(vendor._id)}
+                      onClick={() => getValue(user._id)}
                       type="button"
                       className="text-indigo-600 hover:text-indigo-800"
                     >
                       <Edit size={23} />
                     </button>
                     <button
-                      onClick={() => getDelValue(vendor._id)}
+                      onClick={() => getDelValue(user._id)}
                       className="text-red-500 hover:text-red-700"
                     >
                       <Trash2 size={23} />
@@ -303,7 +298,7 @@ function VendorTable() {
         </div>
       </div>
 
-      {/* // TODO : Add Vendor Modal */}
+      {/* // TODO : Add Unit Modal */}
       <Transition appear show={isAddModalOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeAddModal}>
           <Transition.Child
@@ -334,11 +329,11 @@ function VendorTable() {
                       as="h3"
                       className="text-lg font-medium leading-6 text-gray-900"
                     >
-                      Add Vendor Form
+                      Add Employee Form
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Add the details of the Vendor below.
+                        Add the details of the Employee below.
                       </p>
                     </div>
                     <div className="mt-4">
@@ -347,11 +342,11 @@ function VendorTable() {
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="name"
                         >
-                          Vendor ID
+                          Employee ID
                         </label>
                         <input
-                          onChange={(e) => setVendorId(e.target.value)}
-                          value={vendorId}
+                          onChange={(e) => setUserId(e.target.value)}
+                          value={userId}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           id="title"
                           type="text"
@@ -362,11 +357,11 @@ function VendorTable() {
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="name"
                         >
-                          Vendor Name
+                          Employee Name
                         </label>
                         <input
-                          onChange={(e) => setVendorName(e.target.value)}
-                          value={vendorName}
+                          onChange={(e) => setUserName(e.target.value)}
+                          value={userName}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           id="name"
                           type="text"
@@ -377,15 +372,56 @@ function VendorTable() {
                           className="block text-gray-700 text-sm font-bold mb-2"
                           htmlFor="name"
                         >
-                          Country
+                          Email
                         </label>
                         <input
-                          onChange={(e) => setVendorCountry(e.target.value)}
-                          value={vendorCountry}
+                          onChange={(e) => setEmail(e.target.value)}
+                          value={email}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           id="name"
                           type="text"
                         />
+                      </div>
+                      <div className="flex justify-between mb-4">
+                        <div className="flex-1 mr-1">
+                          <label
+                            className="block text-gray-700 text-sm font-bold mb-2"
+                            htmlFor="amount"
+                          >
+                            Role
+                          </label>
+                          <input
+                            onChange={(e) => setRole(e.target.value)}
+                            value={role}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="amount"
+                            type="text"
+                          />
+                        </div>
+                        {/* <div className="flex-1 ml-1">
+                          <div className="mb-2">
+                            <label
+                              htmlFor="unit"
+                              className="block text-gray-700 text-sm font-bold"
+                            >
+                              Unit
+                            </label>
+                          </div>
+                          <select
+                            id="unit"
+                            onChange={(e) =>
+                              setProductUnit(e.target.selectedOptions[0].text)
+                            }
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          >
+                            <option value="">Select a unit</option>
+                            {units.map((unit) => (
+                              <option key={unit.unitId} value={unit.unitName}>
+                                {unit.unitName}
+                              </option>
+                            ))}
+                          </select>
+                        </div> */}
                       </div>
                     </div>
 
@@ -406,7 +442,7 @@ function VendorTable() {
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                       >
-                        Add Vendor
+                        Add Employee
                       </button>
                     </div>
                   </Dialog.Panel>
@@ -417,24 +453,22 @@ function VendorTable() {
         </Dialog>
       </Transition>
 
-      {/* // TODO : Edit Vendor Modal */}
-      <VendorEdit
+      {/* // TODO : Edit User Modal */}
+      <EmployeeEdit
         isVisible={isEditModalOpen}
         onClose={handleEditModalClose}
-        vendor={selectedVendor}
-        refreshVendors={getVendors}
+        user={selectedUser}
+        refreshUsers={getUsers}
       />
 
-      {/* // TODO : Delete Vendor Modal */}
-      <VendorDel
+      {/* // TODO : Delete Product Modal */}
+      <EmployeeDel
         isVisible={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        vendor={selectedVendor}
-        refreshVendors={getVendors}
+        user={selectedUser}
+        refreshUsers={getUsers}
         refreshCount={handleRefresh}
       />
     </div>
   );
 }
-
-export default VendorTable;

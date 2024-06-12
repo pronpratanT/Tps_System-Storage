@@ -1,5 +1,5 @@
 import React from 'react'
-import LoginForm from '../components1/LoginForm'
+import LoginForm from '../componentsอันนี้คืออันเดิมสามรถลบได้/LoginForm'
 
 function Login() {
   return (

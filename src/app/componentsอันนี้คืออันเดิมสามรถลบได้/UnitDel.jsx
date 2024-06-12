@@ -19,7 +19,7 @@ function UnitDel({ isVisible, onClose, unit, refreshUnits, refreshCount }) {
 
     try {
       const resDelete = await fetch(
-        `http://localhost:3000/api/Unit?id=${unit._id}`,
+        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Unit?id=${unit._id}`,
         {
           method: "DELETE",
         }

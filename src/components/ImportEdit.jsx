@@ -22,7 +22,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
 
   const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
     try {
-      const res = await fetch("http://localhost:3000/api/Import");
+      const res = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import");
       const imports = await res.json();
       return imports.some(
         (importPd) =>
@@ -53,7 +53,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/Import/${importPd?._id || ""}`,
+        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import/${importPd?._id || ""}`,
         {
           method: "PUT",
           headers: {
@@ -89,7 +89,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/User", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
         cache: "no-store",
       });
 
@@ -125,7 +125,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   //TODO < Function to fetch vendors to table >
   const getVendors = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/addVendor", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
         cache: "no-store",
       });
 

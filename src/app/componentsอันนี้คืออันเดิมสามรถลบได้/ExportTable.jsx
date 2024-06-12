@@ -31,7 +31,7 @@ function ExportTable() {
   //TODO < Function to fetch Export to table >
   const getExport = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/Export", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Export", {
         cache: "no-store",
       });
 
@@ -66,7 +66,7 @@ function ExportTable() {
   //TODO < Function to fetch vendors to table >
   const getVendors = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/addVendor", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
         cache: "no-store",
       });
 
@@ -102,7 +102,7 @@ function ExportTable() {
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/User", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
         cache: "no-store",
       });
 
@@ -157,7 +157,7 @@ function ExportTable() {
 
   const getExportById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Export/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Export/${id}`, {
         cache: "no-store",
       });
 
@@ -204,7 +204,7 @@ function ExportTable() {
 
     try {
       const resCheckExport = await fetch(
-        "http://localhost:3000/api/checkExport",
+        "https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkExport",
         {
           method: "POST",
           headers: {
@@ -220,7 +220,7 @@ function ExportTable() {
       }
 
       //* Add Product to DB
-      const res_add = await fetch("http://localhost:3000/api/Export", {
+      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Export", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -259,7 +259,7 @@ function ExportTable() {
   //TODO < Function Delete Export >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Export/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Export/${id}`, {
         cache: "no-store",
       });
 

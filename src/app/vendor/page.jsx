@@ -4,10 +4,10 @@ import React from "react";
 import Sidebar from "../../components/Sidebar"
 ;
 import styled from "styled-components";
-import VendorTable from "../components1/VendorTable";
+import VendorTable from "../componentsอันนี้คืออันเดิมสามรถลบได้/VendorTable";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import UserProfile from "../components1/header";
+import UserProfile from "../componentsอันนี้คืออันเดิมสามรถลบได้/header";
 
 const PageContainer = styled.div`
   display: flex;

@@ -29,7 +29,7 @@ export default function UserTable() {
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/User", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
         cache: "no-store",
       });
 
@@ -84,7 +84,7 @@ export default function UserTable() {
 
   const getUserById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/User/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User/${id}`, {
         cache: "no-store",
       });
 
@@ -128,7 +128,7 @@ export default function UserTable() {
     }
 
     try {
-      const resCheckUser = await fetch("http://localhost:3000/api/checkUser", {
+      const resCheckUser = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkUser", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -142,7 +142,7 @@ export default function UserTable() {
       }
 
       //* Add User to DB
-      const res_add = await fetch("http://localhost:3000/api/User", {
+      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -181,7 +181,7 @@ export default function UserTable() {
   //TODO < Function Delete User >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/User/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User/${id}`, {
         cache: "no-store",
       });
 

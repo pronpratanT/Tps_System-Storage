@@ -20,7 +20,7 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
 
   const checkDuplicateUserId = async (newUserId, currentUserId) => {
     try {
-      const res = await fetch("http://localhost:3000/api/User");
+      const res = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User");
       const users = await res.json();
       return users.some(
         (user) => user.userid === newUserId && user._id !== currentUserId
@@ -33,7 +33,7 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
 
   const checkDuplicateEmail = async (newEmail, currentEmail) => {
     try {
-      const res = await fetch("http://localhost:3000/api/User");
+      const res = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User");
       const users = await res.json();
       return users.some(
         (user) => user.email === newEmail && user._id !== currentEmail
@@ -66,7 +66,7 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
 
     try {
       const res = await fetch(
-        `http://localhost:3000/api/User/${user?._id || ""}`,
+        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User/${user?._id || ""}`,
         {
           method: "PUT",
           headers: {

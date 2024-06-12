@@ -6,7 +6,7 @@ import React from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import styled from "styled-components";
-import ImportTable from "../components1/ImportTable";
+import ImportTable from "../componentsอันนี้คืออันเดิมสามรถลบได้/ImportTable";
 
 const PageContainer = styled.div`
   display: flex;

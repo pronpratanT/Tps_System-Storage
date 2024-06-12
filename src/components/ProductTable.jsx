@@ -31,7 +31,7 @@ export default function ProductTable() {
   //TODO < Function to fetch product to table >
   const getProducts = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/Product", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Product", {
         cache: "no-store",
       });
 
@@ -67,7 +67,7 @@ export default function ProductTable() {
   //TODO < Function to fetch units to table >
   const getUnits = async () => {
     try {
-      const resGetUnit = await fetch("http://localhost:3000/api/Unit", {
+      const resGetUnit = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Unit", {
         cache: "no-store",
       });
 
@@ -122,7 +122,7 @@ export default function ProductTable() {
 
   const getProductById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Product/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Product/${id}`, {
         cache: "no-store",
       });
 
@@ -167,7 +167,7 @@ export default function ProductTable() {
 
     try {
       const resCheckProduct = await fetch(
-        "http://localhost:3000/api/checkProduct",
+        "https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkProduct",
         {
           method: "POST",
           headers: {
@@ -183,7 +183,7 @@ export default function ProductTable() {
       }
 
       //* Add Product to DB
-      const res_add = await fetch("http://localhost:3000/api/Product", {
+      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Product", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -224,7 +224,7 @@ export default function ProductTable() {
   //TODO < Function Delete Product >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Product/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Product/${id}`, {
         cache: "no-store",
       });
 

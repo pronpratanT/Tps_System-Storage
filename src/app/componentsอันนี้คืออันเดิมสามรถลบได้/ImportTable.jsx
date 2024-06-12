@@ -1,35 +1,108 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { Edit, Search, Trash2 } from "lucide-react";
+import { Edit, Search, Trash2, PackagePlus } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
-import EmployeeEdit from "./EmployeeEdit";
-import EmployeeDel from "./EmployeeDel";
-import CountStat from "./CountStat";
+import ImportEdit from "./ImportEdit";
+import ImportDel from "./ImportDel";
+import CountStatIXPort from "./CountStatIXPort";
 
-export default function UserTable() {
+function ImportTable() {
   //? State
-  const [userId, setUserId] = useState("");
-  const [userName, setUserName] = useState("");
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
-  const [users, setUsers] = useState([]);
+  const [dateImport, setDateImport] = useState("");
+  const [documentId, setDocumentId] = useState("");
+  const [importVen, setImportVen] = useState("");
+  const [importEm, setImportEm] = useState("");
+  const [imports, setImports] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [searchID, setSearchID] = useState("");
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedImport, setSelectedImport] = useState(null);
+  const [vendors, setVendors] = useState([]);
+  const [users, setUsers] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+
+  //TODO < Function to fetch Import to table >
+  const getImport = async () => {
+    try {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import", {
+        cache: "no-store",
+      });
+
+      if (!res_get.ok) {
+        throw new Error("Failed to fetch Import");
+      }
+
+      const newImports = await res_get.json();
+
+      // Check for duplicates
+      const uniqueImports = newImports.filter(
+        (importPd, index, self) =>
+          index === self.findIndex((t) => t.documentId === importPd.documentId)
+      );
+
+      // Sort Products by vendorId in alphabetical order
+      const sortedImports = uniqueImports.sort((a, b) =>
+        a.documentId.localeCompare(b.documentId)
+      );
+
+      setImports(sortedImports);
+      console.log(sortedImports);
+    } catch (error) {
+      console.log("Error loading Products: ", error);
+    }
+  };
+  //? Reload Products table
+  useEffect(() => {
+    getImport();
+  }, []);
+
+  //TODO < Function to fetch vendors to table >
+  const getVendors = async () => {
+    try {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
+        cache: "no-store",
+      });
+
+      if (!res_get.ok) {
+        throw new Error("Failed to fetch Vendor");
+      }
+
+      const newVendors = await res_get.json();
+
+      // Check for duplicates
+      const uniqueVendors = newVendors.filter(
+        (vendor, index, self) =>
+          index === self.findIndex((t) => t.vendorId === vendor.vendorId)
+      );
+
+      // Sort vendors by vendorId in alphabetical order
+      const sortedVendors = uniqueVendors.sort((a, b) =>
+        a.vendorId.localeCompare(b.vendorId)
+      );
+
+      setVendors(sortedVendors);
+      console.log(sortedVendors);
+    } catch (error) {
+      console.log("Error loading Vendors: ", error);
+    }
+  };
+
+  //? Reload Vendors table
+  useEffect(() => {
+    getVendors();
+  }, []);
 
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/User", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
         cache: "no-store",
       });
 
@@ -62,147 +135,152 @@ export default function UserTable() {
     getUsers();
   }, []);
 
-  //TODO <Function Search Product Id
-  const filterUsersById = (users, searchID) => {
-    if (!searchID) return users; // Return all products if searchID is empty
+  //TODO <Function Search Document Id
+  const filterImportsByID = (importPds, searchID) => {
+    if (!searchID) return importPds; // Return all products if searchID is empty
 
     // Filter unique products based on searchID
-    const filteredUsers = users.filter(
-      (user, index, self) =>
-        user.userid.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.userid === user.userid)
+    const filteredImports = importPds.filter(
+      (importPd, index, self) =>
+        importPd.documentId.toLowerCase().includes(searchID.toLowerCase()) &&
+        index === self.findIndex((t) => t.documentId === importPd.documentId)
     );
 
-    return filteredUsers;
+    return filteredImports;
   };
 
-  //TODO < Function Get User by Id send to UserEdit >
+  //TODO < Function Get Product by Id send to ProductEdit >
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
-    getUsers();
+    getImport();
   };
 
-  const getUserById = async (id) => {
+  const getImportById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/User/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import/${id}`, {
         cache: "no-store",
       });
 
       if (!res_byid.ok) {
-        throw new Error("Failed to fetch User");
+        throw new Error("Failed to fetch Import");
       }
 
       const data = await res_byid.json();
-      return data.user; // Ensure you return the correct data structure
+      console.log("Data:", data.importPD);
+      return data.importPD; // Ensure you return the correct data structure
     } catch (error) {
-      console.error("Failed to fetch User:", error);
+      console.error("Failed to fetch Import:", error);
     }
   };
 
   const getValue = async (id) => {
     try {
-      const user = await getUserById(id);
-      setSelectedUser(user); // Set the selected product
+      const importPD = await getImportById(id);
+      setSelectedImport(importPD); // Set the selected product
       setIsEditModalOpen(true);
+      console.log("importPd: ", importPD);
     } catch (error) {
-      console.error("Failed to get user:", error);
+      console.error("Failed to get import:", error);
     }
   };
 
-  //TODO < Function Add User >
+  //TODO < Function Add Import >
   const openAddModal = () => {
     setIsAddModalOpen(true);
   };
 
   const closeAddModal = () => {
     setIsAddModalOpen(false);
-    getUsers();
+    getImport();
   };
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
 
-    if (!userId || !userName || !email || !role) {
-      setError("Please complete User details!");
+    if (!dateImport || !documentId || !importVen) {
+      setError("Please complete Import Product details!");
       return;
     }
 
     try {
-      const resCheckUser = await fetch("http://localhost:3000/api/checkUser", {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify({ userId }),
-      });
-      const { user } = await resCheckUser.json();
-      if (user) {
-        setError("User ID already exists!");
+      const resCheckImport = await fetch(
+        "https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkImport",
+        {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({ documentId }),
+        }
+      );
+      const { importPd } = await resCheckImport.json();
+      if (importPd) {
+        setError("Document ID already exists!");
         return;
       }
 
-      //* Add User to DB
-      const res_add = await fetch("http://localhost:3000/api/User", {
+      //* Add Product to DB
+      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
         },
         body: JSON.stringify({
-          userId,
-          userName,
-          email,
-          role,
+          dateImport,
+          documentId,
+          importVen,
+          importEm,
         }),
       });
 
       if (!res_add.ok) {
-        throw new Error("Failed to add User");
+        throw new Error("Failed to add Import");
       }
 
       setError("");
-      setSuccess("User has been added successfully!");
-      getUsers();
+      setSuccess("Import Product has been added successfully!");
+      getImport();
 
       setTimeout(() => {
         closeAddModal();
         setSuccess("");
-        setUserId("");
-        setUserName("");
-        setEmail("");
-        setRole("");
+        setDateImport("");
+        setDocumentId("");
+        setImportVen("");
+        setImportEm("");
         setRefresh(!refresh);
       }, 2000);
     } catch (error) {
       console.log(error);
-      setError("Failed to add user");
+      setError("Failed to add Import Product");
     }
   };
 
-  //TODO < Function Delete User >
+  //TODO < Function Delete Import >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/User/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import/${id}`, {
         cache: "no-store",
       });
 
       if (!res_byid.ok) {
-        throw new Error("Failed to fetch User");
+        throw new Error("Failed to fetch Import");
       }
 
       const data = await res_byid.json();
-      return data.user; // Ensure you return the correct data structure
+      return data.importPD; // Ensure you return the correct data structure
     } catch (error) {
-      console.error("Failed to fetch User:", error);
+      console.error("Failed to fetch Import:", error);
     }
   };
 
   const getDelValue = async (id) => {
     try {
-      const user = await getDelById(id);
-      setSelectedUser(user);
+      const importPD = await getDelById(id);
+      setSelectedImport(importPD);
       setIsDeleteModalOpen(true);
     } catch (error) {
-      console.error("Failed to get user:", error);
+      console.error("Failed to get Import:", error);
     }
   };
 
@@ -213,48 +291,48 @@ export default function UserTable() {
   return (
     <div className="flex-1 p-4">
       <div>
-        <CountStat refresh={refresh} shouldRefresh={shouldRefresh} />
+        <CountStatIXPort refresh={refresh} shouldRefresh={shouldRefresh} />
       </div>
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
           <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">
-            กำหนดรหัสพนักงาน
+            รับสินค้าเข้า
           </h2>
           <div className="flex justify-between items-center mb-4">
             <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
               <input
                 type="text"
-                placeholder="Search Employee ID..."
+                placeholder="Search Document ID..."
                 className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
                 value={searchID}
                 onChange={(event) => setSearchID(event.target.value)}
               />
               <Search size={16} className="text-gray-600 " />
             </div>
-            {/* <button
+            <button
               onClick={openAddModal}
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
-              <UserPlus size={20} className="mr-2" />
-              Add Role
-            </button> */}
+              <PackagePlus size={20} className="mr-2" />
+              Add Import
+            </button>
           </div>
 
           {/* //? Table */}
           <table className="min-w-full bg-white">
             <thead>
               <tr>
-                <th className="py-3 pr-4 pl-20 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-2/12">
-                  Employee ID
+                <th className="py-3 pr-4 pl-10 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-2/12">
+                  Date
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
-                  Employee Name
+                  Document ID
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-4/12">
-                  Email
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
+                  Vendor
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
-                  Role
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
+                  Employee
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">
                   Action
@@ -262,30 +340,32 @@ export default function UserTable() {
               </tr>
             </thead>
             <tbody>
-              {filterUsersById(users, searchID).map((user) => (
-                <tr key={user.email} className="border-t">
-                  <td className="py-4 px-4 pl-20">{user.userid}</td>
+              {filterImportsByID(imports, searchID).map((importPd) => (
+                <tr key={importPd.documentId} className="border-t">
+                  <td className="py-4 pr-4 pl-10 w-auto">
+                    {importPd.dateImport}
+                  </td>
                   <td className="py-4 px-4 flex items-center w-auto">
                     <Avatar
                       sx={{ bgcolor: indigo[800], marginRight: "20px" }}
                       variant="rounded-md"
                     >
-                      {user.name.charAt(0).toUpperCase()}
+                      {importPd.documentId.charAt(0).toUpperCase()}
                     </Avatar>
-                    {user.name}
+                    {importPd.documentId}
                   </td>
-                  <td className="py-4 px-4">{user.email}</td>
-                  <td className="py-4 px-4">{user.role}</td>
+                  <td className="py-4 px-4">{importPd.importVen}</td>
+                  <td className="py-4 px-4">{importPd.importEm}</td>
                   <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
                     <button
-                      onClick={() => getValue(user._id)}
+                      onClick={() => getValue(importPd._id)}
                       type="button"
                       className="text-indigo-600 hover:text-indigo-800"
                     >
                       <Edit size={23} />
                     </button>
                     <button
-                      onClick={() => getDelValue(user._id)}
+                      onClick={() => getDelValue(importPd._id)}
                       className="text-red-500 hover:text-red-700"
                     >
                       <Trash2 size={23} />
@@ -329,99 +409,100 @@ export default function UserTable() {
                       as="h3"
                       className="text-lg font-medium leading-6 text-gray-900"
                     >
-                      Add Employee Form
+                      Add Import Product Form
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Add the details of the Employee below.
+                        Add the details of the Import Product below.
                       </p>
                     </div>
                     <div className="mt-4">
                       <div className="mb-4">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="name"
+                          htmlFor="dateImport"
                         >
-                          Employee ID
+                          Date
                         </label>
                         <input
-                          onChange={(e) => setUserId(e.target.value)}
-                          value={userId}
+                          onChange={(e) => setDateImport(e.target.value)}
+                          value={dateImport}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="title"
+                          id="dateImport"
                           type="text"
                         />
                       </div>
                       <div className="mb-4">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="name"
+                          htmlFor="documentId"
                         >
-                          Employee Name
+                          Document ID
                         </label>
                         <input
-                          onChange={(e) => setUserName(e.target.value)}
-                          value={userName}
+                          onChange={(e) => setDocumentId(e.target.value)}
+                          value={documentId}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="name"
+                          id="documentId"
                           type="text"
                         />
                       </div>
                       <div className="mb-4">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="name"
+                          htmlFor="unit"
                         >
-                          Email
+                          Vendor
                         </label>
-                        <input
-                          onChange={(e) => setEmail(e.target.value)}
-                          value={email}
+                        <select
+                          id="unit"
+                          onChange={(e) => {
+                            const selectedValue = e.target.value;
+                            const selectedText =
+                              e.target.selectedOptions[0].text;
+                            setImportVen(
+                              selectedValue === "" ? "" : selectedText
+                            );
+                          }}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="name"
-                          type="text"
-                        />
-                      </div>
-                      <div className="flex justify-between mb-4">
-                        <div className="flex-1 mr-1">
-                          <label
-                            className="block text-gray-700 text-sm font-bold mb-2"
-                            htmlFor="amount"
-                          >
-                            Role
-                          </label>
-                          <input
-                            onChange={(e) => setRole(e.target.value)}
-                            value={role}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="amount"
-                            type="text"
-                          />
-                        </div>
-                        {/* <div className="flex-1 ml-1">
-                          <div className="mb-2">
-                            <label
-                              htmlFor="unit"
-                              className="block text-gray-700 text-sm font-bold"
+                        >
+                          <option value="">Select Vendor</option>
+                          {vendors.map((vendor) => (
+                            <option
+                              key={vendor.vendorId}
+                              value={vendor.vendorName}
                             >
-                              Unit
-                            </label>
-                          </div>
-                          <select
-                            id="unit"
-                            onChange={(e) =>
-                              setProductUnit(e.target.selectedOptions[0].text)
-                            }
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          >
-                            <option value="">Select a unit</option>
-                            {units.map((unit) => (
-                              <option key={unit.unitId} value={unit.unitName}>
-                                {unit.unitName}
-                              </option>
-                            ))}
-                          </select>
-                        </div> */}
+                              {vendor.vendorName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="importEm"
+                        >
+                          Employee
+                        </label>
+                        <select
+                          id="importEm"
+                          onChange={(e) => {
+                            const selectedValue = e.target.value;
+                            const selectedText =
+                              e.target.selectedOptions[0].text;
+                            setImportEm(
+                              selectedValue === "" ? "" : selectedText
+                            );
+                          }}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        >
+                          <option value="">Select Employee</option>
+                          {users.map((user) => (
+                            <option key={user.userid} value={user.userid}>
+                              {user.name}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                     </div>
 
@@ -442,7 +523,7 @@ export default function UserTable() {
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                       >
-                        Add Employee
+                        Add Import Product
                       </button>
                     </div>
                   </Dialog.Panel>
@@ -453,22 +534,24 @@ export default function UserTable() {
         </Dialog>
       </Transition>
 
-      {/* // TODO : Edit User Modal */}
-      <EmployeeEdit
+      {/* // TODO : Edit Product Modal */}
+      <ImportEdit
         isVisible={isEditModalOpen}
         onClose={handleEditModalClose}
-        user={selectedUser}
-        refreshUsers={getUsers}
+        importPd={selectedImport}
+        refreshImports={getImport}
       />
 
       {/* // TODO : Delete Product Modal */}
-      <EmployeeDel
+      <ImportDel
         isVisible={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        user={selectedUser}
-        refreshUsers={getUsers}
+        importPd={selectedImport}
+        refreshImports={getImport}
         refreshCount={handleRefresh}
       />
     </div>
   );
 }
+
+export default ImportTable;

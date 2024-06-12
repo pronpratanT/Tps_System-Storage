@@ -27,7 +27,7 @@ export default function UnitTable() {
   //TODO < Function to fetch units to table >
   const getUnits = async () => {
     try {
-      const res_get = await fetch("http://localhost:3000/api/Unit", {
+      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Unit", {
         cache: "no-store",
       });
 
@@ -82,7 +82,7 @@ export default function UnitTable() {
 
   const getUnitById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Unit/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Unit/${id}`, {
         cache: "no-store",
       });
 
@@ -126,7 +126,7 @@ export default function UnitTable() {
     }
 
     try {
-      const resCheckUnit = await fetch("http://localhost:3000/api/checkUnit", {
+      const resCheckUnit = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkUnit", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -140,7 +140,7 @@ export default function UnitTable() {
       }
 
       //* Add Unit to DB
-      const res_add = await fetch("http://localhost:3000/api/Unit", {
+      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Unit", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -172,7 +172,7 @@ export default function UnitTable() {
   //TODO < Function Delete Unit >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`http://localhost:3000/api/Unit/${id}`, {
+      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Unit/${id}`, {
         cache: "no-store",
       });
 
