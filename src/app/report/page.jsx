@@ -1,12 +1,12 @@
 "use client";
 
-import Sidebar from "@/app/components/Sidebar"
+import Sidebar from "../../components/Sidebar"
 ;
 import React from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import styled from "styled-components";
-import Report from "../components/Report";
+import Report from "../components1/Report";
 
 const PageContainer = styled.div`
   display: flex;

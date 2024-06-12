@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import Sidebar from "@/app/components/Sidebar"
+import Sidebar from "../../components/Sidebar"
 ;
 import styled from "styled-components";
-import VendorTable from "../components/VendorTable";
+import VendorTable from "../components1/VendorTable";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import UserProfile from "../components/header";
+import UserProfile from "../components1/header";
 
 const PageContainer = styled.div`
   display: flex;
