@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { sarabunFontBase64 } from "../api/fonts/route";
 import { Receipt } from "lucide-react";
 
 function Report() {
@@ -43,10 +42,6 @@ function Report() {
 
   const exportPdfHandler = () => {
     const doc = new jsPDF();
-
-    doc.addFileToVFS("Sarabun-Regular.ttf", sarabunFontBase64);
-    doc.addFont("Sarabun-Regular.ttf", "Sarabun", "normal");
-    doc.setFont("Sarabun");
 
     autoTable(doc, {
       head: [["ลำดับ", "รหัสสินค้า", "ชื่อสินค้า", "หน่วย", "จำนวนหน่วย"]],
