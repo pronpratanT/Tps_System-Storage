@@ -40,6 +40,18 @@ function SidebarItem({ icon, text, href, onClick }) {
   const pathname = usePathname();
   const active = pathname === href;
 
+  const itemContent = (
+    <>
+      <div className="flex-shrink-0">{icon}</div>
+      <span className={`flex items-center w-full overflow-hidden transition-all duration-300 ${expanded ? "w-52 ml-3" : "w-0"}`}>{text}</span>
+      {!expanded && (
+        <div className="absolute left-full rounded-md px-2 py-1 ml-6 bg-indigo-100 text-indigo-800 text-sm invisible opacity-20 -translate-x-3 transition-all group-hover:visible group-hover:opacity-100 group-hover:translate-x-0">
+          {text}
+        </div>
+      )}
+    </>
+  );
+
   return (
     <li
       className={`relative flex items-center py-2 px-3 my-1 font-medium rounded-md cursor-pointer transition-colors group ${
@@ -47,18 +59,14 @@ function SidebarItem({ icon, text, href, onClick }) {
       }`}
       onClick={onClick}
     >
-      <div className="flex-shrink-0">{icon}</div>
       {href ? (
         <Link href={href} className="flex items-center w-full">
-          <span className={`overflow-hidden transition-all duration-300 ${expanded ? "w-52 ml-3" : "w-0"}`}>{text}</span>
-          {!expanded && (
-            <div className="absolute left-full rounded-md px-2 py-1 ml-6 bg-indigo-100 text-indigo-800 text-sm invisible opacity-20 -translate-x-3 transition-all group-hover:visible group-hover:opacity-100 group-hover:translate-x-0">
-              {text}
-            </div>
-          )}
+          {itemContent}
         </Link>
       ) : (
-        <span className={`flex items-center w-full overflow-hidden transition-all duration-300 ${expanded ? "w-52 ml-3" : "w-0"}`}>{text}</span>
+        <div className="flex items-center w-full">
+          {itemContent}
+        </div>
       )}
     </li>
   );
