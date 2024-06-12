@@ -85,7 +85,6 @@ function SidebarItem({ icon, text, href, onClick }) {
   const itemContent = (
     <>
       <div className="flex-shrink-0">{icon}</div>
-<<<<<<< HEAD
       <span
         className={`flex items-center w-full overflow-hidden transition-all duration-300 ${
           expanded ? "w-52 ml-3" : "w-0"
@@ -93,9 +92,6 @@ function SidebarItem({ icon, text, href, onClick }) {
       >
         {text}
       </span>
-=======
-      <span className={`flex items-center w-full overflow-hidden transition-all duration-300 ${expanded ? "w-52 ml-3" : "w-0"}`}>{text}</span>
->>>>>>> a3fc9588e2bd3963fe3da3c3e36c2c0d63a4396d
       {!expanded && (
         <div className="absolute left-full rounded-md px-2 py-1 ml-6 bg-indigo-100 text-indigo-800 text-sm invisible opacity-20 -translate-x-3 transition-all group-hover:visible group-hover:opacity-100 group-hover:translate-x-0">
           {text}
@@ -118,13 +114,7 @@ function SidebarItem({ icon, text, href, onClick }) {
           {itemContent}
         </Link>
       ) : (
-<<<<<<< HEAD
         <div className="flex items-center w-full">{itemContent}</div>
-=======
-        <div className="flex items-center w-full">
-          {itemContent}
-        </div>
->>>>>>> a3fc9588e2bd3963fe3da3c3e36c2c0d63a4396d
       )}
     </li>
   );
