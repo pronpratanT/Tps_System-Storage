@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -13,9 +12,13 @@ export default function LoginForm() {
   const [error, setError] = useState("");
 
   const router = useRouter();
-
   const { data: session } = useSession();
-  if (session) router.replace("/welcome");
+
+  useEffect(() => {
+    if (session) {
+      router.replace("/welcome");
+    }
+  }, [session, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,9 +34,10 @@ export default function LoginForm() {
         setError("Invalid credentials");
         return;
       }
-      router.replace("welcome");
+      router.replace("/welcome");
     } catch (error) {
       console.log(error);
+      setError("An unexpected error occurred");
     }
   };
 
@@ -47,17 +51,26 @@ export default function LoginForm() {
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
             className="border border-gray-200 py-3 px-6 bg-zinc-100/40 rounded-md"
-            type="text"
+            type="email"
+            aria-label="Email"
             placeholder="Email"
-            onChange={(e) => setEmail(e.target.value)}
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError(""); // Clear error on change
+            }}
           />
           <input
             className="border border-gray-200 py-3 px-6 bg-zinc-100/40 rounded-md"
             type="password"
+            aria-label="Password"
             placeholder="Password"
-            onChange={(e) => setPassword(e.target.value)}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError(""); // Clear error on change
+            }}
           />
-          {/* // TODO : Error & Success */}
           {error && (
             <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
               {error}
@@ -72,7 +85,7 @@ export default function LoginForm() {
           </button>
 
           <Link className="text-sm mt-3 text-right" href={"/register"}>
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <span className="underline text-indigo-600 hover:text-indigo-800">Sign Up</span>
           </Link>
         </form>

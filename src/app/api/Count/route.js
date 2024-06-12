@@ -1,6 +1,6 @@
 // pages/api/counts.js
-import { connectMongoDB } from '../../lib/mongodb';
-import Product from '../../models/product';
+import { connectMongoDB } from '../../../../lib/mongodb';
+import Product from '@/../../models/product';
 
 export default async function handler(req, res) {
   try {
