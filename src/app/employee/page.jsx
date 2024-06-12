@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import styled from 'styled-components';
 import UserTable from '../components/EmployeeTable';
-import UserProfile from '../components/header';
 
 const PageContainer = styled.div`
   display: flex;
