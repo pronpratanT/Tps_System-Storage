@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import Sidebar from '@/app/components/Sidebar';
+import Sidebar from "@/app/components/Sidebar"
+;
 import styled from "styled-components";
 import VendorTable from "../components/VendorTable";
 import { useSession } from "next-auth/react";
