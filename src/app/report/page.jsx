@@ -6,7 +6,7 @@ import React from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import styled from "styled-components";
-import Report from "../componentsอันนี้คืออันเดิมสามรถลบได้/Report";
+import Report from "@/components/Report";
 
 const PageContainer = styled.div`
   display: flex;

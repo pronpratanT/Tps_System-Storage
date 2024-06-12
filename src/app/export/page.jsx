@@ -1,12 +1,11 @@
 "use client";
 
-import Sidebar from "../../components/Sidebar"
-;
+import Sidebar from "../../components/Sidebar";
 import React from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import styled from "styled-components";
-import ExportTable from "../componentsอันนี้คืออันเดิมสามรถลบได้/ExportTable";
+import ExportTable from "@/components/ExportTable";
 
 const PageContainer = styled.div`
   display: flex;

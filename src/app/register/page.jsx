@@ -1,5 +1,5 @@
 import React from 'react'
-import RegisterForm from '../componentsอันนี้คืออันเดิมสามรถลบได้/RegisterForm'
+import RegisterForm from '@/components/RegisterForm'
 
 function Register() {
     return (

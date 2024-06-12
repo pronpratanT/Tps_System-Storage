@@ -6,7 +6,7 @@ import React from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import styled from 'styled-components';
-import UnitTable from '../componentsอันนี้คืออันเดิมสามรถลบได้/UnitTable';
+import UnitTable from "@/components/UnitTable";
 
 const PageContainer = styled.div`
   display: flex;

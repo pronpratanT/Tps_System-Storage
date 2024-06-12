@@ -1,7 +1,6 @@
 "use client";
 
-import Sidebar from "./componentsอันนี้คืออันเดิมสามรถลบได้/Sidebar";
-import Navbar from "./componentsอันนี้คืออันเดิมสามรถลบได้/Navbar";
+import Sidebar from "@/components/Sidebar";
 import { useSession } from "next-auth/react";
 
 export default function Home() {
