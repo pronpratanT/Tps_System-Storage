@@ -2,29 +2,28 @@ import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
 function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
-const [newUserId, setNewUserId] = useState("");
-const [newName, setNewName] = useState("");
-const [newEmail, setNewEmail] = useState("");
-const [newRole, setNewRole] = useState("");
-const [error, setError] = useState("");
-const [success, setSuccess] = useState("");
+  const [newUserId, setNewUserId] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newRole, setNewRole] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-useEffect(() => {
-    if(user){
-        setNewUserId(user.userid);
-        setNewName(user.name);
-        setNewEmail(user.email);
-        setNewRole(user.role)
+  useEffect(() => {
+    if (user) {
+      setNewUserId(user.userid);
+      setNewName(user.name);
+      setNewEmail(user.email);
+      setNewRole(user.role);
     }
-}, [user]);
+  }, [user]);
 
-const checkDuplicateUserId = async (newUserId, currentUserId) => {
+  const checkDuplicateUserId = async (newUserId, currentUserId) => {
     try {
       const res = await fetch("http://localhost:3000/api/User");
       const users = await res.json();
       return users.some(
-        (user) =>
-          user.userid === newUserId && user._id !== currentUserId
+        (user) => user.userid === newUserId && user._id !== currentUserId
       );
     } catch (error) {
       console.error("Error checking duplicate User ID:", error);
@@ -32,22 +31,36 @@ const checkDuplicateUserId = async (newUserId, currentUserId) => {
     }
   };
 
+  const checkDuplicateEmail = async (newEmail, currentEmail) => {
+    try {
+      const res = await fetch("http://localhost:3000/api/User");
+      const users = await res.json();
+      return users.some(
+        (user) => user.email === newEmail && user._id !== currentEmail
+      );
+    } catch (error) {
+      console.error("Error checking duplicate Email:", error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      !newUserId || !newName || !newEmail || !newRole
-    ) {
+    if (!newUserId || !newName || !newEmail || !newRole) {
       setError("Please complete Employee details!");
       return;
     }
 
-    const isDuplicate = await checkDuplicateUserId(
-        newUserId,
-      user?._id || ""
-    );
+    const isDuplicate = await checkDuplicateUserId(newUserId, user?._id || "");
     if (isDuplicate) {
       setError("Employee ID already exists!");
+      return;
+    }
+
+    const isDuplicateEmail = await checkDuplicateEmail(newEmail, user?._id || "");
+    if (isDuplicateEmail) {
+      setError("Email already exists!");
       return;
     }
 
@@ -60,7 +73,10 @@ const checkDuplicateUserId = async (newUserId, currentUserId) => {
             "Content-type": "application/json",
           },
           body: JSON.stringify({
-            newUserId, newName, newEmail, newRole
+            newUserId,
+            newName,
+            newEmail,
+            newRole,
           }),
         }
       );
@@ -239,7 +255,7 @@ const checkDuplicateUserId = async (newUserId, currentUserId) => {
         </Dialog>
       </Transition>
     </div>
-  )
+  );
 }
 
-export default EmployeeEdit
+export default EmployeeEdit;

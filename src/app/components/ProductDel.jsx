@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function ProductDel({ isVisible, onClose, product, refreshProducts }) {
+function ProductDel({ isVisible, onClose, product, refreshProducts, refreshCount }) {
   const [delId, setDelId] = useState("");
   const [delName, setDelName] = useState("");
   const [delUnit, setDelUnit] = useState("");
@@ -39,6 +39,7 @@ function ProductDel({ isVisible, onClose, product, refreshProducts }) {
         onClose();
         setSuccess("");
         refreshProducts();
+        refreshCount();
       }, 2000);
     } catch (error) {
       setError("Failed to delete product");

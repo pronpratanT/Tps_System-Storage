@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function VendorDel({ isVisible, onClose, vendor, refreshVendors }) {
+function VendorDel({ isVisible, onClose, vendor, refreshVendors, refreshCount }) {
   const [delId, setDelId] = useState("");
   const [delName, setDelName] = useState("");
   const [delCountry, setDelCountry] = useState("");
@@ -37,6 +37,7 @@ function VendorDel({ isVisible, onClose, vendor, refreshVendors }) {
         onClose(); // Close the modal after successful deletion
         setSuccess("");
         refreshVendors(); // Refresh the vendors list
+        refreshCount();
       }, 2000);
     } catch (error) {
       console.log(vendor);

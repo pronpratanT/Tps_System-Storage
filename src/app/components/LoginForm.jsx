@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Navbar from "../components/Navbar";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";

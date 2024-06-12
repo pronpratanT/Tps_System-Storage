@@ -1,15 +1,7 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import {
-  Edit,
-  Search,
-  Trash2,
-  HeartHandshake,
-  User,
-  Ruler,
-  Package,
-} from "lucide-react";
+import { Edit, Search, Trash2, Ruler } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
@@ -30,6 +22,7 @@ export default function UnitTable() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [refresh, setRefresh] = useState(false);
+  const [shouldRefresh, setShouldRefresh] = useState(false);
 
   //TODO < Function to fetch units to table >
   const getUnits = async () => {
@@ -164,11 +157,11 @@ export default function UnitTable() {
       getUnits();
 
       setTimeout(() => {
+        setRefresh(!refresh);
         closeAddModal();
         setSuccess("");
         setUnitId("");
         setUnitName("");
-        refresh();
       }, 2000);
     } catch (error) {
       console.log(error);
@@ -204,16 +197,14 @@ export default function UnitTable() {
     }
   };
 
-  //TODO Refresh CountStat
   const handleRefresh = () => {
-    setRefresh(!refresh);
+    setShouldRefresh(!shouldRefresh);
   };
 
   return (
     <div className="flex-1 p-4">
       <div>
-        <button onClick={handleRefresh}>Refresh CountStat</button>
-        <CountStat refresh={refresh} />
+        <CountStat refresh={refresh} shouldRefresh={shouldRefresh} />
       </div>
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
@@ -403,6 +394,7 @@ export default function UnitTable() {
         onClose={() => setIsDeleteModalOpen(false)}
         unit={selectedUnit}
         refreshUnits={getUnits}
+        refreshCount={handleRefresh}
       />
     </div>
   );

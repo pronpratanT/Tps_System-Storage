@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function ExportDel({ isVisible, onClose, exportPd, refreshExports }) {
+function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount }) {
   const [delDate, setDelDate] = useState("");
   const [delDocumentId, setDelDocumentId] = useState("");
   const [delExportVen, setDelExportVen] = useState("");
@@ -37,6 +37,7 @@ function ExportDel({ isVisible, onClose, exportPd, refreshExports }) {
         onClose();
         setSuccess("");
         refreshExports();
+        refreshCount();
       }, 2000);
     } catch (error) {
       setError("Failed to delete Export product");

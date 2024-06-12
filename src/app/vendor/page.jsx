@@ -25,8 +25,8 @@ export default function VendorPage() {
     <PageContainer>
       <Sidebar session={session} />
       <div className="flex-1">
-        {/* <div className="bg-white h-16 px-4 shadow-sm"></div> */}
-        <UserProfile session={session} />
+        <div className="bg-white h-16 px-4 shadow-sm"></div>
+        {/* <UserProfile session={session} /> */}
         <div className="p-4">
           <VendorTable />
         </div>

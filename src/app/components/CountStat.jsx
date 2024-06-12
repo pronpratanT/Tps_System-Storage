@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { HeartHandshake, User, Ruler, Package } from "lucide-react";
 
-function CountStat({ refresh }) {
+function CountStat({ refresh, shouldRefresh }) {
   const [users, setUsers] = useState([]);
   const [units, setUnits] = useState([]);
   const [products, setProducts] = useState([]);
@@ -72,7 +72,7 @@ function CountStat({ refresh }) {
     getUnits();
     getProducts();
     getVendors();
-  }, [refresh]);
+  }, [refresh, shouldRefresh ]);
 
   return (
     <div className="flex justify-between items-center mb-6 space-x-5">

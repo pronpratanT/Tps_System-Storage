@@ -9,23 +9,26 @@ import Link from 'next/link';
 // Create a context for the sidebar
 const SidebarContext = createContext();
 
-function SidebarItem({ icon, text, href }) {
+function SidebarItem({ icon, text, href, onClick }) {
   const { expanded } = useContext(SidebarContext);
   const pathname = usePathname();
   const active = pathname === href;
 
   return (
-    <Link href={href}>
-      <li
-        className={`
-          relative flex items-center py-2 px-3 my-1
-          font-medium rounded-md cursor-pointer
-          transition-colors group
-          ${active ? "bg-gradient-to-tr from-indigo-200 to-indigo-100 text-indigo-800" : "hover:bg-indigo-50 text-gray-600"}
-        `}
-      >
+    <li
+      className={`
+        relative flex items-center py-2 px-3 my-1
+        font-medium rounded-md cursor-pointer
+        transition-colors group
+        ${active ? "bg-gradient-to-tr from-indigo-200 to-indigo-100 text-indigo-800" : "hover:bg-indigo-50 text-gray-600"}
+      `}
+      onClick={onClick}
+    >
+      <div className="flex-shrink-0">
         {icon}
-        <span className={`overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}`}>
+      </div>
+      <Link href={href} className="flex items-center w-full">
+        <span className={`overflow-hidden transition-all duration-300 ${expanded ? "w-52 ml-3" : "w-0"}`}>
           {text}
         </span>
         {!expanded && (
@@ -38,8 +41,8 @@ function SidebarItem({ icon, text, href }) {
             {text}
           </div>
         )}
-      </li>
-    </Link>
+      </Link>
+    </li>
   );
 }
 
@@ -77,11 +80,11 @@ export default function Sidebar({ session, children }) {
   return (
     <div className="flex">
       <aside className="h-screen sticky top-0">
-        <nav className="h-full flex flex-col bg-white border-r shadow-sm  ">
+        <nav className="h-full flex flex-col bg-white border-r shadow-sm">
           <div className="p-4 pb-2 flex justify-between items-center">
             <img
               src="https://img.logoipsum.com/243.svg"
-              className={`overflow-hidden transition-all ${expanded ? "w-32" : "w-0"}`}
+              className={`overflow-hidden transition-all duration-300 ${expanded ? "w-32" : "w-0"}`}
               alt=""
             />
             <button onClick={() => setExpanded((curr) => !curr)} className="p-1.5 rounded-lg bg-gray-50 hover:bg-gray-100">
@@ -146,7 +149,8 @@ export default function Sidebar({ session, children }) {
               <SidebarItem 
                 icon={<LogOut size={20} />} 
                 text="Sign out"
-                href="/help"
+                href="#"
+                onClick={() => signOut()}
               />
             </ul>
           </SidebarContext.Provider>
@@ -155,23 +159,12 @@ export default function Sidebar({ session, children }) {
             <Avatar sx={{ bgcolor: indigo[800] }} variant="rounded">
               {userInitial}
             </Avatar>
-            <div className={`flex justify-between items-center overflow-hidden transition-all ${expanded ? "w-52 ml-3" : "w-0"}`}>
+            <div className={`flex flex-col justify-center overflow-hidden transition-all duration-300 ${expanded ? "w-52 ml-3 opacity-100" : "w-0 opacity-0"}`}>
               <div className="leading-4">
                 <h4 className="font-semibold">{session?.user?.name}</h4>
                 <span className="text-xs text-gray-600">{session?.user?.email}</span>
               </div>
-              {/* <button onClick={() => setDropdownOpen(!dropdownOpen)} className="p-1.5 rounded-lg hover:bg-gray-100">
-                <MoreVertical size={20} />
-              </button> */}
             </div>
-
-            {/* {dropdownOpen && (
-              <div ref={dropdownRef} className="absolute bottom-12 right-4 w-48 bg-white border rounded shadow-md">
-                <button className="w-full flex items-center text-left px-4 py-2 text-red-600 hover:bg-gray-100" onClick={() => { signOut() }}>
-                  <LogOut className="mr-2" size={20} /> Sign out
-                </button>
-              </div>
-            )} */}
           </div>
         </nav>
       </aside>

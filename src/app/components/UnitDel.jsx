@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function UnitDel({ isVisible, onClose, unit, refreshUnits }) {
+function UnitDel({ isVisible, onClose, unit, refreshUnits, refreshCount }) {
   const [delId, setDelId] = useState("");
   const [delName, setDelName] = useState("");
   const [error, setError] = useState("");
@@ -35,6 +35,7 @@ function UnitDel({ isVisible, onClose, unit, refreshUnits }) {
         onClose();
         setSuccess("");
         refreshUnits();
+        refreshCount();
       }, 2000);
     } catch (error) {
       console.log(unit);

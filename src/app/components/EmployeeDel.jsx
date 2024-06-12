@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function EmployeeDel({ isVisible, onClose, user, refreshUsers }) {
+function EmployeeDel({ isVisible, onClose, user, refreshUsers, refreshCount }) {
   const [delId, setDelId] = useState("");
   const [delName, setDelName] = useState("");
   const [delEmail, setDelEmail] = useState("");
@@ -37,6 +37,7 @@ function EmployeeDel({ isVisible, onClose, user, refreshUsers }) {
         onClose();
         setSuccess("");
         refreshUsers();
+        refreshCount();
       }, 2000);
     } catch (error) {
       setError("Failed to delete employee");

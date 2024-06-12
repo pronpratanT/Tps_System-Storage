@@ -18,6 +18,8 @@
     "@mui/material": "^5.15.19",
     "bcryptjs": "^2.4.3",
     "express": "^4.19.2",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "lucide-react": "^0.381.0",
     "mongoose": "^8.4.1",
     "next": "14.2.3",

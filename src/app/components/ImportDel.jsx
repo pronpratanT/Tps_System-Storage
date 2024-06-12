@@ -1,7 +1,7 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function ImportDel({ isVisible, onClose, importPd, refreshImports }) {
+function ImportDel({ isVisible, onClose, importPd, refreshImports, refreshCount }) {
   const [delDate, setDelDate] = useState("");
   const [delDocumentId, setDelDocumentId] = useState("");
   const [delImportVen, setDelImportVen] = useState("");
@@ -37,6 +37,7 @@ function ImportDel({ isVisible, onClose, importPd, refreshImports }) {
         onClose();
         setSuccess("");
         refreshImports();
+        refreshCount();
       }, 2000);
     } catch (error) {
       setError("Failed to delete Import product");

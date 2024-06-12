@@ -13,7 +13,7 @@ const UserProfile = ({ session }) => {
   }
 
   return (
-    <div className="border-t flex p-3 relative justify-end bg-white h-16 px-4 shadow-sm sticky top-0">
+    <div className="border-t flex p-3 relative justify-end bg-white h-16 px-4 shadow-sm top-0">
       <div className="flex items-center space-x-3">
         <div className="leading-4 text-right">
           <h4 className="font-semibold">{session?.user?.name}</h4>

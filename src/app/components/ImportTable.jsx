@@ -1,21 +1,13 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import {
-  Edit,
-  Search,
-  Trash2,
-  HeartHandshake,
-  User,
-  Ruler,
-  Package,
-  PackagePlus,
-} from "lucide-react";
+import { Edit, Search, Trash2, PackagePlus } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import ImportEdit from "./ImportEdit";
 import ImportDel from "./ImportDel";
+import CountStatIXPort from "./CountStatIXPort";
 
 function ImportTable() {
   //? State
@@ -33,6 +25,8 @@ function ImportTable() {
   const [selectedImport, setSelectedImport] = useState(null);
   const [vendors, setVendors] = useState([]);
   const [users, setUsers] = useState([]);
+  const [refresh, setRefresh] = useState(false);
+  const [shouldRefresh, setShouldRefresh] = useState(false);
 
   //TODO < Function to fetch Import to table >
   const getImport = async () => {
@@ -254,6 +248,7 @@ function ImportTable() {
         setDocumentId("");
         setImportVen("");
         setImportEm("");
+        setRefresh(!refresh);
       }, 2000);
     } catch (error) {
       console.log(error);
@@ -289,53 +284,15 @@ function ImportTable() {
     }
   };
 
+  const handleRefresh = () => {
+    setShouldRefresh(!shouldRefresh);
+  };
+
   return (
     <div className="flex-1 p-4">
-      <div className="flex justify-between items-center mb-6 space-x-5">
-        {/* //? Stat */}
-        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-          <div className="text-lg font-semibold text-gray-600 my-1">Users</div>
-          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
-            <User size={32} />
-            <span className="text-2xl font-bold">12</span>{" "}
-          </div>
-        </div>
-
-        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-          <div className="text-lg font-semibold text-gray-600 my-1">Units</div>
-          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
-            <Ruler size={32} />
-            <span className="text-2xl font-bold">
-              {/* {units.length} */}
-            </span>{" "}
-          </div>
-        </div>
-
-        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-          <div className="text-lg font-semibold text-gray-600 my-1">
-            Products
-          </div>
-          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
-            <Package size={32} />
-            <span className="text-2xl font-bold">
-              {/* {products.length} */}
-            </span>{" "}
-          </div>
-        </div>
-
-        <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-          <div className="text-lg font-semibold text-gray-600 my-1">
-            Vendors
-          </div>
-          <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
-            <HeartHandshake size={32} />
-            <span className="text-2xl font-bold">
-              {/* {vendors.length} */}
-            </span>{" "}
-          </div>
-        </div>
+      <div>
+        <CountStatIXPort refresh={refresh} shouldRefresh={shouldRefresh} />
       </div>
-
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
           <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">
@@ -591,6 +548,7 @@ function ImportTable() {
         onClose={() => setIsDeleteModalOpen(false)}
         importPd={selectedImport}
         refreshImports={getImport}
+        refreshCount={handleRefresh}
       />
     </div>
   );

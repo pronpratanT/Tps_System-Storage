@@ -1,21 +1,10 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import {
-  Edit,
-  Search,
-  Trash2,
-  HeartHandshake,
-  User,
-  Ruler,
-  Package,
-  UserPlus,
-} from "lucide-react";
+import { Edit, Search, Trash2 } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
-import ProductEdit from "./ProductEdit";
-import ProductDel from "./ProductDel";
 import EmployeeEdit from "./EmployeeEdit";
 import EmployeeDel from "./EmployeeDel";
 import CountStat from "./CountStat";
@@ -34,7 +23,8 @@ export default function UserTable() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [searchID, setSearchID] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
-  const [units, setUnits] = useState([]);
+  const [refresh, setRefresh] = useState(false);
+  const [shouldRefresh, setShouldRefresh] = useState(false);
 
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
@@ -180,6 +170,7 @@ export default function UserTable() {
         setUserName("");
         setEmail("");
         setRole("");
+        setRefresh(!refresh);
       }, 2000);
     } catch (error) {
       console.log(error);
@@ -215,9 +206,15 @@ export default function UserTable() {
     }
   };
 
+  const handleRefresh = () => {
+    setShouldRefresh(!shouldRefresh);
+  };
+
   return (
     <div className="flex-1 p-4">
-      <CountStat />
+      <div>
+        <CountStat refresh={refresh} shouldRefresh={shouldRefresh} />
+      </div>
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
           <h2 className="text-lg font-bold leading-6 text-gray-800 py-3">
@@ -234,13 +231,13 @@ export default function UserTable() {
               />
               <Search size={16} className="text-gray-600 " />
             </div>
-            <button
+            {/* <button
               onClick={openAddModal}
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
               <UserPlus size={20} className="mr-2" />
               Add Role
-            </button>
+            </button> */}
           </div>
 
           {/* //? Table */}
@@ -470,6 +467,7 @@ export default function UserTable() {
         onClose={() => setIsDeleteModalOpen(false)}
         user={selectedUser}
         refreshUsers={getUsers}
+        refreshCount={handleRefresh}
       />
     </div>
   );

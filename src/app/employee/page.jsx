@@ -4,7 +4,6 @@ import Sidebar from '../components/Sidebar';
 import React from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
-import CardList from '../components/CardList'; // Import CardList
 import styled from 'styled-components';
 import UserTable from '../components/EmployeeTable';
 import UserProfile from '../components/header';
@@ -27,8 +26,8 @@ function EmployeeID() {
     <PageContainer>
       <Sidebar session={session} />
       <div className="flex-1">
-        {/* <div className="bg-white h-16 px-4 shadow-sm"></div> */}
-        <UserProfile session={session} />
+        <div className="bg-white h-16 px-4 shadow-sm"></div>
+        {/* <UserProfile session={session} /> */}
         <div className="p-4">
           <UserTable />
         </div>

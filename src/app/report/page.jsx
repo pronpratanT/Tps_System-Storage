@@ -5,6 +5,7 @@ import React from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import styled from "styled-components";
+import Report from "../components/Report";
 
 const PageContainer = styled.div`
   display: flex;
@@ -26,6 +27,7 @@ function ReportPage() {
       <div className="flex-1">
         <div className="bg-white h-16 px-4 shadow-sm"></div>
         {/* <div className="p-4"><ProductTable /></div> */}
+        <Report />
       </div>
     </PageContainer>
   );
