@@ -46,4 +46,13 @@ const authOptions = {
   },
 };
 
-export default (req, res) => NextAuth(req, res, authOptions);
+const handler = (req, res) => {
+  if (req.method === "GET" || req.method === "POST") {
+    return NextAuth(req, res, authOptions);
+  } else {
+    res.setHeader("Allow", ["GET", "POST"]);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+};
+
+export default handler;
