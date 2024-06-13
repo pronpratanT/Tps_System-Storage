@@ -86,14 +86,14 @@ function SidebarItem({ icon, text, href, onClick }) {
     <>
       <div className="flex-shrink-0">{icon}</div>
       <span
-        className={`flex items-center w-full overflow-hidden transition-all duration-300 ${
-          expanded ? "w-52 ml-3" : "w-0"
+        className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out ${
+          expanded ? "max-w-xs ml-3" : "max-w-0"
         }`}
       >
         {text}
       </span>
       {!expanded && (
-        <div className="absolute left-full rounded-md px-2 py-1 ml-6 bg-indigo-100 text-indigo-800 text-sm invisible opacity-20 -translate-x-3 transition-all group-hover:visible group-hover:opacity-100 group-hover:translate-x-0">
+        <div className="absolute left-full rounded-md px-2 py-1 ml-6 bg-indigo-100 text-indigo-800 text-sm invisible opacity-0 -translate-x-3 transition-all duration-300 ease-in-out group-hover:visible group-hover:opacity-100 group-hover:translate-x-0">
           {text}
         </div>
       )}
@@ -150,11 +150,11 @@ export default function Sidebar({ session, children }) {
   return (
     <div className="flex">
       <aside className="h-screen sticky top-0">
-        <nav className="h-full flex flex-col bg-white border-r shadow-sm">
+        <nav className="h-full flex flex-col bg-white border-r shadow-sm transition-width duration-300 ease-in-out" style={{ width: expanded ? '250px' : '60px' }}>
           <div className="p-4 pb-2 flex justify-between items-center">
             <img
               src="https://img.logoipsum.com/243.svg"
-              className={`overflow-hidden transition-all duration-300 ${
+              className={`overflow-hidden transition-all duration-300 ease-in-out ${
                 expanded ? "w-32" : "w-0"
               }`}
               alt=""
@@ -188,8 +188,8 @@ export default function Sidebar({ session, children }) {
               {userInitial}
             </Avatar>
             <div
-              className={`flex flex-col justify-center overflow-hidden transition-all duration-300 ${
-                expanded ? "w-52 ml-3 opacity-100" : "w-0 opacity-0"
+              className={`flex flex-col justify-center overflow-hidden transition-all duration-300 ease-in-out ${
+                expanded ? "max-w-xs ml-3 opacity-100" : "max-w-0 opacity-0"
               }`}
             >
               <div className="leading-4">
