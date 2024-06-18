@@ -36,7 +36,7 @@ function VendorTable() {
   //TODO < Function to fetch vendors to table >
   const getVendors = async () => {
     try {
-      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
+      const res_get = await fetch("/api/addVendor", {
         cache: "no-store",
       });
 
@@ -92,7 +92,7 @@ function VendorTable() {
   const getVendorById = async (id) => {
     try {
       const res_byid = await fetch(
-        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor/${id}`,
+        `/api/addVendor/${id}`,
         {
           cache: "no-store",
         }
@@ -139,7 +139,7 @@ function VendorTable() {
 
     try {
       const resCheckVendor = await fetch(
-        "https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkVendor",
+        "/api/checkVendor",
         {
           method: "POST",
           headers: {
@@ -155,7 +155,7 @@ function VendorTable() {
       }
 
       //* Add Vendor to DB
-      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
+      const res_add = await fetch("/api/addVendor", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -188,7 +188,7 @@ function VendorTable() {
   const getDelById = async (id) => {
     try {
       const res_byid = await fetch(
-        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor/${id}`,
+        `/api/addVendor/${id}`,
         {
           cache: "no-store",
         }

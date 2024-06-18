@@ -32,7 +32,7 @@ export default function RegisterForm() {
         try {
             //---ตรวจสอบ email ซ้ำ---
             //รับค่า POST มาจากไฟล์ checkUser\route.js
-            const resCheckUser = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkUser", {
+            const resCheckUser = await fetch("/api/checkUser", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -46,7 +46,7 @@ export default function RegisterForm() {
                 return;
             }
 
-            const res = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/register", {
+            const res = await fetch("/api/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

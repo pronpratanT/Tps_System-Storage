@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import Sidebar from "../../components/Sidebar"
-;
+import Sidebar from "../../components/Sidebar";
 import styled from "styled-components";
 import VendorTable from "@/components/VendorTable";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { useEffect } from "react";
 
 const PageContainer = styled.div`
   display: flex;
@@ -17,10 +17,13 @@ export default function VendorPage() {
   const { data: session } = useSession();
   console.log(session);
 
-  if (!session) {
-    redirect("/login");
-    return null; // Stop rendering content after redirect
-  }
+  useEffect(() => {
+    if (!session) {
+      redirect("/login");
+      return null; // Stop rendering content after redirect
+    }
+  }, []);
+
   return (
     <PageContainer>
       <Sidebar session={session} />

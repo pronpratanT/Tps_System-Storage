@@ -7,7 +7,7 @@ function CountStatIXPort({ refresh, shouldRefresh }) {
 
   const getImport = async () => {
     try {
-      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import", {
+      const res_get = await fetch("/api/Import", {
         cache: "no-store",
       });
       if (!res_get.ok) {
@@ -30,7 +30,7 @@ function CountStatIXPort({ refresh, shouldRefresh }) {
 
   const getExport = async () => {
     try {
-      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Export", {
+      const res_get = await fetch("/api/Export", {
         cache: "no-store",
       });
       if (!res_get.ok) {

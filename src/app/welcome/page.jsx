@@ -1,11 +1,11 @@
 "use client";
 
-import Sidebar from "../../components/Sidebar"
-;
+import Sidebar from "../../components/Sidebar";
 import React from 'react';
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import styled from 'styled-components';
+import { useEffect } from "react";
 
 const PageContainer = styled.div`
   display: flex;
@@ -16,10 +16,12 @@ function WelcomePage() {
   const { data: session } = useSession();
   console.log(session);
 
-  if (!session) {
-    redirect("/login");
-    return null; // Stop rendering content after redirect
-  }
+  useEffect(() => {
+    if (!session) {
+      redirect("/login");
+      return null; // Stop rendering content after redirect
+    }
+  }, []);
 
   return (
     <PageContainer>

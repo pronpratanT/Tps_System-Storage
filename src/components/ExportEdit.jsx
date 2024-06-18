@@ -22,7 +22,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
 
   const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
     try {
-      const res = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Export");
+      const res = await fetch("/api/Export");
       const exports = await res.json();
       return exports.some(
         (exportPd) =>
@@ -54,7 +54,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
 
     try {
       const res = await fetch(
-        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Export/${exportPd?._id || ""}`,
+        `/api/Export/${exportPd?._id || ""}`,
         {
           method: "PUT",
           headers: {
@@ -90,7 +90,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
     try {
-      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
+      const res_get = await fetch("/api/User", {
         cache: "no-store",
       });
 
@@ -126,7 +126,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   //TODO < Function to fetch vendors to table >
   const getVendors = async () => {
     try {
-      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
+      const res_get = await fetch("/api/addVendor", {
         cache: "no-store",
       });
 

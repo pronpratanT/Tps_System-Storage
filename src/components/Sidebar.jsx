@@ -84,7 +84,9 @@ function SidebarItem({ icon, text, href, onClick }) {
 
   const itemContent = (
     <>
-      <div className="flex-shrink-0">{icon}</div>
+      <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+        {icon}
+      </div>
       <span
         className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out ${
           expanded ? "max-w-xs ml-3" : "max-w-0"
@@ -102,7 +104,7 @@ function SidebarItem({ icon, text, href, onClick }) {
 
   return (
     <li
-      className={`relative flex items-center py-2 px-3 my-1 font-medium rounded-md cursor-pointer transition-colors group ${
+      className={`relative flex items-center justify-center py-2 my-1 font-medium rounded-md cursor-pointer transition-colors group ${
         active
           ? "bg-gradient-to-tr from-indigo-200 to-indigo-100 text-indigo-800"
           : "hover:bg-indigo-50 text-gray-600"
@@ -150,7 +152,10 @@ export default function Sidebar({ session, children }) {
   return (
     <div className="flex">
       <aside className="h-screen sticky top-0">
-        <nav className="h-full flex flex-col bg-white border-r shadow-sm transition-width duration-300 ease-in-out" style={{ width: expanded ? '250px' : '60px' }}>
+        <nav
+          className="h-full flex flex-col bg-white border-r shadow-sm transition-width duration-300 ease-in-out"
+          style={{ width: expanded ? "250px" : "60px" }}
+        >
           <div className="p-4 pb-2 flex justify-between items-center">
             <img
               src="https://img.logoipsum.com/243.svg"
@@ -183,7 +188,7 @@ export default function Sidebar({ session, children }) {
             </ul>
           </SidebarContext.Provider>
 
-          <div className="border-t flex p-3 relative">
+          <div className="border-t flex justify-center p-3 relative">
             <Avatar sx={{ bgcolor: indigo[800] }} variant="rounded">
               {userInitial}
             </Avatar>

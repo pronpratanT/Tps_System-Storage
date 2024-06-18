@@ -19,7 +19,7 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
   // TODO : Check update duplicate Vendor ID
   const checkDuplicateVendorId = async (newVendorId, currentVendorId) => {
     try {
-      const res = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor");
+      const res = await fetch("/api/addVendor");
       const vendors = await res.json();
   
       // Check if newVendorId already exists in the vendors list, excluding the current vendor
@@ -54,7 +54,7 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
     try {
       //? Update Vendor
       const res = await fetch(
-        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor/${vendor?._id || ""}`,
+        `/api/addVendor/${vendor?._id || ""}`,
         {
           method: "PUT",
           headers: {

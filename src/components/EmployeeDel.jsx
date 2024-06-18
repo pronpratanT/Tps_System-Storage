@@ -23,7 +23,7 @@ function EmployeeDel({ isVisible, onClose, user, refreshUsers, refreshCount }) {
 
     try {
       const resDelete = await fetch(
-        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User?id=${user._id}`,
+        `/api/User?id=${user._id}`,
         {
           method: "DELETE",
         }

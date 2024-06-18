@@ -25,7 +25,7 @@ function ProductDel({ isVisible, onClose, product, refreshProducts, refreshCount
 
     try {
       const resDelete = await fetch(
-        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Product?id=${product._id}`,
+        `/api/Product?id=${product._id}`,
         {
           method: "DELETE",
         }

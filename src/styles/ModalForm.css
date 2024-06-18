@@ -1,0 +1,20 @@
+.react-datepicker {
+  z-index: 9999 !important;
+}
+
+.react-datepicker__input-container {
+  position: relative;
+}
+
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+input[type="text"] {
+  width: 100%; /* ให้ input มีความกว้างเต็มที่ */
+  padding-right: 2.5rem; /* เพิ่ม padding right เพื่อเว้นที่สำหรับไอคอน */
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}

@@ -6,53 +6,42 @@ import bcrypt from 'bcryptjs';
 
 const authOptions = {
   providers: [
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        email: { label: "Email", type: "email", placeholder: "example@example.com" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials, req) {
-        const { email, password } = credentials;
+      CredentialsProvider({
+        name: 'credentials',
+        credentials: {
 
-        try {
-          await connectMongoDB();
-          const user = await User.findOne({ email });
+        },
+        async authorize(credentials, req) {
+          const {email, password} = credentials;
+          try{
+              await connectMongoDB();
+              const user = await User.findOne({email});
 
-          if (!user) {
-            throw new Error('No user found with the provided email');
+              if(!user){
+                  return null;
+              }
+              const passwordMatch = await bcrypt.compare(password, user.password);
+
+              if(!passwordMatch){
+                  return null;
+              }
+              return user;
+
+          }catch(error){
+              console.log("Error", error);
           }
 
-          const passwordMatch = await bcrypt.compare(password, user.password);
-
-          if (!passwordMatch) {
-            throw new Error('Invalid password');
-          }
-
-          return user;
-        } catch (error) {
-          console.error("Error in authorize function:", error);
-          return null;
         }
-      }
-    })
-  ],
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-  pages: {
-    signIn: "/login",
-  },
-};
+      })
+    ],
+    session: {
+      strategy: "jwt",
+    },
+    secret: process.env.NEXTAUTH_SECRET,
+    pages: {
+      signIn: "/login"
+    },
+}
 
-const handler = (req, res) => {
-  if (req.method === "GET" || req.method === "POST") {
-    return NextAuth(req, res, authOptions);
-  } else {
-    res.setHeader("Allow", ["GET", "POST"]);
-    res.status(405).end(`Method ${req.method} Not Allowed`);
-  }
-};
-
-export default handler;
+const handler = NextAuth(authOptions);
+export{handler as GET, handler as POST};

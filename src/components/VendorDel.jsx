@@ -21,7 +21,7 @@ function VendorDel({ isVisible, onClose, vendor, refreshVendors, refreshCount })
 
     try {
       const resDelete = await fetch(
-        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor?id=${vendor._id}`,
+        `/api/addVendor?id=${vendor._id}`,
         {
           method: "DELETE",
         }

@@ -23,7 +23,7 @@ function ImportDel({ isVisible, onClose, importPd, refreshImports, refreshCount 
 
     try {
       const resDelete = await fetch(
-        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import?id=${importPd._id}`,
+        `/api/Import?id=${importPd._id}`,
         {
           method: "DELETE",
         }

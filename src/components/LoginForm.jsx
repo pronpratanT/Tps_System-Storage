@@ -5,6 +5,7 @@ import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { getSession } from "next-auth/react";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -12,7 +13,7 @@ export default function LoginForm() {
   const [error, setError] = useState("");
 
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session } = getSession();
 
   useEffect(() => {
     if (session) {

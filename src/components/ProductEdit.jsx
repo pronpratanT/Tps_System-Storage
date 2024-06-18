@@ -23,7 +23,7 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
 
   const checkDuplicateProductId = async (newProductId, currentProductId) => {
     try {
-      const res = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Product");
+      const res = await fetch("/api/Product");
       const products = await res.json();
       return products.some(
         (product) =>
@@ -60,7 +60,7 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
 
     try {
       const res = await fetch(
-        `https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Product/${product?._id || ""}`,
+        `/api/Product/${product?._id || ""}`,
         {
           method: "PUT",
           headers: {
@@ -96,7 +96,7 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
 
   const getUnits = async () => {
     try {
-      const resGetUnit = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Unit", {
+      const resGetUnit = await fetch("/api/Unit", {
         cache: "no-store",
       });
 

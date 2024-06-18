@@ -1,17 +1,20 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
-import { Edit, Search, Trash2, PackagePlus } from "lucide-react";
+import { useState, useEffect, Fragment, useRef } from "react";
+import { Edit, Search, Trash2, PackagePlus, Calendar } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import ImportEdit from "./ImportEdit";
 import ImportDel from "./ImportDel";
 import CountStatIXPort from "./CountStatIXPort";
+import DatePicker, { CalendarContainer } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "../styles/ModalForm.css";
 
-function ImportTable() {
+const ImportTable = () => {
   //? State
-  const [dateImport, setDateImport] = useState("");
+  const [dateImport, setDateImport] = useState(null);
   const [documentId, setDocumentId] = useState("");
   const [importVen, setImportVen] = useState("");
   const [importEm, setImportEm] = useState("");
@@ -25,13 +28,17 @@ function ImportTable() {
   const [selectedImport, setSelectedImport] = useState(null);
   const [vendors, setVendors] = useState([]);
   const [users, setUsers] = useState([]);
+  const [products, setProducts] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+  const datePickerRef = useRef(null);
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
+  const [selectedProductId, setSelectedProductId] = useState("");
 
   //TODO < Function to fetch Import to table >
   const getImport = async () => {
     try {
-      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import", {
+      const res_get = await fetch("/api/Import", {
         cache: "no-store",
       });
 
@@ -66,7 +73,7 @@ function ImportTable() {
   //TODO < Function to fetch vendors to table >
   const getVendors = async () => {
     try {
-      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/addVendor", {
+      const res_get = await fetch("/api/addVendor", {
         cache: "no-store",
       });
 
@@ -102,7 +109,7 @@ function ImportTable() {
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
     try {
-      const res_get = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/User", {
+      const res_get = await fetch("/api/User", {
         cache: "no-store",
       });
 
@@ -135,6 +142,42 @@ function ImportTable() {
     getUsers();
   }, []);
 
+  //TODO < Function to fetch product to table >
+  const getProducts = async () => {
+    try {
+      const res_get = await fetch("/api/Product", {
+        cache: "no-store",
+      });
+
+      if (!res_get.ok) {
+        throw new Error("Failed to fetch Product");
+      }
+
+      const newProducts = await res_get.json();
+
+      // Check for duplicates
+      const uniqueProducts = newProducts.filter(
+        (product, index, self) =>
+          index === self.findIndex((t) => t.productId === product.productId)
+      );
+
+      // Sort Products by vendorId in alphabetical order
+      const sortedProducts = uniqueProducts.sort((a, b) =>
+        a.productId.localeCompare(b.productId)
+      );
+
+      setProducts(sortedProducts);
+      console.log(sortedProducts);
+    } catch (error) {
+      console.log("Error loading Products: ", error);
+    }
+  };
+
+  //? Reload Products table
+  useEffect(() => {
+    getProducts();
+  }, []);
+
   //TODO <Function Search Document Id
   const filterImportsByID = (importPds, searchID) => {
     if (!searchID) return importPds; // Return all products if searchID is empty
@@ -157,7 +200,7 @@ function ImportTable() {
 
   const getImportById = async (id) => {
     try {
-      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import/${id}`, {
+      const res_byid = await fetch(`/api/Import/${id}`, {
         cache: "no-store",
       });
 
@@ -203,16 +246,13 @@ function ImportTable() {
     }
 
     try {
-      const resCheckImport = await fetch(
-        "https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/checkImport",
-        {
-          method: "POST",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({ documentId }),
-        }
-      );
+      const resCheckImport = await fetch("/api/checkImport", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({ documentId }),
+      });
       const { importPd } = await resCheckImport.json();
       if (importPd) {
         setError("Document ID already exists!");
@@ -220,7 +260,7 @@ function ImportTable() {
       }
 
       //* Add Product to DB
-      const res_add = await fetch("https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import", {
+      const res_add = await fetch("/api/Import", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -259,7 +299,7 @@ function ImportTable() {
   //TODO < Function Delete Import >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`https://tps-system-storage-nmjpypynm-pronpratants-projects.vercel.app/api/Import/${id}`, {
+      const res_byid = await fetch(`/api/Import/${id}`, {
         cache: "no-store",
       });
 
@@ -286,6 +326,42 @@ function ImportTable() {
 
   const handleRefresh = () => {
     setShouldRefresh(!shouldRefresh);
+  };
+
+  const CustomContainer = ({ className, children }) => (
+    <div style={{ zIndex: 9999 }}>
+      <CalendarContainer className={className}>
+        <div style={{ position: "relative" }}>{children}</div>
+      </CalendarContainer>
+    </div>
+  );
+
+  const handleImportQuantityChange = (productId, quantity) => {
+    setSelectedDocuments(
+      selectedDocuments.map((doc) =>
+        doc.productId === productId
+          ? { ...doc, importQuantity: parseInt(quantity) || 0 }
+          : doc
+      )
+    );
+  };
+
+  const handleProductIdChange = (e) => {
+    const productId = e.target.value;
+    if (!selectedDocuments.some((doc) => doc.productId === productId)) {
+      const selectedProduct = products.find(
+        (product) => product.productId === productId
+      );
+      if (selectedProduct) {
+        setSelectedDocuments([...selectedDocuments, selectedProduct]);
+      }
+    }
+  };
+
+  const handleRemoveProduct = (productId) => {
+    setSelectedDocuments(
+      selectedDocuments.filter((doc) => doc.productId !== productId)
+    );
   };
 
   return (
@@ -404,7 +480,7 @@ function ImportTable() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Panel className="w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                     <Dialog.Title
                       as="h3"
                       className="text-lg font-medium leading-6 text-gray-900"
@@ -417,36 +493,53 @@ function ImportTable() {
                       </p>
                     </div>
                     <div className="mt-4">
-                      <div className="mb-4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="dateImport"
-                        >
-                          Date
-                        </label>
-                        <input
-                          onChange={(e) => setDateImport(e.target.value)}
-                          value={dateImport}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="dateImport"
-                          type="text"
-                        />
+                      <div className="mb-4 flex justify-between">
+                        <div className="w-1/2 pr-2">
+                          <label
+                            className="block text-gray-700 text-sm font-bold mb-2"
+                            htmlFor="dateImport"
+                          >
+                            Date
+                          </label>
+                          <div className="relative">
+                            <DatePicker
+                              selected={dateImport}
+                              onChange={(date) => setDateImport(date)}
+                              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pl-10"
+                              id="dateImport"
+                              dateFormat="dd/MM/yyyy"
+                              placeholderText="Select a date"
+                              ref={datePickerRef}
+                              onFocus={(e) => e.target.blur()}
+                              calendarContainer={CustomContainer}
+                              popperPlacement="bottom-end"
+                            />
+                            <div
+                              className="absolute top-0 left-0 px-2 py-2 cursor-pointer"
+                              onClick={() => datePickerRef.current.setFocus()}
+                            >
+                              <Calendar className="text-gray-500" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="w-1/2 pl-2">
+                          <label
+                            className="block text-gray-700 text-sm font-bold mb-2"
+                            htmlFor="documentId"
+                          >
+                            Document ID
+                          </label>
+                          <input
+                            onChange={(e) => setDocumentId(e.target.value)}
+                            value={documentId}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="documentId"
+                            type="text"
+                          />
+                        </div>
                       </div>
-                      <div className="mb-4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="documentId"
-                        >
-                          Document ID
-                        </label>
-                        <input
-                          onChange={(e) => setDocumentId(e.target.value)}
-                          value={documentId}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="documentId"
-                          type="text"
-                        />
-                      </div>
+
                       <div className="mb-4">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
@@ -477,6 +570,91 @@ function ImportTable() {
                           ))}
                         </select>
                       </div>
+                      {/* Product ID */}
+                      <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2">
+                          Product ID
+                        </label>
+                        <select
+                          onChange={handleProductIdChange}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          value={selectedProductId}
+                        >
+                          <option value="">Select Product ID</option>
+                          {products.map((product) => (
+                            <option
+                              key={product.productId}
+                              value={product.productId}
+                            >
+                              {product.productId}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {/* Products Table */}
+                      <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2">
+                          Selected Products
+                        </label>
+                        <table className="min-w-full bg-white border">
+                          <thead>
+                            <tr>
+                              <th className="py-2 px-4 border w-3/12">
+                                Product ID
+                              </th>
+                              <th className="py-2 px-4 border w-5/12">
+                                Product Name
+                              </th>
+                              <th className="py-2 px-4 border w-1/12 text-center">Amount</th>
+                              <th className="py-2 px-4 border w-2/12 text-center">Import</th>
+                              <th className="py-2 px-4 border w-1/12 text-center">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedDocuments.map((doc) => (
+                              <tr key={doc.productId}>
+                                <td className="py-2 px-4 border">
+                                  {doc.productId}
+                                </td>
+                                <td className="py-2 px-4 border">
+                                  {doc.productName}
+                                </td>
+                                <td className="py-2 px-4 border text-right">
+                                  {doc.amount}
+                                </td>
+                                <td className="py-2 px-4 border">
+                                  <input
+                                    type="number"
+                                    value={doc.importQuantity || ""}
+                                    onChange={(e) =>
+                                      handleImportQuantityChange(
+                                        doc.productId,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full py-1 px-2 border rounded text-right"
+                                  />
+                                </td>
+                                <td className="py-2 px-4 border text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRemoveProduct(doc.productId)
+                                    }
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <Trash2 size={23} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Employee */}
                       <div className="mb-4">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
@@ -506,7 +684,7 @@ function ImportTable() {
                       </div>
                     </div>
 
-                    {/* // TODO : Error & Success */}
+                    {/* Error & Success Messages */}
                     {error && (
                       <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
                         {error}
@@ -552,6 +730,6 @@ function ImportTable() {
       />
     </div>
   );
-}
+};
 
 export default ImportTable;
