@@ -188,7 +188,7 @@ export default function Sidebar({ session, children }) {
             </ul>
           </SidebarContext.Provider>
 
-          <div className="border-t flex justify-center p-3 relative">
+          <div className="border-t flex justify-left p-3 relative">
             <Avatar sx={{ bgcolor: indigo[800] }} variant="rounded">
               {userInitial}
             </Avatar>

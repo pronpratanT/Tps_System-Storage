@@ -4,9 +4,9 @@ import Product from "../../../../../models/product";
 
 export async function PUT(request, {params}){
     const {id} = params;
-    const { newProductId: productId, newProductName: productName, newProductUnit: productUnit, newStoreHouse: storeHouse, newAmount: amount } = await request.json();
+    const { newProductId: productId, newProductName: productName, newProductUnit: productUnit, newBrand: brand, newStoreHouse: storeHouse, newAmount: amount } = await request.json();
     await connectMongoDB();
-    await Product.findByIdAndUpdate(id, {productId, productName, productUnit, storeHouse, amount});
+    await Product.findByIdAndUpdate(id, {productId, productName, productUnit, brand, storeHouse, amount});
     return NextResponse.json({message: "Product updated"}, {status: 200});
 }
 

@@ -22,7 +22,7 @@ const userSchema = new Schema(
         role: {
             type: String,
             required: false,
-            default: "member",
+            default: "USER",
         },
     },
     {timestamps: true}

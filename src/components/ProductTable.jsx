@@ -15,6 +15,7 @@ export default function ProductTable() {
   const [productName, setProductName] = useState("");
   const [productUnit, setProductUnit] = useState("");
   const [storeHouse, setStoreHouse] = useState("");
+  const [brand, setBrand] = useState("");
   const [amount, setAmount] = useState("");
   const [products, setProducts] = useState([]);
   const [error, setError] = useState("");
@@ -192,6 +193,7 @@ export default function ProductTable() {
           productId,
           productName,
           productUnit,
+          brand,
           storeHouse,
           amount,
         }),
@@ -287,11 +289,14 @@ export default function ProductTable() {
           <table className="min-w-full bg-white">
             <thead>
               <tr>
-                <th className="py-3 pr-4 pl-20 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-3/12">
+                <th className="py-3 pr-4 pl-10 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-3/12">
                   Product ID
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-4/12">
                   Product Name
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
+                  Brand
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
                   Unit
@@ -310,7 +315,7 @@ export default function ProductTable() {
             <tbody>
               {filterProductsByID(products, searchID).map((product) => (
                 <tr key={product.productId} className="border-t">
-                  <td className="py-4 pr-4 pl-20 flex items-center w-auto">
+                  <td className="py-4 pr-4 pl-10 flex items-center w-auto">
                     <Avatar
                       sx={{ bgcolor: indigo[800], marginRight: "20px" }}
                       variant="rounded-md"
@@ -320,6 +325,7 @@ export default function ProductTable() {
                     {product.productId}
                   </td>
                   <td className="py-4 px-4">{product.productName}</td>
+                  <td className="py-4 px-4">{product.brand}</td>
                   <td className="py-4 px-4">{product.productUnit}</td>
                   <td className="py-4 px-4">{product.storeHouse}</td>
                   <td className="py-4 px-4 text-right">{product.amount}</td>
@@ -409,6 +415,21 @@ export default function ProductTable() {
                         <input
                           onChange={(e) => setProductName(e.target.value)}
                           value={productName}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="name"
+                          type="text"
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="name"
+                        >
+                          Brand
+                        </label>
+                        <input
+                          onChange={(e) => setBrand(e.target.value)}
+                          value={brand}
                           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           id="name"
                           type="text"

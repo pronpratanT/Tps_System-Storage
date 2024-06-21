@@ -58,28 +58,28 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
       return;
     }
 
-    const isDuplicateEmail = await checkDuplicateEmail(newEmail, user?._id || "");
+    const isDuplicateEmail = await checkDuplicateEmail(
+      newEmail,
+      user?._id || ""
+    );
     if (isDuplicateEmail) {
       setError("Email already exists!");
       return;
     }
 
     try {
-      const res = await fetch(
-        `/api/User/${user?._id || ""}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({
-            newUserId,
-            newName,
-            newEmail,
-            newRole,
-          }),
-        }
-      );
+      const res = await fetch(`/api/User/${user?._id || ""}`, {
+        method: "PUT",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({
+          newUserId,
+          newName,
+          newEmail,
+          newRole,
+        }),
+      });
 
       if (!res.ok) {
         throw new Error("Failed to update Employee");
@@ -192,38 +192,17 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
                           >
                             Role
                           </label>
-                          <input
+                          <select
                             onChange={(e) => setNewRole(e.target.value)}
                             value={newRole}
                             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                             id="role"
-                            type="text"
-                          />
-                        </div>
-                        {/* <div className="flex-1 ml-1">
-                          <div className="mb-2">
-                            <label
-                              htmlFor="unit"
-                              className="block text-gray-700 text-sm font-bold"
-                            >
-                              Unit
-                            </label>
-                          </div>
-                          <select
-                            id="unit"
-                            onChange={(e) =>
-                              setProductUnit(e.target.selectedOptions[0].text)
-                            }
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                           >
-                            <option value="">Select a unit</option>
-                            {units.map((unit) => (
-                              <option key={unit.unitId} value={unit.unitName}>
-                                {unit.unitName}
-                              </option>
-                            ))}
+                            <option value="USER">USER</option>
+                            <option value="MEMBER">MEMBER</option>
+                            <option value="ADMIN">ADMIN</option>
                           </select>
-                        </div> */}
+                        </div>
                       </div>
                     </div>
 

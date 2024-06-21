@@ -34,12 +34,12 @@ const ImportTable = () => {
   const [shouldRefresh, setShouldRefresh] = useState(false);
   const datePickerRef = useRef(null);
   const [selectedDocuments, setSelectedDocuments] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState([]);
+  const [selectedProductId, setSelectedProductId] = useState("");
 
   //TODO < Function to fetch Import to table >
   const getImport = async () => {
     try {
-      const res_get = await fetch("/api/ImportDB", {
+      const res_get = await fetch("/api/Import", {
         cache: "no-store",
       });
 
@@ -201,7 +201,7 @@ const ImportTable = () => {
 
   const getImportById = async (id) => {
     try {
-      const res_byid = await fetch(`/api/ImportDB/${id}`, {
+      const res_byid = await fetch(`/api/Import/${id}`, {
         cache: "no-store",
       });
 
@@ -228,7 +228,7 @@ const ImportTable = () => {
     }
   };
 
-  //! < Function Add Import >
+  //TODO < Function Add Import >
   const openAddModal = () => {
     setIsAddModalOpen(true);
   };
@@ -241,29 +241,13 @@ const ImportTable = () => {
   const handleAddSubmit = async (e) => {
     e.preventDefault();
 
-    for (let i = 0; i < selectedDocuments.length; i++) {
-      const selDoc = {
-        imProId: selectedDocuments[i].productId,
-        imProName: selectedDocuments[i].productName,
-        import: selectedDocuments[i].importQuantity,
-      };
-      selectedProduct.push(selDoc);
-    }
-    console.log("selectedProduct : ", selectedProduct);
-    console.log("selectedDocuments : ", selectedDocuments);
-
     if (!dateImport || !documentId || !importVen) {
       setError("Please complete Import Product details!");
       return;
     }
 
-    if (!selectedProduct || selectedProduct.length === 0) {
-      setError("Please add at least one product!");
-      return;
-    }
-
     try {
-      const resCheckImport = await fetch("/api/checkImportDB", {
+      const resCheckImport = await fetch("/api/checkImport", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -276,8 +260,8 @@ const ImportTable = () => {
         return;
       }
 
-      // Add Product to DB
-      const res_add = await fetch("/api/ImportDB", {
+      //* Add Product to DB
+      const res_add = await fetch("/api/Import", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -287,7 +271,6 @@ const ImportTable = () => {
           documentId,
           importVen,
           importEm,
-          selectedProduct,
         }),
       });
 
@@ -306,8 +289,6 @@ const ImportTable = () => {
         setDocumentId("");
         setImportVen("");
         setImportEm("");
-        setSelectedProduct([]);
-        setSelectedDocuments([]);
         setRefresh(!refresh);
       }, 2000);
     } catch (error) {
@@ -319,7 +300,7 @@ const ImportTable = () => {
   //TODO < Function Delete Import >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`/api/ImportDB/${id}`, {
+      const res_byid = await fetch(`/api/Import/${id}`, {
         cache: "no-store",
       });
 
@@ -350,17 +331,13 @@ const ImportTable = () => {
   };
 
   //? Selected Product
-
-  //* Date Custom
   const CustomContainer = ({ className, children }) => (
-    <div style={{ zIndex: 9999, position: "absolute" }}>
+    <div style={{ zIndex: 9999, position: 'absolute' }}>
       <CalendarContainer className={className}>
-        <div style={{ position: "relative" }}>{children}</div>
+        <div style={{ position: 'relative' }}>{children}</div>
       </CalendarContainer>
     </div>
   );
-
-  //* Date Custom >
 
   const handleProductIdChange = (selectedOption) => {
     if (!selectedOption) return;
@@ -370,13 +347,13 @@ const ImportTable = () => {
       productId &&
       !selectedDocuments.some((doc) => doc.productId === productId)
     ) {
-      const selected = products.find(
+      const selectedProduct = products.find(
         (product) => product.productId === productId
       );
-      if (selected) {
+      if (selectedProduct) {
         setSelectedDocuments([
           ...selectedDocuments,
-          { ...selected, importQuantity: 0 },
+          { ...selectedProduct, importQuantity: 0 },
         ]);
       }
     }
@@ -466,7 +443,8 @@ const ImportTable = () => {
       </div>
     ),
   }));
-
+  
+  
   const renderDropdownInPortal = ({ props, isOpened }) => {
     if (isOpened) {
       return createPortal(

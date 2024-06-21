@@ -15,6 +15,10 @@ const productSchema = new Schema(
             type: String,
             required: true,
         },
+        brand: {
+            type: String,
+            required: false,
+        },
         storeHouse: {
             type: String,
             required: true,

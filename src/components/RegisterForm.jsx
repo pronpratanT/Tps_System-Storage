@@ -72,7 +72,7 @@ export default function RegisterForm() {
 
     return (
         <div className="grid place-items-center h-screen">
-            <div className="shadow-lg p-8 rounded-lg border-t-4 border-indigo-800 w-[450px]">
+            <div className="shadow-lg p-8 rounded-lg border-t-4 border-indigo-600 w-[450px]">
                 <h1 className="text-2xl font-bold my-4 text-center">Create your account</h1>
 
                 <form className="flex flex-col gap-4" onSubmit={handleSubmit}>

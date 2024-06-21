@@ -5,6 +5,7 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
   const [newProductId, setNewProductId] = useState("");
   const [newProductName, setNewProductName] = useState("");
   const [newProductUnit, setNewProductUnit] = useState("");
+  const [newBrand, setNewBrand] = useState("");
   const [newStoreHouse, setNewStoreHouse] = useState("");
   const [newAmount, setNewAmount] = useState("");
   const [error, setError] = useState("");
@@ -16,6 +17,7 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
       setNewProductId(product.productId);
       setNewProductName(product.productName);
       setNewProductUnit(product.productUnit);
+      setNewBrand(product.brand)
       setNewStoreHouse(product.storeHouse);
       setNewAmount(product.amount);
     }
@@ -70,6 +72,7 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
             newProductId,
             newProductName,
             newProductUnit,
+            newBrand,
             newStoreHouse,
             newAmount,
           }),
@@ -187,6 +190,18 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
                         value={newProductName}
                       />
                     </div>
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-sm font-bold mb-2">
+                        Brand
+                      </label>
+                      <input
+                        onChange={(e) => setNewBrand(e.target.value)}
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        type="text"
+                        value={newBrand}
+                      />
+                    </div>
+
                     <div className="mb-4">
                       <label className="block text-gray-700 text-sm font-bold mb-2">
                         StoreHouse

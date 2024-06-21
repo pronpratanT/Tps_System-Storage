@@ -49,6 +49,7 @@ function Report() {
         index + 1,
         item.productId,
         item.productName,
+        item.brand,
         item.productUnit,
         Number(item.amount).toFixed(2),
       ]),
@@ -83,13 +84,16 @@ function Report() {
                 <th className="border py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center w-3/12">
                   รหัสสินค้า
                 </th>
-                <th className="border py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center w-5/12">
+                <th className="border py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center w-4/12">
                   ชื่อสินค้า
+                </th>
+                <th className="border py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center w-1/12">
+                  ยี่ห้อ
                 </th>
                 <th className="border py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center w-1/12">
                   หน่วย
                 </th>
-                <th className="border py-3 pr-10 pl-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md w-2/12">
+                <th className="border py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md w-1/12">
                   จำนวนหน่วย
                 </th>
               </tr>
@@ -104,8 +108,9 @@ function Report() {
                     {product.productId}
                   </td>
                   <td className="border py-4 px-4">{product.productName}</td>
+                  <td className="border py-4 px-4">{product.brand}</td>
                   <td className="border py-4 px-4 text-center">{product.productUnit}</td>
-                  <td className="border py-4 pr-10 text-right">
+                  <td className="border py-4 px-4 text-right">
                     {Number(product.amount).toFixed(2)}
                   </td>
                 </tr>

@@ -5,6 +5,7 @@ function ProductDel({ isVisible, onClose, product, refreshProducts, refreshCount
   const [delId, setDelId] = useState("");
   const [delName, setDelName] = useState("");
   const [delUnit, setDelUnit] = useState("");
+  const [delBrand, setDelBrand] = useState("");
   const [delStoreHouse, setDelStoreHouse] = useState("");
   const [delAmount, setDelAmount] = useState("");
   const [error, setError] = useState("");
@@ -15,6 +16,7 @@ function ProductDel({ isVisible, onClose, product, refreshProducts, refreshCount
       setDelId(product.productId);
       setDelName(product.productName);
       setDelUnit(product.productUnit);
+      setDelBrand(product.brand);
       setDelStoreHouse(product.storeHouse);
       setDelAmount(product.amount);
     }
@@ -107,6 +109,18 @@ function ProductDel({ isVisible, onClose, product, refreshProducts, refreshCount
                           id="ProductName"
                           type="text"
                           value={delName}
+                          readOnly
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2">
+                          Brand
+                        </label>
+                        <input
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="Brand"
+                          type="text"
+                          value={delBrand}
                           readOnly
                         />
                       </div>

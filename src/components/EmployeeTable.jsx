@@ -386,42 +386,21 @@ export default function UserTable() {
                         <div className="flex-1 mr-1">
                           <label
                             className="block text-gray-700 text-sm font-bold mb-2"
-                            htmlFor="amount"
+                            htmlFor="role"
                           >
                             Role
                           </label>
-                          <input
+                          <select
                             onChange={(e) => setRole(e.target.value)}
                             value={role}
                             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="amount"
-                            type="text"
-                          />
-                        </div>
-                        {/* <div className="flex-1 ml-1">
-                          <div className="mb-2">
-                            <label
-                              htmlFor="unit"
-                              className="block text-gray-700 text-sm font-bold"
-                            >
-                              Unit
-                            </label>
-                          </div>
-                          <select
-                            id="unit"
-                            onChange={(e) =>
-                              setProductUnit(e.target.selectedOptions[0].text)
-                            }
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="role"
                           >
-                            <option value="">Select a unit</option>
-                            {units.map((unit) => (
-                              <option key={unit.unitId} value={unit.unitName}>
-                                {unit.unitName}
-                              </option>
-                            ))}
+                            <option value="USER">USER</option>
+                            <option value="MEMBER">MEMBER</option>
+                            <option value="ADMIN">ADMIN</option>
                           </select>
-                        </div> */}
+                        </div>
                       </div>
                     </div>
 
