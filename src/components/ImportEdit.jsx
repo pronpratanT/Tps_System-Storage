@@ -1,5 +1,10 @@
-import React, { Fragment, useState, useEffect } from "react";
+import React, { Fragment, useState, useEffect, useRef } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import DatePicker, { CalendarContainer } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "../styles/ModalForm.css";
+import Select from "react-select";
+import { Calendar, Trash2 } from "lucide-react";
 
 function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   const [newDateImport, setNewDateImport] = useState("");
@@ -8,8 +13,14 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   const [newImportEm, setNewImportEm] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const datePickerRef = useRef(null);
   const [vendors, setVendors] = useState([]);
   const [users, setUsers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [newSelectedProduct, setNewSelectedProduct] = useState([]);
+  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
 
   useEffect(() => {
     if (importPd) {
@@ -17,16 +28,18 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
       setNewDocumentId(importPd.documentId);
       setNewImportVen(importPd.importVen);
       setNewImportEm(importPd.importEm);
+      setNewSelectedProduct(importPd.selectedProduct);
     }
   }, [importPd]);
 
   const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
     try {
-      const res = await fetch("/api/Import");
+      const res = await fetch("/api/ImportDB");
       const imports = await res.json();
       return imports.some(
         (importPd) =>
-          importPd.documentId === newDocumentId && importPd._id !== currentDocumentId
+          importPd.documentId === newDocumentId &&
+          importPd._id !== currentDocumentId
       );
     } catch (error) {
       console.error("Error checking duplicate Document ID:", error);
@@ -52,21 +65,19 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
     }
 
     try {
-      const res = await fetch(
-        `/api/Import/${importPd?._id || ""}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({
-            newDateImport,
-            newDocumentId,
-            newImportVen,
-            newImportEm,
-          }),
-        }
-      );
+      const res = await fetch(`/api/Import/${importPd?._id || ""}`, {
+        method: "PUT",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({
+          newDateImport,
+          newDocumentId,
+          newImportVen,
+          newImportEm,
+          newSelectedProduct,
+        }),
+      });
 
       if (!res.ok) {
         throw new Error("Failed to update Import Product");
@@ -158,6 +169,189 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
     getVendors();
   }, []);
 
+  //TODO < Function to fetch product to table >
+  const getProducts = async () => {
+    try {
+      const res_get = await fetch("/api/Product", {
+        cache: "no-store",
+      });
+
+      if (!res_get.ok) {
+        throw new Error("Failed to fetch Product");
+      }
+
+      const newProducts = await res_get.json();
+
+      // Check for duplicates
+      const uniqueProducts = newProducts.filter(
+        (product, index, self) =>
+          index === self.findIndex((t) => t.productId === product.productId)
+      );
+
+      // Sort Products by vendorId in alphabetical order
+      const sortedProducts = uniqueProducts.sort((a, b) =>
+        a.productId.localeCompare(b.productId)
+      );
+
+      setProducts(sortedProducts);
+      console.log(sortedProducts);
+    } catch (error) {
+      console.log("Error loading Products: ", error);
+    }
+  };
+
+  //? Reload Products table
+  useEffect(() => {
+    getProducts();
+  }, []);
+
+  //? Selected Vendor
+  useEffect(() => {
+    if (newImportVen && vendors.length > 0) {
+      const initialVendor = vendors.find(
+        (vendor) => vendor.vendorName === newImportVen
+      );
+      if (initialVendor) {
+        setSelectedVendor({
+          value: initialVendor.vendorName,
+          label: initialVendor.vendorName,
+        });
+      }
+    }
+  }, [newImportVen, vendors]);
+
+  const sortedVendors = vendors.slice().sort((a, b) => {
+    const isASelected = a.vendorName === newImportVen;
+    const isBSelected = b.vendorName === newImportVen;
+
+    if (isASelected && !isBSelected) return -1;
+    if (!isASelected && isBSelected) return 1;
+    return 0;
+  });
+
+  const vendorOptions = sortedVendors.map((vendor) => ({
+    value: vendor.vendorName,
+    label: (
+      <div className="flex justify-between items-center">
+        <span>{vendor.vendorName}</span>
+        {vendor.vendorName === newImportVen && (
+          <span className="text-green-700 ml-2">&#10003;</span>
+        )}
+      </div>
+    ),
+  }));
+
+  const handleVendorChange = (option) => {
+    setSelectedVendor(option);
+    setNewImportVen(option ? option.value : "");
+  };
+  //? Selected Vendor >
+
+  //? Selected User
+  useEffect(() => {
+    if (newImportEm && users.length > 0) {
+      const initialEmployee = users.find((user) => user.name === newImportEm);
+      if (initialEmployee) {
+        setSelectedEmployee({
+          value: initialEmployee.name,
+          label: initialEmployee.name,
+        });
+      }
+    }
+  }, [newImportEm, users]);
+
+  const sortedUsers = users.slice().sort((a, b) => {
+    const isASelected = a.name === newImportEm;
+    const isBSelected = b.name === newImportEm;
+
+    if (isASelected && !isBSelected) return -1; // a ถูกเลือกแล้ว ให้อยู่ก่อน
+    if (!isASelected && isBSelected) return 1; // b ถูกเลือกแล้ว ให้อยู่หลัง
+    return 0; // กรณีอื่น ๆ ให้คงลำดับเดิม
+  });
+
+  const employeeOptions = sortedUsers.map((user) => ({
+    value: user.name,
+    label: (
+      <div className="flex justify-between items-center">
+        <span>{user.name}</span>
+        {user.name === newImportEm && (
+          <span className="text-green-700 ml-2">&#10003;</span>
+        )}
+      </div>
+    ),
+  }));
+
+  const renderDropdownInPortal = ({ props, isOpened }) => {
+    if (isOpened) {
+      return createPortal(
+        <div {...props.menuPortalTarget}>{props.menuPortal}</div>,
+        document.body
+      );
+    }
+    return null;
+  };
+
+  const handleEmployeeChange = (option) => {
+    setSelectedEmployee(option);
+    setNewImportEm(option ? option.value : "");
+  };
+  //? Selected User >
+  //* Date Custom
+  const CustomContainer = ({ className, children }) => (
+    <div style={{ zIndex: 9999, position: "absolute" }}>
+      <CalendarContainer className={className}>
+        <div style={{ position: "relative" }}>{children}</div>
+      </CalendarContainer>
+    </div>
+  );
+  //* Date Custom >
+  //? Selected Product
+  const handleProductIdChange = (selectedOption) => {
+    if (!selectedOption) return;
+  
+    const productId = selectedOption.value;
+    if (
+      productId &&
+      !newSelectedProduct.some((prod) => prod.imProId === productId)
+    ) {
+      const selected = products.find(
+        (product) => product.productId === productId
+      );
+      if (selected) {
+        const updatedSelectedProduct = [
+          ...newSelectedProduct,
+          { imProId: selected.productId, imProName: selected.productName, import: 0 },
+        ];
+        setNewSelectedProduct(updatedSelectedProduct);
+      }
+    }
+  };
+  
+  const productOptions = products.map((product) => {
+    const isSelected = newSelectedProduct.some((prod) => prod.imProId === product.productId);
+  
+    return {
+      value: product.productId,
+      label: (
+        <div className="flex justify-between items-center">
+          <span>{product.productId}</span>
+          {isSelected && (
+            <span className="text-green-500 ml-2">&#10003;</span> // เปลี่ยนเป็นเครื่องหมายถูก (checkmark icon)
+          )}
+        </div>
+      ),
+      isSelected: isSelected, // เพิ่มฟิลด์ isSelected เพื่อใช้ในการเรียงลำดับต่อไป (ถ้าต้องการ)
+    };
+  });
+  
+  // เรียงลำดับตัวเลือกที่มีเลือกแล้วไปอยู่บนสุดของ productOptions
+  productOptions.sort((a, b) => {
+    if (a.isSelected && !b.isSelected) return -1; // a มีเลือกแล้ว แต่ b ยังไม่มี
+    if (!a.isSelected && b.isSelected) return 1; // b มีเลือกแล้ว แต่ a ยังไม่มี
+    return 0; // ไม่มีการเปลี่ยนแปลงในการเรียงลำดับ
+  });
+  //? Selected Product >
+
   return (
     <Transition appear show={isVisible} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={onClose}>
@@ -184,49 +378,66 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                   <Dialog.Title
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Update Import Product Form
+                    Add Import Product Form
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Update the details of the Import Product below.
+                      Add the details of the Import Product below.
                     </p>
                   </div>
+
                   <div className="mt-4">
-                    <div className="mb-4">
-                      <label
-                        className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="dateImport"
-                      >
-                        Date
-                      </label>
-                      <input
-                        onChange={(e) => setNewDateImport(e.target.value)}
-                        value={newDateImport}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="dateImport"
-                        type="text"
-                      />
+                    <div className="mb-4 flex justify-between">
+                      <div className="w-1/2 pr-2">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="dateImport"
+                        >
+                          Date
+                        </label>
+                        <div className="relative">
+                          <DatePicker
+                            selected={newDateImport}
+                            onChange={(date) => setDateImport(date)}
+                            className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pl-10"
+                            id="dateImport"
+                            dateFormat="dd/MM/yyyy"
+                            placeholderText="Select a date"
+                            ref={datePickerRef}
+                            onFocus={(e) => e.target.blur()}
+                            popperPlacement="bottom-end"
+                          />
+                          <div
+                            className="absolute top-0 left-0 px-2 py-2 cursor-pointer"
+                            onClick={() => datePickerRef.current.setFocus()}
+                          >
+                            <Calendar className="text-gray-500" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-1/2 pl-2">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="documentId"
+                        >
+                          Document ID
+                        </label>
+                        <input
+                          onChange={(e) => setNewDocumentId(e.target.value)}
+                          value={newDocumentId}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="documentId"
+                          type="text"
+                        />
+                      </div>
                     </div>
-                    <div className="mb-4">
-                      <label
-                        className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="documentId"
-                      >
-                        Document ID
-                      </label>
-                      <input
-                        onChange={(e) => setNewDocumentId(e.target.value)}
-                        value={newDocumentId}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="documentId"
-                        type="text"
-                      />
-                    </div>
+
                     <div className="mb-4">
                       <label
                         className="block text-gray-700 text-sm font-bold mb-2"
@@ -234,59 +445,143 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                       >
                         Vendor
                       </label>
-                      <select
-                        id="unit"
-                        value={newImportVen}
-                        onChange={(e) => {
-                          const selectedValue = e.target.value;
-                          const selectedText = e.target.selectedOptions[0].text;
-                          setNewImportVen(
-                            selectedValue === "" ? "" : selectedText
-                          );
+                      <Select
+                        options={vendorOptions}
+                        onChange={handleVendorChange}
+                        value={selectedVendor}
+                        placeholder="Select Vendor"
+                        isClearable
+                        className="basic-single shadow rounded focus:outline-none focus:shadow-outline"
+                        classNamePrefix="select"
+                        maxMenuHeight={200}
+                        styles={{
+                          menuPortal: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                          }),
                         }}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      >
-                        <option value="">Select Vendor</option>
-                        {vendors.map((vendor) => (
-                          <option
-                            key={vendor.vendorId}
-                            value={vendor.vendorName}
-                          >
-                            {vendor.vendorName}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </div>
+                    {/* Product ID */}
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-sm font-bold mb-2">
+                        Product ID
+                      </label>
+                      <Select
+                        options={productOptions}
+                        onChange={handleProductIdChange}
+                        placeholder="Select Product"
+                        isClearable
+                        className="basic-single shadow rounded focus:outline-none focus:shadow-outline"
+                        classNamePrefix="select"
+                        maxMenuHeight={200}
+                        styles={{
+                          menuPortal: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                          }),
+                        }}
+                      />
+                    </div>
+                    {/* Products Table */}
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-sm font-bold mb-2">
+                        Selected Products
+                      </label>
+                      <table className="min-w-full bg-white border">
+                        <thead>
+                          <tr>
+                            <th className="py-2 px-4 border w-3/12">
+                              Product ID
+                            </th>
+                            <th className="py-2 px-4 border w-5/12">
+                              Product Name
+                            </th>
+                            <th className="py-2 px-4 border w-1/12 text-center">
+                              Amount
+                            </th>
+                            <th className="py-2 px-4 border w-2/12 text-center">
+                              Import
+                            </th>
+                            <th className="py-2 px-4 border w-1/12 text-center">
+                              Actions
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {newSelectedProduct.map((prod) => (
+                            <tr key={prod.imProId}>
+                              <td className="py-2 px-4 border">
+                                {prod.imProId}
+                              </td>
+                              <td className="py-2 px-4 border">
+                                {prod.imProName}
+                              </td>
+                              <td className="py-2 px-4 border text-right">
+                                {prod.amount}
+                              </td>
+                              <td className="py-2 px-4 border">
+                                <input
+                                  type="number"
+                                  value={prod.import || ""}
+                                  onChange={(e) =>
+                                    handleImportQuantityChange(
+                                      prod.imProId,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="w-full py-1 px-2 border rounded text-right"
+                                />
+                              </td>
+                              <td className="py-2 px-4 border text-center">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleRemoveProduct(prod.imProId)
+                                  }
+                                  className="text-red-500 hover:text-red-700"
+                                >
+                                  <Trash2 size={23} />
+                                </button>
+                                {prod.selected && (
+                                  <span className="ml-2 text-green-500">
+                                    Selected
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Employee */}
                     <div className="mb-4">
                       <label
                         className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="importEm"
+                        htmlFor="newImportEm"
                       >
                         Employee
                       </label>
-                      <select
-                        id="importEm"
-                        value={newImportEm}
-                        onChange={(e) => {
-                          const selectedValue = e.target.value;
-                          const selectedText = e.target.selectedOptions[0].text;
-                          setNewImportEm(
-                            selectedValue === "" ? "" : selectedText
-                          );
+                      <Select
+                        options={employeeOptions}
+                        onChange={handleEmployeeChange}
+                        value={selectedEmployee}
+                        placeholder="Select Employee"
+                        isClearable
+                        className="basic-single shadow focus:shadow-outline focus:outline-none rounded"
+                        classNamePrefix="select"
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        maxMenuHeight={200}
+                        styles={{
+                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                         }}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      >
-                        <option value="">Select Employee</option>
-                        {users.map((user) => (
-                          <option key={user.userid} value={user.name}>
-                            {user.name}
-                          </option>
-                        ))}
-                      </select>
+                      />
                     </div>
                   </div>
 
-                  {/* // TODO : Error & Success */}
+                  {/* Error & Success Messages */}
                   {error && (
                     <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
                       {error}
@@ -303,7 +598,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                     >
-                      Update Import Product
+                      Add Import Product
                     </button>
                   </div>
                 </Dialog.Panel>
