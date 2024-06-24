@@ -270,13 +270,44 @@ const ImportTable = () => {
         },
         body: JSON.stringify({ documentId }),
       });
+
+      //? Product Amount Update
+      const updatePromises = selectedDocuments.map(async (doc) => {
+        const product = products.find(p => p.productId === doc.productId);
+        if (!product) return null;
+        console.log("Product ID : ", product._id);
+        const newAmount = (parseInt(product.amount) + parseInt(doc.importQuantity || 0)).toString();
+        
+        const res = await fetch(`/api/Product/${product._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({
+            newProductId: product.productId,
+            newProductName: product.productName,
+            newProductUnit: product.productUnit,
+            newBrand: product.brand,
+            newStoreHouse: product.storeHouse,
+            newAmount: newAmount,
+          }),
+        });
+  
+        if (!res.ok) {
+          throw new Error(`Failed to update Product ${product.productId}`);
+        }
+  
+        return res.json();
+      });
+
       const { importPd } = await resCheckImport.json();
       if (importPd) {
         setError("Document ID already exists!");
         return;
       }
+      const results = await Promise.all(updatePromises);
 
-      // Add Product to DB
+      //? Add Product to DB
       const res_add = await fetch("/api/ImportDB", {
         method: "POST",
         headers: {
@@ -390,9 +421,27 @@ const ImportTable = () => {
 
   const handleImportQuantityChange = (productId, quantity) => {
     setSelectedDocuments(
-      selectedDocuments.map((doc) =>
-        doc.productId === productId ? { ...doc, importQuantity: quantity } : doc
-      )
+      selectedDocuments.map((doc) => {
+        if (doc.productId === productId) {
+          const originalAmount = doc.originalAmount ?? doc.amount;
+          const originalQuantity = doc.originalQuantity ?? 0;
+
+          const quantityDifference = parseInt(quantity || 0) - originalQuantity;
+          const newAmount = parseInt(originalAmount) + quantityDifference;
+
+          const isModified = newAmount !== parseInt(originalAmount);
+
+          return {
+            ...doc,
+            importQuantity: quantity,
+            amount: newAmount,
+            isModified: isModified,
+            originalAmount: doc.originalAmount ?? doc.amount,
+            originalQuantity: doc.originalQuantity ?? 0,
+          };
+        }
+        return doc;
+      })
     );
   };
 
@@ -736,7 +785,11 @@ const ImportTable = () => {
                                 <td className="py-2 px-4 border">
                                   {doc.productName}
                                 </td>
-                                <td className="py-2 px-4 border text-right">
+                                <td
+                                  className={`py-2 px-4 border text-right ${
+                                    doc.isModified ? "text-green-600" : ""
+                                  }`}
+                                >
                                   {doc.amount}
                                 </td>
                                 <td className="py-2 px-4 border">

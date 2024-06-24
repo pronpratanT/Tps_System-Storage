@@ -47,11 +47,16 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
     }
   };
 
+  //! Edit Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!newDateImport || !newDocumentId || !newImportVen) {
       setError("Please complete Import Product details!");
+      return;
+    }
+    if (!newSelectedProduct || newSelectedProduct.length === 0) {
+      setError("Please add at least one product!");
       return;
     }
 
@@ -65,7 +70,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
     }
 
     try {
-      const res = await fetch(`/api/Import/${importPd?._id || ""}`, {
+      const res = await fetch(`/api/ImportDB/${importPd?._id || ""}`, {
         method: "PUT",
         headers: {
           "Content-type": "application/json",
@@ -308,7 +313,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   //? Selected Product
   const handleProductIdChange = (selectedOption) => {
     if (!selectedOption) return;
-  
+
     const productId = selectedOption.value;
     if (
       productId &&
@@ -320,16 +325,27 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
       if (selected) {
         const updatedSelectedProduct = [
           ...newSelectedProduct,
-          { imProId: selected.productId, imProName: selected.productName, import: 0 },
+          {
+            imProId: selected.productId,
+            imProName: selected.productName,
+            import: 0,
+            amount: selected.amount,
+            originalAmount: selected.amount,
+          },
         ];
         setNewSelectedProduct(updatedSelectedProduct);
       }
     }
   };
-  
+  useEffect(() => {
+    console.log(newSelectedProduct);
+  }, [newSelectedProduct]);
+
   const productOptions = products.map((product) => {
-    const isSelected = newSelectedProduct.some((prod) => prod.imProId === product.productId);
-  
+    const isSelected = newSelectedProduct.some(
+      (prod) => prod.imProId === product.productId
+    );
+
     return {
       value: product.productId,
       label: (
@@ -343,13 +359,36 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
       isSelected: isSelected, // เพิ่มฟิลด์ isSelected เพื่อใช้ในการเรียงลำดับต่อไป (ถ้าต้องการ)
     };
   });
-  
+
   // เรียงลำดับตัวเลือกที่มีเลือกแล้วไปอยู่บนสุดของ productOptions
   productOptions.sort((a, b) => {
     if (a.isSelected && !b.isSelected) return -1; // a มีเลือกแล้ว แต่ b ยังไม่มี
     if (!a.isSelected && b.isSelected) return 1; // b มีเลือกแล้ว แต่ a ยังไม่มี
     return 0; // ไม่มีการเปลี่ยนแปลงในการเรียงลำดับ
   });
+
+  const handleImportQuantityChange = (productId, quantity) => {
+    setNewSelectedProduct(prevSelectedProduct =>
+      prevSelectedProduct.map((prod) => {
+        if (prod.imProId === productId) {
+          const originalProduct = products.find(p => p.productId === productId);
+          const originalAmount = originalProduct ? parseInt(originalProduct.amount) : 0;
+          const importQuantity = parseInt(quantity) || 0;
+          const newAmount = originalAmount + importQuantity;
+          const isModified = importQuantity !== 0;
+  
+          return { 
+            ...prod, 
+            import: quantity,
+            amount: newAmount,
+            isModified: isModified,
+            originalAmount: prod.originalAmount ?? originalAmount
+          };
+        }
+        return prod;
+      })
+    );
+  };
   //? Selected Product >
 
   return (
@@ -383,11 +422,11 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Add Import Product Form
+                    Update Import Product Form
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Add the details of the Import Product below.
+                      Update the details of the Import Product below.
                     </p>
                   </div>
 
@@ -509,48 +548,61 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                           </tr>
                         </thead>
                         <tbody>
-                          {newSelectedProduct.map((prod) => (
-                            <tr key={prod.imProId}>
-                              <td className="py-2 px-4 border">
-                                {prod.imProId}
-                              </td>
-                              <td className="py-2 px-4 border">
-                                {prod.imProName}
-                              </td>
-                              <td className="py-2 px-4 border text-right">
-                                {prod.amount}
-                              </td>
-                              <td className="py-2 px-4 border">
-                                <input
-                                  type="number"
-                                  value={prod.import || ""}
-                                  onChange={(e) =>
-                                    handleImportQuantityChange(
-                                      prod.imProId,
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full py-1 px-2 border rounded text-right"
-                                />
-                              </td>
-                              <td className="py-2 px-4 border text-center">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleRemoveProduct(prod.imProId)
-                                  }
-                                  className="text-red-500 hover:text-red-700"
+                          {newSelectedProduct.map((prod) => {
+                            const originalProduct = products.find(
+                              (p) => p.productId === prod.imProId
+                            );
+                            const amount =
+                              prod.amount ??
+                              (originalProduct ? originalProduct.amount : "0");
+
+                            return (
+                              <tr key={prod.imProId}>
+                                <td className="py-2 px-4 border">
+                                  {prod.imProId}
+                                </td>
+                                <td className="py-2 px-4 border">
+                                  {prod.imProName}
+                                </td>
+                                <td
+                                  className={`py-2 px-4 border text-right ${
+                                    prod.isModified ? "text-green-600" : ""
+                                  }`}
                                 >
-                                  <Trash2 size={23} />
-                                </button>
-                                {prod.selected && (
-                                  <span className="ml-2 text-green-500">
-                                    Selected
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
+                                  {amount}
+                                </td>
+                                <td className="py-2 px-4 border">
+                                  <input
+                                    type="number"
+                                    value={prod.import || ""}
+                                    onChange={(e) =>
+                                      handleImportQuantityChange(
+                                        prod.imProId,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full py-1 px-2 border rounded text-right"
+                                  />
+                                </td>
+                                <td className="py-2 px-4 border text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRemoveProduct(prod.imProId)
+                                    }
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <Trash2 size={23} />
+                                  </button>
+                                  {prod.selected && (
+                                    <span className="ml-2 text-green-500">
+                                      Selected
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -598,7 +650,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                     >
-                      Add Import Product
+                      Update Import Product
                     </button>
                   </div>
                 </Dialog.Panel>
