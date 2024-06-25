@@ -20,7 +20,6 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   const [newSelectedProduct, setNewSelectedProduct] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [selectedDocuments, setSelectedDocuments] = useState([]);
 
   useEffect(() => {
     if (importPd) {
@@ -70,6 +69,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
     }
 
     try {
+      //? Update Import
       const res = await fetch(`/api/ImportDB/${importPd?._id || ""}`, {
         method: "PUT",
         headers: {
@@ -82,6 +82,38 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
           newImportEm,
           newSelectedProduct,
         }),
+      });
+      //? Update Import-Product
+      const updatePromises = newSelectedProduct.map(async (prod) => {
+        const product = products.find(p => p.productId === prod.imProId);
+        if (!product) return null;
+        
+        console.log("Product ID : ", product._id);
+        
+        const newAmount = (prod.amount !== undefined && prod.amount !== null)
+          ? prod.amount.toString()
+          : (parseInt(product.amount) + parseInt(prod.import || 0)).toString();
+        
+        const res = await fetch(`/api/Product/${product._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({
+            newProductId: product.productId,
+            newProductName: product.productName,
+            newProductUnit: product.productUnit,
+            newBrand: product.brand,
+            newStoreHouse: product.storeHouse,
+            newAmount: newAmount,
+          }),
+        });
+  
+        if (!res.ok) {
+          throw new Error(`Failed to update Product ${product.productId}`);
+        }
+  
+        return res.json();
       });
 
       if (!res.ok) {
@@ -351,43 +383,60 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
       label: (
         <div className="flex justify-between items-center">
           <span>{product.productId}</span>
-          {isSelected && (
-            <span className="text-green-500 ml-2">&#10003;</span> // เปลี่ยนเป็นเครื่องหมายถูก (checkmark icon)
-          )}
+          {isSelected && <span className="text-green-500 ml-2">&#10003;</span>}
         </div>
       ),
-      isSelected: isSelected, // เพิ่มฟิลด์ isSelected เพื่อใช้ในการเรียงลำดับต่อไป (ถ้าต้องการ)
+      isSelected: isSelected,
     };
   });
 
-  // เรียงลำดับตัวเลือกที่มีเลือกแล้วไปอยู่บนสุดของ productOptions
   productOptions.sort((a, b) => {
-    if (a.isSelected && !b.isSelected) return -1; // a มีเลือกแล้ว แต่ b ยังไม่มี
-    if (!a.isSelected && b.isSelected) return 1; // b มีเลือกแล้ว แต่ a ยังไม่มี
-    return 0; // ไม่มีการเปลี่ยนแปลงในการเรียงลำดับ
+    if (a.isSelected && !b.isSelected) return -1;
+    if (!a.isSelected && b.isSelected) return 1;
+    return 0; //
   });
 
   const handleImportQuantityChange = (productId, quantity) => {
-    setNewSelectedProduct(prevSelectedProduct =>
+    setNewSelectedProduct((prevSelectedProduct) =>
       prevSelectedProduct.map((prod) => {
         if (prod.imProId === productId) {
-          const originalProduct = products.find(p => p.productId === productId);
-          const originalAmount = originalProduct ? parseInt(originalProduct.amount) : 0;
+          const originalProduct = products.find(
+            (p) => p.productId === productId
+          );
+          const originalAmount = originalProduct
+            ? parseInt(originalProduct.amount)
+            : 0;
           const importQuantity = parseInt(quantity) || 0;
-          const newAmount = originalAmount + importQuantity;
-          const isModified = importQuantity !== 0;
-  
-          return { 
-            ...prod, 
+          const amountBeforeImport =
+            prod.originalAmountBeforeImport ?? originalAmount;
+          const newAmount = amountBeforeImport + importQuantity;
+          const isModified = newAmount !== amountBeforeImport;
+          return {
+            ...prod,
             import: quantity,
             amount: newAmount,
             isModified: isModified,
-            originalAmount: prod.originalAmount ?? originalAmount
+            originalAmountBeforeImport:
+              prod.originalAmountBeforeImport ?? amountBeforeImport,
           };
         }
         return prod;
       })
     );
+  };
+
+  const handleRemoveProduct = (productId) => {
+    setNewSelectedProduct((prevSelectedProduct) => {
+      const updatedProducts = prevSelectedProduct.filter(
+        (doc) => doc.imProId !== productId
+      );
+
+      if (updatedProducts.length === prevSelectedProduct.length) {
+        console.warn(`Product with ID ${productId} not found in the list.`);
+      }
+
+      return updatedProducts;
+    });
   };
   //? Selected Product >
 
@@ -552,9 +601,14 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                             const originalProduct = products.find(
                               (p) => p.productId === prod.imProId
                             );
-                            const amount =
-                              prod.amount ??
-                              (originalProduct ? originalProduct.amount : "0");
+                            const originalAmount = originalProduct
+                              ? parseInt(originalProduct.amount)
+                              : 0;
+                            const importQuantity = parseInt(prod.import) || 0;
+                            const displayAmount = (
+                              originalAmount + importQuantity
+                            ).toString();
+                            const isModified = importQuantity !== 0;
 
                             return (
                               <tr key={prod.imProId}>
@@ -566,10 +620,10 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                                 </td>
                                 <td
                                   className={`py-2 px-4 border text-right ${
-                                    prod.isModified ? "text-green-600" : ""
+                                    isModified ? "text-green-600" : ""
                                   }`}
                                 >
-                                  {amount}
+                                  {displayAmount}
                                 </td>
                                 <td className="py-2 px-4 border">
                                   <input

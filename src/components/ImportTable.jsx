@@ -359,7 +359,7 @@ const ImportTable = () => {
       }
 
       const data = await res_byid.json();
-      return data.importPD; // Ensure you return the correct data structure
+      return data.importDb; // Ensure you return the correct data structure
     } catch (error) {
       console.error("Failed to fetch Import:", error);
     }
