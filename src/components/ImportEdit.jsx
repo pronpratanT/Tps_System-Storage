@@ -1,10 +1,11 @@
-import React, { Fragment, useState, useEffect, useRef } from "react";
+import React, { Fragment, useState, useEffect, useRef, useMemo } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import DatePicker, { CalendarContainer } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../styles/ModalForm.css";
 import Select from "react-select";
 import { Calendar, Trash2 } from "lucide-react";
+import { parseISO, format, startOfDay } from "date-fns";
 
 function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   const [newDateImport, setNewDateImport] = useState("");
@@ -85,15 +86,18 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
       });
       //? Update Import-Product
       const updatePromises = newSelectedProduct.map(async (prod) => {
-        const product = products.find(p => p.productId === prod.imProId);
+        const product = products.find((p) => p.productId === prod.imProId);
         if (!product) return null;
-        
+
         console.log("Product ID : ", product._id);
-        
-        const newAmount = (prod.amount !== undefined && prod.amount !== null)
-          ? prod.amount.toString()
-          : (parseInt(product.amount) + parseInt(prod.import || 0)).toString();
-        
+
+        const newAmount =
+          prod.amount !== undefined && prod.amount !== null
+            ? prod.amount.toString()
+            : (
+                parseInt(product.amount) + parseInt(prod.import || 0)
+              ).toString();
+
         const res = await fetch(`/api/Product/${product._id}`, {
           method: "PUT",
           headers: {
@@ -108,11 +112,11 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
             newAmount: newAmount,
           }),
         });
-  
+
         if (!res.ok) {
           throw new Error(`Failed to update Product ${product.productId}`);
         }
-  
+
         return res.json();
       });
 
@@ -333,6 +337,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
     setNewImportEm(option ? option.value : "");
   };
   //? Selected User >
+
   //* Date Custom
   const CustomContainer = ({ className, children }) => (
     <div style={{ zIndex: 9999, position: "absolute" }}>
@@ -341,7 +346,23 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
       </CalendarContainer>
     </div>
   );
+  const adjustedDate = useMemo(() => {
+    if (newDateImport) {
+      return parseISO(newDateImport);
+    }
+    return null;
+  }, [newDateImport]);
+
+  const handleDateChange = (date) => {
+    if (date) {
+      const startOfSelectedDay = startOfDay(date);
+      setNewDateImport(format(startOfSelectedDay, "yyyy-MM-dd"));
+    } else {
+      setNewDateImport(null);
+    }
+  };
   //* Date Custom >
+
   //? Selected Product
   const handleProductIdChange = (selectedOption) => {
     if (!selectedOption) return;
@@ -404,20 +425,26 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
             (p) => p.productId === productId
           );
           const originalAmount = originalProduct
-            ? parseInt(originalProduct.amount)
+            ? parseInt(originalProduct.amount) || 0
             : 0;
-          const importQuantity = parseInt(quantity) || 0;
-          const amountBeforeImport =
-            prod.originalAmountBeforeImport ?? originalAmount;
-          const newAmount = amountBeforeImport + importQuantity;
-          const isModified = newAmount !== amountBeforeImport;
+          const newImportQuantity = parseInt(quantity) || 0;
+          
+          const amountBeforeImport = prod.originalAmountBeforeImport ?? originalAmount;
+          
+          const prevImportQuantity = parseInt(prod.import) || 0;
+          const importDifference = newImportQuantity - prevImportQuantity;
+          
+          const currentAmount = parseInt(prod.amount) || amountBeforeImport;
+          const newAmount = currentAmount + importDifference;
+          
+          const isModified = newImportQuantity !== 0;
+          
           return {
             ...prod,
             import: quantity,
             amount: newAmount,
             isModified: isModified,
-            originalAmountBeforeImport:
-              prod.originalAmountBeforeImport ?? amountBeforeImport,
+            originalAmountBeforeImport: prod.originalAmountBeforeImport ?? amountBeforeImport,
           };
         }
         return prod;
@@ -490,8 +517,8 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                         </label>
                         <div className="relative">
                           <DatePicker
-                            selected={newDateImport}
-                            onChange={(date) => setDateImport(date)}
+                            selected={adjustedDate}
+                            onChange={handleDateChange}
                             className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pl-10"
                             id="dateImport"
                             dateFormat="dd/MM/yyyy"
@@ -602,14 +629,13 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                               (p) => p.productId === prod.imProId
                             );
                             const originalAmount = originalProduct
-                              ? parseInt(originalProduct.amount)
+                              ? parseInt(originalProduct.amount) || 0
                               : 0;
                             const importQuantity = parseInt(prod.import) || 0;
-                            const displayAmount = (
-                              originalAmount + importQuantity
-                            ).toString();
+                            
+                            const displayAmount = (prod.amount !== undefined ? parseInt(prod.amount) : originalAmount) || 0;
+                            
                             const isModified = importQuantity !== 0;
-
                             return (
                               <tr key={prod.imProId}>
                                 <td className="py-2 px-4 border">

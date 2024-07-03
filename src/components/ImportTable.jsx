@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, Fragment, useRef } from "react";
-import { Edit, Search, Trash2, PackagePlus, Calendar } from "lucide-react";
+import { useState, useEffect, Fragment, useRef, useCallback, useMemo } from "react";
+import { Edit, Search, Trash2, PackagePlus, Calendar, Eye } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
@@ -12,6 +12,7 @@ import DatePicker, { CalendarContainer } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../styles/ModalForm.css";
 import Select from "react-select";
+import { parse, format, compareAsc } from "date-fns";
 
 const ImportTable = () => {
   //? State
@@ -192,6 +193,13 @@ const ImportTable = () => {
 
     return filteredImports;
   };
+  const sortImportsByDate = (imports) => {
+    return imports.sort((a, b) => {
+      const dateA = parse(a.dateImport, "yyyy-MM-dd", new Date());
+      const dateB = parse(b.dateImport, "yyyy-MM-dd", new Date());
+      return compareAsc(dateA, dateB);
+    });
+  };
 
   //TODO < Function Get Product by Id send to ProductEdit >
   const handleEditModalClose = () => {
@@ -273,11 +281,13 @@ const ImportTable = () => {
 
       //? Product Amount Update
       const updatePromises = selectedDocuments.map(async (doc) => {
-        const product = products.find(p => p.productId === doc.productId);
+        const product = products.find((p) => p.productId === doc.productId);
         if (!product) return null;
         console.log("Product ID : ", product._id);
-        const newAmount = (parseInt(product.amount) + parseInt(doc.importQuantity || 0)).toString();
-        
+        const newAmount = (
+          parseInt(product.amount) + parseInt(doc.importQuantity || 0)
+        ).toString();
+
         const res = await fetch(`/api/Product/${product._id}`, {
           method: "PUT",
           headers: {
@@ -292,11 +302,11 @@ const ImportTable = () => {
             newAmount: newAmount,
           }),
         });
-  
+
         if (!res.ok) {
           throw new Error(`Failed to update Product ${product.productId}`);
         }
-  
+
         return res.json();
       });
 
@@ -390,28 +400,55 @@ const ImportTable = () => {
       </CalendarContainer>
     </div>
   );
+  const handleDateChange = (date) => {
+    if (date) {
+      const formattedDate = format(date, "yyyy-MM-dd");
+      setDateImport(formattedDate);
+    } else {
+      setDateImport(null);
+    }
+  };
 
   //* Date Custom >
 
-  const handleProductIdChange = (selectedOption) => {
+  const handleProductIdChange = useCallback((selectedOption) => {
     if (!selectedOption) return;
-
-    const productId = selectedOption.value;
-    if (
-      productId &&
-      !selectedDocuments.some((doc) => doc.productId === productId)
-    ) {
-      const selected = products.find(
-        (product) => product.productId === productId
-      );
-      if (selected) {
-        setSelectedDocuments([
-          ...selectedDocuments,
-          { ...selected, importQuantity: 0 },
-        ]);
-      }
+  
+    const isProductAlreadyAdded = selectedProduct.some(
+      (prod) => prod.imProId === selectedOption.value
+    );
+  
+    if (isProductAlreadyAdded) {
+      alert('This product has already been added.');
+      return;
     }
-  };
+  
+    const selectedProduct = products.find(
+      (product) => product.productId === selectedOption.value
+    );
+  
+    if (selectedProduct) {
+      const newProduct = {
+        imProId: selectedProduct.productId,
+        imProName: selectedProduct.name,
+        amount: selectedProduct.amount,
+        import: '',
+        isModified: false,
+      };
+  
+      setSelectedDocuments((prevSelected) => [...prevSelected, newProduct]);
+    }
+  }, [selectedProduct, products]);
+
+  const uniqueProductOptions = useMemo(() => {
+    const uniqueOptions = products.reduce((acc, product) => {
+      if (!acc.some(option => option.value === product.productId)) {
+        acc.push({ value: product.productId, label: `${product.productId} - ${product.name}` });
+      }
+      return acc;
+    }, []);
+    return uniqueOptions;
+  }, [products]);
 
   const handleRemoveProduct = (productId) => {
     setSelectedDocuments(
@@ -580,39 +617,57 @@ const ImportTable = () => {
               </tr>
             </thead>
             <tbody>
-              {filterImportsByID(imports, searchID).map((importPd) => (
-                <tr key={importPd.documentId} className="border-t">
-                  <td className="py-4 pr-4 pl-10 w-auto">
-                    {importPd.dateImport}
-                  </td>
-                  <td className="py-4 px-4 flex items-center w-auto">
-                    <Avatar
-                      sx={{ bgcolor: indigo[800], marginRight: "20px" }}
-                      variant="rounded-md"
-                    >
-                      {importPd.documentId.charAt(0).toUpperCase()}
-                    </Avatar>
-                    {importPd.documentId}
-                  </td>
-                  <td className="py-4 px-4">{importPd.importVen}</td>
-                  <td className="py-4 px-4">{importPd.importEm}</td>
-                  <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
-                    <button
-                      onClick={() => getValue(importPd._id)}
-                      type="button"
-                      className="text-indigo-600 hover:text-indigo-800"
-                    >
-                      <Edit size={23} />
-                    </button>
-                    <button
-                      onClick={() => getDelValue(importPd._id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={23} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {sortImportsByDate(filterImportsByID(imports, searchID)).map(
+                (importPd) => (
+                  <tr key={importPd.documentId} className="border-t">
+                    <td className="py-4 pr-4 pl-10 w-auto">
+                      {importPd.dateImport
+                        ? format(
+                            parse(
+                              importPd.dateImport,
+                              "yyyy-MM-dd",
+                              new Date()
+                            ),
+                            "dd/MM/yyyy"
+                          )
+                        : ""}
+                    </td>
+                    <td className="py-4 px-4 flex items-center w-auto">
+                      <Avatar
+                        sx={{ bgcolor: indigo[800], marginRight: "20px" }}
+                        variant="rounded-md"
+                      >
+                        {importPd.documentId.charAt(0).toUpperCase()}
+                      </Avatar>
+                      {importPd.documentId}
+                    </td>
+                    <td className="py-4 px-4">{importPd.importVen}</td>
+                    <td className="py-4 px-4">{importPd.importEm}</td>
+                    <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
+                      <button
+                        onClick={() => getValue(importPd._id)}
+                        type="button"
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <Eye size={23} />
+                      </button>
+                      <button
+                        onClick={() => getValue(importPd._id)}
+                        type="button"
+                        className="text-indigo-600 hover:text-indigo-800"
+                      >
+                        <Edit size={23} />
+                      </button>
+                      <button
+                        onClick={() => getDelValue(importPd._id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={23} />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         </div>
@@ -668,13 +723,16 @@ const ImportTable = () => {
                           </label>
                           <div className="relative">
                             <DatePicker
-                              selected={dateImport}
-                              onChange={(date) => setDateImport(date)}
+                              selected={
+                                dateImport
+                                  ? parse(dateImport, "yyyy-MM-dd", new Date())
+                                  : null
+                              }
+                              onChange={handleDateChange}
                               className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pl-10"
                               id="dateImport"
                               dateFormat="dd/MM/yyyy"
                               placeholderText="Select a date"
-                              ref={datePickerRef}
                               onFocus={(e) => e.target.blur()}
                               popperPlacement="bottom-end"
                             />

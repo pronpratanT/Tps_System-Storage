@@ -20,6 +20,7 @@ function ImportDel({
   const [delSelectedProduct, setDelSelectedProduct] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [products, setProducts] = useState([]);
   const datePickerRef = useRef(null);
   const vendorOption = { value: delImportVen, label: delImportVen };
   const employeeOption = { value: delImportEm, label: delImportEm };
@@ -38,6 +39,39 @@ function ImportDel({
     event.preventDefault();
 
     try {
+      const updatePromises = delSelectedProduct.map(async (prod) => {
+        const product = products.find((p) => p.productId === prod.imProId);
+        if (!product) return null;
+      
+        console.log("Product ID : ", product._id);
+      
+        const newAmount = Math.max(
+          0,
+          parseInt(product.amount) - (prod.amount !== undefined && prod.amount !== null ? parseInt(prod.amount) : parseInt(prod.import || 0))
+        ).toString();
+      
+        const res = await fetch(`/api/Product/${product._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({
+            newProductId: product.productId,
+            newProductName: product.productName,
+            newProductUnit: product.productUnit,
+            newBrand: product.brand,
+            newStoreHouse: product.storeHouse,
+            newAmount: newAmount,
+          }),
+        });
+      
+        if (!res.ok) {
+          throw new Error(`Failed to update Product ${product.productId}`);
+        }
+      
+        return res.json();
+      });
+
       const resDelete = await fetch(`/api/ImportDB?id=${importPd._id}`, {
         method: "DELETE",
       });
@@ -56,6 +90,42 @@ function ImportDel({
       setError("Failed to delete Import product");
     }
   };
+
+   //TODO < Function to fetch product to table >
+   const getProducts = async () => {
+    try {
+      const res_get = await fetch("/api/Product", {
+        cache: "no-store",
+      });
+
+      if (!res_get.ok) {
+        throw new Error("Failed to fetch Product");
+      }
+
+      const newProducts = await res_get.json();
+
+      // Check for duplicates
+      const uniqueProducts = newProducts.filter(
+        (product, index, self) =>
+          index === self.findIndex((t) => t.productId === product.productId)
+      );
+
+      // Sort Products by vendorId in alphabetical order
+      const sortedProducts = uniqueProducts.sort((a, b) =>
+        a.productId.localeCompare(b.productId)
+      );
+
+      setProducts(sortedProducts);
+      console.log(sortedProducts);
+    } catch (error) {
+      console.log("Error loading Products: ", error);
+    }
+  };
+
+  //? Reload Products table
+  useEffect(() => {
+    getProducts();
+  }, []);
 
   return (
     <Transition appear show={isVisible} as={Fragment}>
@@ -154,34 +224,6 @@ function ImportDel({
                       </label>
                       <Select
                         value={vendorOption}
-                        isDisabled={true}
-                        placeholder="Select Vendor"
-                        className="basic-single shadow rounded focus:outline-none focus:shadow-outline"
-                        classNamePrefix="select"
-                        maxMenuHeight={200}
-                        styles={{
-                          control: (base) => ({
-                            ...base,
-                            backgroundColor: "#f0f0f0",
-                            borderColor: "#d1d5db",
-                          }),
-                          singleValue: (base) => ({
-                            ...base,
-                            color: "#374151",
-                          }),
-                          menuPortal: (base) => ({
-                            ...base,
-                            zIndex: 9999,
-                          }),
-                        }}
-                      />
-                    </div>
-                    {/* Product ID */}
-                    <div className="mb-4">
-                      <label className="block text-gray-700 text-sm font-bold mb-2">
-                        Product ID
-                      </label>
-                      <Select
                         isDisabled={true}
                         placeholder="Select Vendor"
                         className="basic-single shadow rounded focus:outline-none focus:shadow-outline"

@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
-import { Edit, Search, Trash2, PackageMinus } from "lucide-react";
+import { useState, useEffect, Fragment, useRef } from "react";
+import { Edit, Search, Trash2, PackageMinus, Calendar, Eye } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import ExportEdit from "./ExportEdit";
 import ExportDel from "./ExportDel";
 import CountStatIXPort from "./CountStatIXPort";
+import DatePicker, { CalendarContainer } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "../styles/ModalForm.css";
+import Select from "react-select";
+import { startOfDay } from "date-fns";
 
 function ExportTable() {
   //? State
@@ -25,8 +30,12 @@ function ExportTable() {
   const [selectedExport, setSelectedExport] = useState(null);
   const [vendors, setVendors] = useState([]);
   const [users, setUsers] = useState([]);
+  const [products, setProducts] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+  const datePickerRef = useRef(null);
+  const [selectedDocuments, setSelectedDocuments] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState([]);
 
   //TODO < Function to fetch Export to table >
   const getExport = async () => {
@@ -135,6 +144,42 @@ function ExportTable() {
     getUsers();
   }, []);
 
+  //TODO < Function to fetch product to table >
+  const getProducts = async () => {
+    try {
+      const res_get = await fetch("/api/Product", {
+        cache: "no-store",
+      });
+
+      if (!res_get.ok) {
+        throw new Error("Failed to fetch Product");
+      }
+
+      const newProducts = await res_get.json();
+
+      // Check for duplicates
+      const uniqueProducts = newProducts.filter(
+        (product, index, self) =>
+          index === self.findIndex((t) => t.productId === product.productId)
+      );
+
+      // Sort Products by vendorId in alphabetical order
+      const sortedProducts = uniqueProducts.sort((a, b) =>
+        a.productId.localeCompare(b.productId)
+      );
+
+      setProducts(sortedProducts);
+      console.log(sortedProducts);
+    } catch (error) {
+      console.log("Error loading Products: ", error);
+    }
+  };
+
+  //? Reload Products table
+  useEffect(() => {
+    getProducts();
+  }, []);
+
   //TODO <Function Search Document Id
   const filterExportsByID = (exportPds, searchID) => {
     if (!searchID) return exportPds; // Return all products if searchID is empty
@@ -184,7 +229,7 @@ function ExportTable() {
     }
   };
 
-  //TODO < Function Add Export >
+  //! < Function Add Export >
   const openAddModal = () => {
     setIsAddModalOpen(true);
   };
@@ -203,16 +248,13 @@ function ExportTable() {
     }
 
     try {
-      const resCheckExport = await fetch(
-        "/api/checkExport",
-        {
-          method: "POST",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({ documentId }),
-        }
-      );
+      const resCheckExport = await fetch("/api/checkExport", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({ documentId }),
+      });
       const { exportPd } = await resCheckExport.json();
       if (exportPd) {
         setError("Document ID already exists!");
@@ -288,6 +330,154 @@ function ExportTable() {
     setShouldRefresh(!shouldRefresh);
   };
 
+  //* Date Custom
+  const CustomContainer = ({ className, children }) => (
+    <div style={{ zIndex: 9999, position: "absolute" }}>
+      <CalendarContainer className={className}>
+        <div style={{ position: "relative" }}>{children}</div>
+      </CalendarContainer>
+    </div>
+  );
+  const handleDateChange = (date) => {
+    if (date) {
+      setDateImport(startOfDay(date));
+    } else {
+      setDateImport(null);
+    }
+  };
+  //* Date Custom >
+
+  //? Selected Product
+  const handleProductIdChange = (selectedOption) => {
+    if (!selectedOption) return;
+
+    const productId = selectedOption.value;
+    if (
+      productId &&
+      !selectedDocuments.some((doc) => doc.productId === productId)
+    ) {
+      const selected = products.find(
+        (product) => product.productId === productId
+      );
+      if (selected) {
+        setSelectedDocuments([
+          ...selectedDocuments,
+          { ...selected, importQuantity: 0 },
+        ]);
+      }
+    }
+  };
+  const handleRemoveProduct = (productId) => {
+    setSelectedDocuments(
+      selectedDocuments.filter((doc) => doc.productId !== productId)
+    );
+  };
+  const handleImportQuantityChange = (productId, quantity) => {
+    setSelectedDocuments(
+      selectedDocuments.map((doc) => {
+        if (doc.productId === productId) {
+          const originalAmount = doc.originalAmount ?? doc.amount;
+          const originalQuantity = doc.originalQuantity ?? 0;
+
+          const quantityDifference = parseInt(quantity || 0) - originalQuantity;
+          const newAmount = parseInt(originalAmount) + quantityDifference;
+
+          const isModified = newAmount !== parseInt(originalAmount);
+
+          return {
+            ...doc,
+            importQuantity: quantity,
+            amount: newAmount,
+            isModified: isModified,
+            originalAmount: doc.originalAmount ?? doc.amount,
+            originalQuantity: doc.originalQuantity ?? 0,
+          };
+        }
+        return doc;
+      })
+    );
+  };
+  const sortedProducts = products.sort((a, b) => {
+    const isASelected = selectedDocuments.some(
+      (doc) => doc.productId === a.productId
+    );
+    const isBSelected = selectedDocuments.some(
+      (doc) => doc.productId === b.productId
+    );
+
+    if (isASelected && !isBSelected) return -1; // a ถูกเลือกแล้ว ให้อยู่ก่อน
+    if (!isASelected && isBSelected) return 1; // b ถูกเลือกแล้ว ให้อยู่หลัง
+    return 0;
+  });
+  const productOptions = sortedProducts.map((product) => ({
+    value: product.productId,
+    label: (
+      <div className="flex justify-between items-center">
+        <span>{product.productId}</span>
+        {selectedDocuments.some(
+          (doc) => doc.productId === product.productId
+        ) && <span className="text-green-700 ml-2">&#10003;</span>}
+      </div>
+    ),
+  }));
+  //? Selected Product >
+
+  //? Selected Vendor
+  const sortedVendors = vendors.slice().sort((a, b) => {
+    const isASelected = a.vendorName === exportVen;
+    const isBSelected = b.vendorName === exportVen;
+
+    if (isASelected && !isBSelected) return -1; // a ถูกเลือกแล้ว ให้อยู่ก่อน
+    if (!isASelected && isBSelected) return 1; // b ถูกเลือกแล้ว ให้อยู่หลัง
+    return 0; // กรณีอื่น ๆ ให้คงลำดับเดิม
+  });
+
+  const vendorOptions = sortedVendors.map((vendor) => ({
+    value: vendor.vendorName,
+    label: (
+      <div className="flex justify-between items-center">
+        <span>{vendor.vendorName}</span>
+        {vendor.vendorName === exportVen && (
+          <span className="text-green-700 ml-2">&#10003;</span>
+        )}
+      </div>
+    ),
+  }));
+  //? Selected Vendor >
+
+  //? Selected User
+  const sortedUsers = users.slice().sort((a, b) => {
+    const isASelected = a.name === exportEm;
+    const isBSelected = b.name === exportEm;
+
+    if (isASelected && !isBSelected) return -1; // a ถูกเลือกแล้ว ให้อยู่ก่อน
+    if (!isASelected && isBSelected) return 1; // b ถูกเลือกแล้ว ให้อยู่หลัง
+    return 0; // กรณีอื่น ๆ ให้คงลำดับเดิม
+  });
+
+  const employeeOptions = sortedUsers.map((user) => ({
+    value: user.name,
+    label: (
+      <div className="flex justify-between items-center">
+        <span>{user.name}</span>
+        {user.name === exportEm && (
+          <span className="text-green-700 ml-2">&#10003;</span>
+        )}
+      </div>
+    ),
+  }));
+
+  const renderDropdownInPortal = ({ props, isOpened }) => {
+    if (isOpened) {
+      return createPortal(
+        <div {...props.menuPortalTarget}>{props.menuPortal}</div>,
+        document.body
+      );
+    }
+    return null;
+  };
+  //? Selected User >
+
   return (
     <div className="flex-1 p-4">
       <div>
@@ -343,7 +533,7 @@ function ExportTable() {
               {filterExportsByID(exports, searchID).map((exportPd) => (
                 <tr key={exportPd.documentId} className="border-t">
                   <td className="py-4 pr-4 pl-10 w-auto">
-                    {exportPd.dateExport}
+                    {exportPd.dateImport}
                   </td>
                   <td className="py-4 px-4 flex items-center w-auto">
                     <Avatar
@@ -354,9 +544,16 @@ function ExportTable() {
                     </Avatar>
                     {exportPd.documentId}
                   </td>
-                  <td className="py-4 px-4">{exportPd.exportVen}</td>
-                  <td className="py-4 px-4">{exportPd.exportEm}</td>
+                  <td className="py-4 px-4">{exportPd.importVen}</td>
+                  <td className="py-4 px-4">{exportPd.importEm}</td>
                   <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
+                    <button
+                      onClick={() => getValue(exportPd._id)}
+                      type="button"
+                      className="text-indigo-600 hover:text-indigo-800"
+                    >
+                      <Eye size={23} />
+                    </button>
                     <button
                       onClick={() => getValue(exportPd._id)}
                       type="button"
@@ -404,7 +601,7 @@ function ExportTable() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Panel className="w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                     <Dialog.Title
                       as="h3"
                       className="text-lg font-medium leading-6 text-gray-900"
@@ -416,37 +613,54 @@ function ExportTable() {
                         Add the details of the Export Product below.
                       </p>
                     </div>
+
                     <div className="mt-4">
-                      <div className="mb-4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="dateImport"
-                        >
-                          Date
-                        </label>
-                        <input
-                          onChange={(e) => setDateExport(e.target.value)}
-                          value={dateExport}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="dateImport"
-                          type="text"
-                        />
+                      <div className="mb-4 flex justify-between">
+                        <div className="w-1/2 pr-2">
+                          <label
+                            className="block text-gray-700 text-sm font-bold mb-2"
+                            htmlFor="dateImport"
+                          >
+                            Date
+                          </label>
+                          <div className="relative">
+                            <DatePicker
+                              selected={dateExport}
+                              onChange={handleDateChange}
+                              className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pl-10"
+                              id="dateImport"
+                              dateFormat="dd/MM/yyyy"
+                              placeholderText="Select a date"
+                              ref={datePickerRef}
+                              onFocus={(e) => e.target.blur()}
+                              popperPlacement="bottom-end"
+                            />
+                            <div
+                              className="absolute top-0 left-0 px-2 py-2 cursor-pointer"
+                              onClick={() => datePickerRef.current.setFocus()}
+                            >
+                              <Calendar className="text-gray-500" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="w-1/2 pl-2">
+                          <label
+                            className="block text-gray-700 text-sm font-bold mb-2"
+                            htmlFor="documentId"
+                          >
+                            Document ID
+                          </label>
+                          <input
+                            onChange={(e) => setDocumentId(e.target.value)}
+                            value={documentId}
+                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                            id="documentId"
+                            type="text"
+                          />
+                        </div>
                       </div>
-                      <div className="mb-4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="documentId"
-                        >
-                          Document ID
-                        </label>
-                        <input
-                          onChange={(e) => setDocumentId(e.target.value)}
-                          value={documentId}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="documentId"
-                          type="text"
-                        />
-                      </div>
+
                       <div className="mb-4">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
@@ -454,29 +668,118 @@ function ExportTable() {
                         >
                           Vendor
                         </label>
-                        <select
-                          id="unit"
-                          onChange={(e) => {
-                            const selectedValue = e.target.value;
-                            const selectedText =
-                              e.target.selectedOptions[0].text;
-                            setExportVen(
-                              selectedValue === "" ? "" : selectedText
-                            );
+                        <Select
+                          options={vendorOptions}
+                          onChange={(option) =>
+                            setImportVen(option ? option.value : "")
+                          }
+                          placeholder="Select Vendor"
+                          isClearable
+                          className="basic-single shadow rounded focus:outline-none focus:shadow-outline"
+                          classNamePrefix="select"
+                          maxMenuHeight={200}
+                          styles={{
+                            menuPortal: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
                           }}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        >
-                          <option value="">Select Vendor</option>
-                          {vendors.map((vendor) => (
-                            <option
-                              key={vendor.vendorId}
-                              value={vendor.vendorName}
-                            >
-                              {vendor.vendorName}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </div>
+                      {/* Product ID */}
+                      <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2">
+                          Product ID
+                        </label>
+                        <Select
+                          options={productOptions}
+                          onChange={handleProductIdChange}
+                          className="basic-single shadow focus:shadow-outline focus:outline-none rounded"
+                          classNamePrefix="select"
+                          placeholder="Select Product ID"
+                          menuPortalTarget={document.body}
+                          menuPosition="fixed"
+                          maxMenuHeight={200}
+                          styles={{
+                            menuPortal: (base) => ({
+                              ...base,
+                              zIndex: 9999,
+                            }),
+                          }}
+                        />
+                      </div>
+                      {/* Products Table */}
+                      <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2">
+                          Selected Products
+                        </label>
+                        <table className="min-w-full bg-white border">
+                          <thead>
+                            <tr>
+                              <th className="py-2 px-4 border w-3/12">
+                                Product ID
+                              </th>
+                              <th className="py-2 px-4 border w-5/12">
+                                Product Name
+                              </th>
+                              <th className="py-2 px-4 border w-1/12 text-center">
+                                Amount
+                              </th>
+                              <th className="py-2 px-4 border w-2/12 text-center">
+                                Import
+                              </th>
+                              <th className="py-2 px-4 border w-1/12 text-center">
+                                Actions
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedDocuments.map((doc) => (
+                              <tr key={doc.productId}>
+                                <td className="py-2 px-4 border">
+                                  {doc.productId}
+                                </td>
+                                <td className="py-2 px-4 border">
+                                  {doc.productName}
+                                </td>
+                                <td
+                                  className={`py-2 px-4 border text-right ${
+                                    doc.isModified ? "text-green-600" : ""
+                                  }`}
+                                >
+                                  {doc.amount}
+                                </td>
+                                <td className="py-2 px-4 border">
+                                  <input
+                                    type="number"
+                                    value={doc.importQuantity || ""}
+                                    onChange={(e) =>
+                                      handleImportQuantityChange(
+                                        doc.productId,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-full py-1 px-2 border rounded text-right"
+                                  />
+                                </td>
+                                <td className="py-2 px-4 border text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleRemoveProduct(doc.productId)
+                                    }
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <Trash2 size={23} />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Employee */}
                       <div className="mb-4">
                         <label
                           className="block text-gray-700 text-sm font-bold mb-2"
@@ -484,29 +787,26 @@ function ExportTable() {
                         >
                           Employee
                         </label>
-                        <select
-                          id="importEm"
-                          onChange={(e) => {
-                            const selectedValue = e.target.value;
-                            const selectedText =
-                              e.target.selectedOptions[0].text;
-                            setExportEm(
-                              selectedValue === "" ? "" : selectedText
-                            );
+                        <Select
+                          options={employeeOptions}
+                          onChange={(option) =>
+                            setImportEm(option ? option.value : "")
+                          }
+                          placeholder="Select Employee"
+                          isClearable
+                          className="basic-single shadow focus:shadow-outline focus:outline-none rounded"
+                          classNamePrefix="select"
+                          menuPortalTarget={document.body}
+                          menuPosition="fixed"
+                          maxMenuHeight={200}
+                          styles={{
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                           }}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        >
-                          <option value="">Select Employee</option>
-                          {users.map((user) => (
-                            <option key={user.userid} value={user.userid}>
-                              {user.name}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </div>
                     </div>
 
-                    {/* // TODO : Error & Success */}
+                    {/* Error & Success Messages */}
                     {error && (
                       <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
                         {error}
