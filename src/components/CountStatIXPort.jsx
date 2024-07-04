@@ -7,7 +7,7 @@ function CountStatIXPort({ refresh, shouldRefresh }) {
 
   const getImport = async () => {
     try {
-      const res_get = await fetch("/api/Import", {
+      const res_get = await fetch("/api/ImportDB", {
         cache: "no-store",
       });
       if (!res_get.ok) {
@@ -30,7 +30,7 @@ function CountStatIXPort({ refresh, shouldRefresh }) {
 
   const getExport = async () => {
     try {
-      const res_get = await fetch("/api/Export", {
+      const res_get = await fetch("/api/ExportDB", {
         cache: "no-store",
       });
       if (!res_get.ok) {

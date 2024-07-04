@@ -37,148 +37,67 @@ const ImportTable = () => {
   const [selectedDocuments, setSelectedDocuments] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState([]);
 
-  //TODO < Function to fetch Import to table >
-  const getImport = async () => {
+  //! Fetch Data
+  const fetchData = async (url, key, setStateFunction) => {
     try {
-      const res_get = await fetch("/api/ImportDB", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch Import");
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${key}`);
       }
-
-      const newImports = await res_get.json();
-
-      // Check for duplicates
-      const uniqueImports = newImports.filter(
-        (importPd, index, self) =>
-          index === self.findIndex((t) => t.documentId === importPd.documentId)
+      const data = await response.json();
+      
+      const uniqueData = data.filter(
+        (item, index, self) =>
+          index === self.findIndex((t) => t[key] === item[key])
       );
-
-      // Sort Products by vendorId in alphabetical order
-      const sortedImports = uniqueImports.sort((a, b) =>
-        a.documentId.localeCompare(b.documentId)
+      
+      const sortedData = uniqueData.sort((a, b) =>
+        a[key].localeCompare(b[key])
       );
-
-      setImports(sortedImports);
-      console.log(sortedImports);
+      
+      setStateFunction(sortedData);
+      console.log(`Sorted ${key}:`, sortedData);
+      return sortedData;
     } catch (error) {
-      console.log("Error loading Products: ", error);
+      console.log(`Error loading ${key}:`, error);
+      throw error; 
     }
   };
-  //? Reload Products table
-  useEffect(() => {
-    getImport();
-  }, []);
-
-  //TODO < Function to fetch vendors to table >
-  const getVendors = async () => {
-    try {
-      const res_get = await fetch("/api/addVendor", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch Vendor");
-      }
-
-      const newVendors = await res_get.json();
-
-      // Check for duplicates
-      const uniqueVendors = newVendors.filter(
-        (vendor, index, self) =>
-          index === self.findIndex((t) => t.vendorId === vendor.vendorId)
-      );
-
-      // Sort vendors by vendorId in alphabetical order
-      const sortedVendors = uniqueVendors.sort((a, b) =>
-        a.vendorId.localeCompare(b.vendorId)
-      );
-
-      setVendors(sortedVendors);
-      console.log(sortedVendors);
-    } catch (error) {
-      console.log("Error loading Vendors: ", error);
-    }
+  
+  const getImport = () => {
+    return fetchData("/api/ImportDB", "documentId", setImports);
   };
-
-  //? Reload Vendors table
-  useEffect(() => {
-    getVendors();
-  }, []);
-
-  //TODO < Function to fetch user to table >
-  const getUsers = async () => {
-    try {
-      const res_get = await fetch("/api/User", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch User");
-      }
-
-      const newUsers = await res_get.json();
-
-      // Check for duplicates
-      const uniqueUsers = newUsers.filter(
-        (user, index, self) =>
-          index === self.findIndex((t) => t.email === user.email)
-      );
-
-      // Sort Users by vendorId in alphabetical order
-      const sortedUsers = uniqueUsers.sort((a, b) =>
-        a.email.localeCompare(b.email)
-      );
-
-      setUsers(sortedUsers);
-      console.log("SortedUsers: ", sortedUsers);
-    } catch (error) {
-      console.log("Error loading Users: ", error);
-    }
+  
+  const getVendors = () => {
+    return fetchData("/api/addVendor", "vendorId", setVendors);
   };
-
-  //? Reload users table
-  useEffect(() => {
-    getUsers();
-  }, []);
-
-  //TODO < Function to fetch product to table >
-  const getProducts = async () => {
-    try {
-      const res_get = await fetch("/api/Product", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch Product");
-      }
-
-      const newProducts = await res_get.json();
-
-      // Check for duplicates
-      const uniqueProducts = newProducts.filter(
-        (product, index, self) =>
-          index === self.findIndex((t) => t.productId === product.productId)
-      );
-
-      // Sort Products by vendorId in alphabetical order
-      const sortedProducts = uniqueProducts.sort((a, b) =>
-        a.productId.localeCompare(b.productId)
-      );
-
-      setProducts(sortedProducts);
-      console.log(sortedProducts);
-    } catch (error) {
-      console.log("Error loading Products: ", error);
-    }
+  
+  const getUsers = () => {
+    return fetchData("/api/User", "email", setUsers);
   };
-
-  //? Reload Products table
+  
+  const getProducts = () => {
+    return fetchData("/api/Product", "productId", setProducts);
+  };
+  
   useEffect(() => {
-    getProducts();
+    const fetchAllData = async () => {
+      try {
+        await Promise.all([
+          getProducts(),
+          getUsers(),
+          getVendors(),
+          getImport()
+        ]);
+        console.log('All data fetched successfully');
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+  
+    fetchAllData();
   }, []);
+  //! Fetch Data >
 
   //TODO <Function Search Document Id
   const filterImportsByID = (importPds, searchID) => {
@@ -310,8 +229,8 @@ const ImportTable = () => {
         return res.json();
       });
 
-      const { importPd } = await resCheckImport.json();
-      if (importPd) {
+      const { importDb } = await resCheckImport.json();
+      if (importDb) {
         setError("Document ID already exists!");
         return;
       }
@@ -411,34 +330,25 @@ const ImportTable = () => {
 
   //* Date Custom >
 
-  const handleProductIdChange = useCallback((selectedOption) => {
+  const handleProductIdChange = (selectedOption) => {
     if (!selectedOption) return;
-  
-    const isProductAlreadyAdded = selectedProduct.some(
-      (prod) => prod.imProId === selectedOption.value
-    );
-  
-    if (isProductAlreadyAdded) {
-      alert('This product has already been added.');
-      return;
+
+    const productId = selectedOption.value;
+    if (
+      productId &&
+      !selectedDocuments.some((doc) => doc.productId === productId)
+    ) {
+      const selected = products.find(
+        (product) => product.productId === productId
+      );
+      if (selected) {
+        setSelectedDocuments([
+          ...selectedDocuments,
+          { ...selected, importQuantity: 0 },
+        ]);
+      }
     }
-  
-    const selectedProduct = products.find(
-      (product) => product.productId === selectedOption.value
-    );
-  
-    if (selectedProduct) {
-      const newProduct = {
-        imProId: selectedProduct.productId,
-        imProName: selectedProduct.name,
-        amount: selectedProduct.amount,
-        import: '',
-        isModified: false,
-      };
-  
-      setSelectedDocuments((prevSelected) => [...prevSelected, newProduct]);
-    }
-  }, [selectedProduct, products]);
+  };
 
   const uniqueProductOptions = useMemo(() => {
     const uniqueOptions = products.reduce((acc, product) => {
@@ -562,7 +472,6 @@ const ImportTable = () => {
     }
     return null;
   };
-
   //? Selected User >
 
   return (

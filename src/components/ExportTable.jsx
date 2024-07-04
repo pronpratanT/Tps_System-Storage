@@ -1,7 +1,21 @@
 "use client";
 
-import { useState, useEffect, Fragment, useRef } from "react";
-import { Edit, Search, Trash2, PackageMinus, Calendar, Eye } from "lucide-react";
+import {
+  useState,
+  useEffect,
+  Fragment,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import {
+  Edit,
+  Search,
+  Trash2,
+  PackageMinus,
+  Calendar,
+  Eye,
+} from "lucide-react";
 import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
@@ -12,7 +26,7 @@ import DatePicker, { CalendarContainer } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../styles/ModalForm.css";
 import Select from "react-select";
-import { startOfDay } from "date-fns";
+import { parse, format, compareAsc } from "date-fns";
 
 function ExportTable() {
   //? State
@@ -36,11 +50,12 @@ function ExportTable() {
   const datePickerRef = useRef(null);
   const [selectedDocuments, setSelectedDocuments] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   //TODO < Function to fetch Export to table >
   const getExport = async () => {
     try {
-      const res_get = await fetch("/api/Export", {
+      const res_get = await fetch("/api/ExportDB", {
         cache: "no-store",
       });
 
@@ -193,6 +208,13 @@ function ExportTable() {
 
     return filteredExports;
   };
+  const sortExportsByDate = (exports) => {
+    return exports.sort((a, b) => {
+      const dateA = parse(a.dateExport, "yyyy-MM-dd", new Date());
+      const dateB = parse(b.dateExport, "yyyy-MM-dd", new Date());
+      return compareAsc(dateA, dateB);
+    });
+  };
 
   //TODO < Function Get Product by Id send to ProductEdit >
   const handleEditModalClose = () => {
@@ -202,7 +224,7 @@ function ExportTable() {
 
   const getExportById = async (id) => {
     try {
-      const res_byid = await fetch(`/api/Export/${id}`, {
+      const res_byid = await fetch(`/api/ExportDB/${id}`, {
         cache: "no-store",
       });
 
@@ -211,8 +233,8 @@ function ExportTable() {
       }
 
       const data = await res_byid.json();
-      console.log("Data:", data.exportPD);
-      return data.exportPD; // Ensure you return the correct data structure
+      console.log("Data:", data.exportDb);
+      return data.exportDb; // Ensure you return the correct data structure
     } catch (error) {
       console.error("Failed to fetch Export:", error);
     }
@@ -241,28 +263,74 @@ function ExportTable() {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
-
+    if (isSubmitting) return;
+  
+    // รวบรวมข้อมูลที่เลือก
+    const updatedSelectedProduct = selectedDocuments.map(doc => ({
+      exProId: doc.productId,
+      exProName: doc.productName,
+      export: doc.exportQuantity,
+    }));
+  
+    // ตรวจสอบข้อมูล
     if (!dateExport || !documentId || !exportVen) {
       setError("Please complete Export Product details!");
       return;
     }
-
+    if (updatedSelectedProduct.length === 0) {
+      setError("Please add at least one product!");
+      return;
+    }
+  
+    // ตั้งค่า isSubmitting หลังจากตรวจสอบข้อมูลแล้ว
+    setIsSubmitting(true);
+  
     try {
-      const resCheckExport = await fetch("/api/checkExport", {
+      const resCheckExport = await fetch("/api/checkExportDB", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
         },
         body: JSON.stringify({ documentId }),
       });
-      const { exportPd } = await resCheckExport.json();
-      if (exportPd) {
+  
+      const { exportDb } = await resCheckExport.json();
+      if (exportDb) {
         setError("Document ID already exists!");
+        setIsSubmitting(false);
         return;
       }
-
-      //* Add Product to DB
-      const res_add = await fetch("/api/Export", {
+  
+      const updatePromises = selectedDocuments.map(async (doc) => {
+        const product = products.find((p) => p.productId === doc.productId);
+        if (!product) return null;
+        const newAmount = (parseInt(product.amount) - parseInt(doc.exportQuantity || 0)).toString();
+  
+        const res = await fetch(`/api/Product/${product._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({
+            newProductId: product.productId,
+            newProductName: product.productName,
+            newProductUnit: product.productUnit,
+            newBrand: product.brand,
+            newStoreHouse: product.storeHouse,
+            newAmount: newAmount,
+          }),
+        });
+  
+        if (!res.ok) {
+          throw new Error(`Failed to update Product ${product.productId}`);
+        }
+  
+        return res.json();
+      });
+  
+      await Promise.all(updatePromises);
+  
+      const res_add = await fetch("/api/ExportDB", {
         method: "POST",
         headers: {
           "Content-type": "application/json",
@@ -272,17 +340,18 @@ function ExportTable() {
           documentId,
           exportVen,
           exportEm,
+          selectedProduct: updatedSelectedProduct,
         }),
       });
-
+  
       if (!res_add.ok) {
         throw new Error("Failed to add Export");
       }
-
+  
       setError("");
       setSuccess("Export Product has been added successfully!");
       getExport();
-
+  
       setTimeout(() => {
         closeAddModal();
         setSuccess("");
@@ -290,18 +359,23 @@ function ExportTable() {
         setDocumentId("");
         setExportVen("");
         setExportEm("");
+        setError("");
+        setSelectedProduct([]);
+        setSelectedDocuments([]);
         setRefresh(!refresh);
       }, 2000);
     } catch (error) {
       console.log(error);
       setError("Failed to add Export Product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   //TODO < Function Delete Export >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(`/api/Export/${id}`, {
+      const res_byid = await fetch(`/api/ExportDB/${id}`, {
         cache: "no-store",
       });
 
@@ -310,7 +384,7 @@ function ExportTable() {
       }
 
       const data = await res_byid.json();
-      return data.exportPD; // Ensure you return the correct data structure
+      return data.exportDb; // Ensure you return the correct data structure
     } catch (error) {
       console.error("Failed to fetch Export:", error);
     }
@@ -340,9 +414,10 @@ function ExportTable() {
   );
   const handleDateChange = (date) => {
     if (date) {
-      setDateImport(startOfDay(date));
+      const formattedDate = format(date, "yyyy-MM-dd");
+      setDateExport(formattedDate);
     } else {
-      setDateImport(null);
+      setDateExport(null);
     }
   };
   //* Date Custom >
@@ -362,17 +437,29 @@ function ExportTable() {
       if (selected) {
         setSelectedDocuments([
           ...selectedDocuments,
-          { ...selected, importQuantity: 0 },
+          { ...selected, exportQuantity: 0 },
         ]);
       }
     }
   };
+  const uniqueProductOptions = useMemo(() => {
+    const uniqueOptions = products.reduce((acc, product) => {
+      if (!acc.some((option) => option.value === product.productId)) {
+        acc.push({
+          value: product.productId,
+          label: `${product.productId} - ${product.name}`,
+        });
+      }
+      return acc;
+    }, []);
+    return uniqueOptions;
+  }, [products]);
   const handleRemoveProduct = (productId) => {
     setSelectedDocuments(
       selectedDocuments.filter((doc) => doc.productId !== productId)
     );
   };
-  const handleImportQuantityChange = (productId, quantity) => {
+  const handleExportQuantityChange = (productId, quantity) => {
     setSelectedDocuments(
       selectedDocuments.map((doc) => {
         if (doc.productId === productId) {
@@ -380,13 +467,13 @@ function ExportTable() {
           const originalQuantity = doc.originalQuantity ?? 0;
 
           const quantityDifference = parseInt(quantity || 0) - originalQuantity;
-          const newAmount = parseInt(originalAmount) + quantityDifference;
+          const newAmount = parseInt(originalAmount) - quantityDifference;
 
           const isModified = newAmount !== parseInt(originalAmount);
 
           return {
             ...doc,
-            importQuantity: quantity,
+            exportQuantity: quantity,
             amount: newAmount,
             isModified: isModified,
             originalAmount: doc.originalAmount ?? doc.amount,
@@ -530,46 +617,57 @@ function ExportTable() {
               </tr>
             </thead>
             <tbody>
-              {filterExportsByID(exports, searchID).map((exportPd) => (
-                <tr key={exportPd.documentId} className="border-t">
-                  <td className="py-4 pr-4 pl-10 w-auto">
-                    {exportPd.dateImport}
-                  </td>
-                  <td className="py-4 px-4 flex items-center w-auto">
-                    <Avatar
-                      sx={{ bgcolor: indigo[800], marginRight: "20px" }}
-                      variant="rounded-md"
-                    >
-                      {exportPd.documentId.charAt(0).toUpperCase()}
-                    </Avatar>
-                    {exportPd.documentId}
-                  </td>
-                  <td className="py-4 px-4">{exportPd.importVen}</td>
-                  <td className="py-4 px-4">{exportPd.importEm}</td>
-                  <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
-                    <button
-                      onClick={() => getValue(exportPd._id)}
-                      type="button"
-                      className="text-indigo-600 hover:text-indigo-800"
-                    >
-                      <Eye size={23} />
-                    </button>
-                    <button
-                      onClick={() => getValue(exportPd._id)}
-                      type="button"
-                      className="text-indigo-600 hover:text-indigo-800"
-                    >
-                      <Edit size={23} />
-                    </button>
-                    <button
-                      onClick={() => getDelValue(exportPd._id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={23} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {sortExportsByDate(filterExportsByID(exports, searchID)).map(
+                (exportPd) => (
+                  <tr key={exportPd.documentId} className="border-t">
+                    <td className="py-4 pr-4 pl-10 w-auto">
+                      {exportPd.dateExport
+                        ? format(
+                            parse(
+                              exportPd.dateExport,
+                              "yyyy-MM-dd",
+                              new Date()
+                            ),
+                            "dd/MM/yyyy"
+                          )
+                        : ""}
+                    </td>
+                    <td className="py-4 px-4 flex items-center w-auto">
+                      <Avatar
+                        sx={{ bgcolor: indigo[800], marginRight: "20px" }}
+                        variant="rounded-md"
+                      >
+                        {exportPd.documentId.charAt(0).toUpperCase()}
+                      </Avatar>
+                      {exportPd.documentId}
+                    </td>
+                    <td className="py-4 px-4">{exportPd.exportVen}</td>
+                    <td className="py-4 px-4">{exportPd.exportEm}</td>
+                    <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
+                      <button
+                        onClick={() => getValue(exportPd._id)}
+                        type="button"
+                        className="text-indigo-600 hover:text-indigo-800"
+                      >
+                        <Eye size={23} />
+                      </button>
+                      <button
+                        onClick={() => getValue(exportPd._id)}
+                        type="button"
+                        className="text-indigo-600 hover:text-indigo-800"
+                      >
+                        <Edit size={23} />
+                      </button>
+                      <button
+                        onClick={() => getDelValue(exportPd._id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={23} />
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )}
             </tbody>
           </table>
         </div>
@@ -625,13 +723,16 @@ function ExportTable() {
                           </label>
                           <div className="relative">
                             <DatePicker
-                              selected={dateExport}
+                              selected={
+                                dateExport
+                                  ? parse(dateExport, "yyyy-MM-dd", new Date())
+                                  : null
+                              }
                               onChange={handleDateChange}
                               className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pl-10"
                               id="dateImport"
                               dateFormat="dd/MM/yyyy"
                               placeholderText="Select a date"
-                              ref={datePickerRef}
                               onFocus={(e) => e.target.blur()}
                               popperPlacement="bottom-end"
                             />
@@ -671,7 +772,7 @@ function ExportTable() {
                         <Select
                           options={vendorOptions}
                           onChange={(option) =>
-                            setImportVen(option ? option.value : "")
+                            setExportVen(option ? option.value : "")
                           }
                           placeholder="Select Vendor"
                           isClearable
@@ -752,9 +853,9 @@ function ExportTable() {
                                 <td className="py-2 px-4 border">
                                   <input
                                     type="number"
-                                    value={doc.importQuantity || ""}
+                                    value={doc.exportQuantity || ""}
                                     onChange={(e) =>
-                                      handleImportQuantityChange(
+                                      handleExportQuantityChange(
                                         doc.productId,
                                         e.target.value
                                       )
@@ -790,7 +891,7 @@ function ExportTable() {
                         <Select
                           options={employeeOptions}
                           onChange={(option) =>
-                            setImportEm(option ? option.value : "")
+                            setExportEm(option ? option.value : "")
                           }
                           placeholder="Select Employee"
                           isClearable
@@ -822,8 +923,9 @@ function ExportTable() {
                       <button
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                        disabled={isSubmitting}
                       >
-                        Add Export Product
+                        {isSubmitting ? 'Adding...' : 'Add Export Product'}
                       </button>
                     </div>
                   </Dialog.Panel>
