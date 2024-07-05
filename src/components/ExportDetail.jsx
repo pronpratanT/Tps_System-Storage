@@ -6,93 +6,33 @@ import "../styles/ModalForm.css";
 import Select from "react-select";
 import { Calendar } from "lucide-react";
 
-function ImportDel({
+function ExportDetail({
   isVisible,
   onClose,
-  importPd,
-  refreshImports,
-  refreshCount,
+  exportPd,
 }) {
-  const [delDate, setDelDate] = useState("");
-  const [delDocumentId, setDelDocumentId] = useState("");
-  const [delImportVen, setDelImportVen] = useState("");
-  const [delImportEm, setDelImportEm] = useState("");
-  const [delSelectedProduct, setDelSelectedProduct] = useState([]);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [products, setProducts] = useState([]);
-  const datePickerRef = useRef(null);
-  const vendorOption = { value: delImportVen, label: delImportVen };
-  const employeeOption = { value: delImportEm, label: delImportEm };
-
-  useEffect(() => {
-    if (importPd) {
-      setDelDate(importPd.dateImport);
-      setDelDocumentId(importPd.documentId);
-      setDelImportVen(importPd.importVen);
-      setDelImportEm(importPd.importEm);
-      setDelSelectedProduct(importPd.selectedProduct);
-    }
-  }, [importPd]);
-
-  const removeImport = async (event) => {
-    event.preventDefault();
-
-    try {
-      const updatePromises = delSelectedProduct.map(async (prod) => {
-        const product = products.find((p) => p.productId === prod.imProId);
-        if (!product) return null;
-      
-        console.log("Product ID : ", product._id);
-      
-        const newAmount = Math.max(
-          0,
-          parseInt(product.amount) - (prod.amount !== undefined && prod.amount !== null ? parseInt(prod.amount) : parseInt(prod.import || 0))
-        ).toString();
-      
-        const res = await fetch(`/api/Product/${product._id}`, {
-          method: "PUT",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({
-            newProductId: product.productId,
-            newProductName: product.productName,
-            newProductUnit: product.productUnit,
-            newBrand: product.brand,
-            newStoreHouse: product.storeHouse,
-            newAmount: newAmount,
-          }),
-        });
-      
-        if (!res.ok) {
-          throw new Error(`Failed to update Product ${product.productId}`);
-        }
-      
-        return res.json();
-      });
-
-      const resDelete = await fetch(`/api/ImportDB?id=${importPd._id}`, {
-        method: "DELETE",
-      });
-      if (!resDelete.ok) {
-        throw new Error("Failed to delete Import Product");
+    const [delDate, setDelDate] = useState("");
+    const [delDocumentId, setDelDocumentId] = useState("");
+    const [delExportVen, setDelExportVen] = useState("");
+    const [delExportEm, setDelExportEm] = useState("");
+    const [delSelectedProduct, setDelSelectedProduct] = useState([]);
+    const [products, setProducts] = useState([]);
+    const datePickerRef = useRef(null);
+    const vendorOption = { value: delExportVen, label: delExportVen };
+    const employeeOption = { value: delExportEm, label: delExportEm };
+  
+    useEffect(() => {
+      if (exportPd) {
+        setDelDate(exportPd.dateExport);
+        setDelDocumentId(exportPd.documentId);
+        setDelExportVen(exportPd.exportVen);
+        setDelExportEm(exportPd.exportEm);
+        setDelSelectedProduct(exportPd.selectedProduct);
       }
-      setError("");
-      setSuccess("Import Product has been deleted successfully!");
-      setTimeout(() => {
-        onClose();
-        setSuccess("");
-        refreshImports();
-        refreshCount();
-      }, 2000);
-    } catch (error) {
-      setError("Failed to delete Import product");
-    }
-  };
+    }, [exportPd]);
 
-   //TODO < Function to fetch product to table >
-   const getProducts = async () => {
+  //TODO < Function to fetch product to table >
+  const getProducts = async () => {
     try {
       const res_get = await fetch("/api/Product", {
         cache: "no-store",
@@ -141,7 +81,6 @@ function ImportDel({
         >
           <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
-        <form onSubmit={removeImport}>
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex items-center justify-center min-h-full p-4 text-center">
               <Transition.Child
@@ -158,11 +97,11 @@ function ImportDel({
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Delete Import Product Form
+                    Detail Export Product Form
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Delete the details of the Import Product below.
+                      Details of the Export Product.
                     </p>
                   </div>
 
@@ -261,22 +200,22 @@ function ImportDel({
                               Product Name
                             </th>
                             <th className="py-2 px-4 border w-2/12 text-center">
-                              Import
+                              Export
                             </th>
                           </tr>
                         </thead>
                         <tbody>
                           {delSelectedProduct.map((prod) => {
                             return (
-                              <tr key={prod.imProId}>
+                              <tr key={prod.exProId}>
                                 <td className="py-2 px-4 border">
-                                  {prod.imProId}
+                                  {prod.exProId}
                                 </td>
                                 <td className="py-2 px-4 border">
-                                  {prod.imProName}
+                                  {prod.exProName}
                                 </td>
                                 <td className="py-2 px-4 border text-right">
-                                  {prod.import}
+                                  {prod.export}
                                 </td>
                               </tr>
                             );
@@ -318,35 +257,13 @@ function ImportDel({
                       />
                     </div>
                   </div>
-
-                  {/* Error & Success Messages */}
-                  {error && (
-                    <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
-                      {error}
-                    </div>
-                  )}
-                  {success && (
-                    <div className="px-4 py-2 text-sm font-medium text-green-900 bg-green-100 border border-transparent rounded-md hover:bg-green-200">
-                      {success}
-                    </div>
-                  )}
-
-                  <div className="mt-4 py-2">
-                    <button
-                      type="submit"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
-                    >
-                      Delete Import Product
-                    </button>
-                  </div>
                 </Dialog.Panel>
               </Transition.Child>
             </div>
           </div>
-        </form>
       </Dialog>
     </Transition>
   );
 }
 
-export default ImportDel;
+export default ExportDetail;

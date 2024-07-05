@@ -214,6 +214,7 @@ export default function ProductTable() {
         setProductName("");
         setProductUnit("");
         setStoreHouse("");
+        setBrand("");
         setAmount("");
         setRefresh(!refresh);
       }, 2000);

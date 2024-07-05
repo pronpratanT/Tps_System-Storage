@@ -1,13 +1,23 @@
-import React, { Fragment, useState, useEffect } from "react";
+import React, { Fragment, useState, useEffect, useRef } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import DatePicker, { CalendarContainer } from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import "../styles/ModalForm.css";
+import Select from "react-select";
+import { Calendar } from "lucide-react";
 
 function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount }) {
   const [delDate, setDelDate] = useState("");
   const [delDocumentId, setDelDocumentId] = useState("");
   const [delExportVen, setDelExportVen] = useState("");
   const [delExportEm, setDelExportEm] = useState("");
+  const [delSelectedProduct, setDelSelectedProduct] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [products, setProducts] = useState([]);
+  const datePickerRef = useRef(null);
+  const vendorOption = { value: delExportVen, label: delExportVen };
+  const employeeOption = { value: delExportEm, label: delExportEm };
 
   useEffect(() => {
     if (exportPd) {
@@ -15,19 +25,51 @@ function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount 
       setDelDocumentId(exportPd.documentId);
       setDelExportVen(exportPd.exportVen);
       setDelExportEm(exportPd.exportEm);
+      setDelSelectedProduct(exportPd.selectedProduct);
     }
   }, [exportPd]);
 
+  //TODO Submit
   const removeExport = async (event) => {
     event.preventDefault();
 
     try {
-      const resDelete = await fetch(
-        `/api/Export?id=${exportPd._id}`,
-        {
-          method: "DELETE",
+      const updatePromises = delSelectedProduct.map(async (prod) => {
+        const product = products.find((p) => p.productId === prod.exProId);
+        if (!product) return null;
+      
+        console.log("Product ID : ", product._id);
+      
+        const newAmount = Math.max(
+          0,
+          parseInt(product.amount) + (prod.amount !== undefined && prod.amount !== null ? parseInt(prod.amount) : parseInt(prod.export || 0))
+        ).toString();
+      
+        const res = await fetch(`/api/Product/${product._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({
+            newProductId: product.productId,
+            newProductName: product.productName,
+            newProductUnit: product.productUnit,
+            newBrand: product.brand,
+            newStoreHouse: product.storeHouse,
+            newAmount: newAmount,
+          }),
+        });
+      
+        if (!res.ok) {
+          throw new Error(`Failed to update Product ${product.productId}`);
         }
-      );
+      
+        return res.json();
+      });
+
+      const resDelete = await fetch(`/api/ExportDB?id=${exportPd._id}`, {
+        method: "DELETE",
+      });
       if (!resDelete.ok) {
         throw new Error("Failed to delete Export Product");
       }
@@ -43,6 +85,43 @@ function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount 
       setError("Failed to delete Export product");
     }
   };
+  //TODO Submit >
+
+  //TODO < Function to fetch product to table >
+  const getProducts = async () => {
+    try {
+      const res_get = await fetch("/api/Product", {
+        cache: "no-store",
+      });
+
+      if (!res_get.ok) {
+        throw new Error("Failed to fetch Product");
+      }
+
+      const newProducts = await res_get.json();
+
+      // Check for duplicates
+      const uniqueProducts = newProducts.filter(
+        (product, index, self) =>
+          index === self.findIndex((t) => t.productId === product.productId)
+      );
+
+      // Sort Products by vendorId in alphabetical order
+      const sortedProducts = uniqueProducts.sort((a, b) =>
+        a.productId.localeCompare(b.productId)
+      );
+
+      setProducts(sortedProducts);
+      console.log(sortedProducts);
+    } catch (error) {
+      console.log("Error loading Products: ", error);
+    }
+  };
+
+  //? Reload Products table
+  useEffect(() => {
+    getProducts();
+  }, []);
 
   return (
     <Transition appear show={isVisible} as={Fragment}>
@@ -70,86 +149,173 @@ function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount 
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-5xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                   <Dialog.Title
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Delete Export Product Form
+                    Detail Export Product Form
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-500">
-                      Delete the details of the Export Product below.
+                      Detail the details of the Export Product below.
                     </p>
                   </div>
+
                   <div className="mt-4">
-                    <div className="mb-4">
-                      <label
-                        className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="dateImport"
-                      >
-                        Date
-                      </label>
-                      <input
-                        onChange={(e) => setDelDate(e.target.value)}
-                        value={delDate}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="dateImport"
-                        type="text"
-                        readOnly
-                      />
+                    <div className="mb-4 flex justify-between">
+                      <div className="w-1/2 pr-2">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="dateImport"
+                        >
+                          Date
+                        </label>
+                        <div className="relative">
+                          <DatePicker
+                            selected={delDate}
+                            onChange={(date) => setDelDate(date)}
+                            className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pl-10"
+                            id="dateImport"
+                            dateFormat="dd/MM/yyyy"
+                            placeholderText="Select a date"
+                            ref={datePickerRef}
+                            onFocus={(e) => e.target.blur()}
+                            popperPlacement="bottom-end"
+                            readOnly
+                          />
+                          <div
+                            className="absolute top-0 left-0 px-2 py-2 cursor-pointer"
+                            onClick={() => datePickerRef.current.setFocus()}
+                          >
+                            <Calendar className="text-gray-500" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="w-1/2 pl-2">
+                        <label
+                          className="block text-gray-700 text-sm font-bold mb-2"
+                          htmlFor="documentId"
+                        >
+                          Document ID
+                        </label>
+                        <input
+                          onChange={(e) => setDelDocumentId(e.target.value)}
+                          value={delDocumentId}
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="documentId"
+                          type="text"
+                          readOnly
+                        />
+                      </div>
                     </div>
+
                     <div className="mb-4">
                       <label
                         className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="documentId"
-                      >
-                        Document ID
-                      </label>
-                      <input
-                        onChange={(e) => setDelDocumentId(e.target.value)}
-                        value={delDocumentId}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="documentId"
-                        type="text"
-                        readOnly
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label
-                        className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="documentId"
+                        htmlFor="unit"
                       >
                         Vendor
                       </label>
-                      <input
-                        onChange={(e) => setDelImportVen(e.target.value)}
-                        value={delExportVen}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="documentId"
-                        type="text"
-                        readOnly
+                      <Select
+                        value={vendorOption}
+                        isDisabled={true}
+                        placeholder="Select Vendor"
+                        className="basic-single shadow rounded focus:outline-none focus:shadow-outline"
+                        classNamePrefix="select"
+                        maxMenuHeight={200}
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            backgroundColor: "#f0f0f0",
+                            borderColor: "#d1d5db",
+                          }),
+                          singleValue: (base) => ({
+                            ...base,
+                            color: "#374151",
+                          }),
+                          menuPortal: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                          }),
+                        }}
                       />
                     </div>
+                    {/* Products Table */}
+                    <div className="mb-4">
+                      <label className="block text-gray-700 text-sm font-bold mb-2">
+                        Selected Products
+                      </label>
+                      <table className="min-w-full bg-white border">
+                        <thead>
+                          <tr>
+                            <th className="py-2 px-4 border w-3/12">
+                              Product ID
+                            </th>
+                            <th className="py-2 px-4 border w-5/12">
+                              Product Name
+                            </th>
+                            <th className="py-2 px-4 border w-2/12 text-center">
+                              Export
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {delSelectedProduct.map((prod) => {
+                            return (
+                              <tr key={prod.exProId}>
+                                <td className="py-2 px-4 border">
+                                  {prod.exProId}
+                                </td>
+                                <td className="py-2 px-4 border">
+                                  {prod.exProName}
+                                </td>
+                                <td className="py-2 px-4 border text-right">
+                                  {prod.export}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Employee */}
                     <div className="mb-4">
                       <label
                         className="block text-gray-700 text-sm font-bold mb-2"
-                        htmlFor="documentId"
+                        htmlFor="newImportEm"
                       >
                         Employee
                       </label>
-                      <input
-                        onChange={(e) => setDelImportEm(e.target.value)}
-                        value={delExportEm}
-                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                        id="documentId"
-                        type="text"
-                        readOnly
+                      <Select
+                        value={employeeOption}
+                        isDisabled={true}
+                        placeholder="Select Vendor"
+                        className="basic-single shadow rounded focus:outline-none focus:shadow-outline"
+                        classNamePrefix="select"
+                        maxMenuHeight={200}
+                        styles={{
+                          control: (base) => ({
+                            ...base,
+                            backgroundColor: "#f0f0f0",
+                            borderColor: "#d1d5db",
+                          }),
+                          singleValue: (base) => ({
+                            ...base,
+                            color: "#374151",
+                          }),
+                          menuPortal: (base) => ({
+                            ...base,
+                            zIndex: 9999,
+                          }),
+                        }}
                       />
                     </div>
                   </div>
 
-                  {/* // TODO : Error & Success */}
+                  {/* Error & Success Messages */}
                   {error && (
                     <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
                       {error}

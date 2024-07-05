@@ -429,12 +429,14 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
             : 0;
           const newImportQuantity = parseInt(quantity) || 0;
           
-          const amountBeforeImport = prod.originalAmountBeforeImport ?? originalAmount;
+          // ใช้ค่า amount ปัจจุบันหรือ originalAmount ถ้ายังไม่มีการกำหนดค่า amount
+          const currentAmount = prod.amount !== undefined ? parseInt(prod.amount) : originalAmount;
           
+          // คำนวณผลต่างของ import
           const prevImportQuantity = parseInt(prod.import) || 0;
           const importDifference = newImportQuantity - prevImportQuantity;
           
-          const currentAmount = parseInt(prod.amount) || amountBeforeImport;
+          // คำนวณ amount ใหม่โดยเพิ่มผลต่างของ import
           const newAmount = currentAmount + importDifference;
           
           const isModified = newImportQuantity !== 0;
@@ -444,7 +446,6 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
             import: quantity,
             amount: newAmount,
             isModified: isModified,
-            originalAmountBeforeImport: prod.originalAmountBeforeImport ?? amountBeforeImport,
           };
         }
         return prod;

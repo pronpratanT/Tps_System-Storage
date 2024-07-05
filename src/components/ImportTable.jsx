@@ -309,6 +309,11 @@ const ImportTable = () => {
     setShouldRefresh(!shouldRefresh);
   };
 
+  const SubmitRefresh = () => {
+    getImport();
+    getProducts();
+  } 
+
   //? Selected Product
 
   //* Date Custom
@@ -849,7 +854,7 @@ const ImportTable = () => {
         isVisible={isEditModalOpen}
         onClose={handleEditModalClose}
         importPd={selectedImport}
-        refreshImports={getImport}
+        refreshImports={SubmitRefresh}
       />
 
       {/* // TODO : Delete Product Modal */}
@@ -857,7 +862,7 @@ const ImportTable = () => {
         isVisible={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         importPd={selectedImport}
-        refreshImports={getImport}
+        refreshImports={SubmitRefresh}
         refreshCount={handleRefresh}
       />
     </div>

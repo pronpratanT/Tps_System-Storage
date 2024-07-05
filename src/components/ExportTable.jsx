@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  Fragment,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import { useState, useEffect, Fragment, useRef, useMemo } from "react";
 import {
   Edit,
   Search,
@@ -17,7 +10,7 @@ import {
   Eye,
 } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
-import { indigo } from "@mui/material/colors";
+import { indigo, teal } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import ExportEdit from "./ExportEdit";
 import ExportDel from "./ExportDel";
@@ -27,6 +20,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "../styles/ModalForm.css";
 import Select from "react-select";
 import { parse, format, compareAsc } from "date-fns";
+import ExportDetail from "./ExportDetail";
 
 function ExportTable() {
   //? State
@@ -39,6 +33,7 @@ function ExportTable() {
   const [success, setSuccess] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [searchID, setSearchID] = useState("");
   const [selectedExport, setSelectedExport] = useState(null);
@@ -264,15 +259,26 @@ function ExportTable() {
   const handleAddSubmit = async (e) => {
     e.preventDefault();
     if (isSubmitting) return;
-  
-    // รวบรวมข้อมูลที่เลือก
-    const updatedSelectedProduct = selectedDocuments.map(doc => ({
-      exProId: doc.productId,
-      exProName: doc.productName,
-      export: doc.exportQuantity,
-    }));
-  
-    // ตรวจสอบข้อมูล
+
+    const uniqueProductMap = new Map();
+
+    selectedDocuments.forEach((doc) => {
+      const key = doc.productId;
+      if (
+        !uniqueProductMap.has(key) ||
+        parseInt(doc.exportQuantity) >
+          parseInt(uniqueProductMap.get(key).exportQuantity)
+      ) {
+        uniqueProductMap.set(key, {
+          exProId: doc.productId,
+          exProName: doc.productName,
+          export: doc.exportQuantity,
+        });
+      }
+    });
+
+    const updatedSelectedProduct = Array.from(uniqueProductMap.values());
+
     if (!dateExport || !documentId || !exportVen) {
       setError("Please complete Export Product details!");
       return;
@@ -281,10 +287,9 @@ function ExportTable() {
       setError("Please add at least one product!");
       return;
     }
-  
-    // ตั้งค่า isSubmitting หลังจากตรวจสอบข้อมูลแล้ว
+
     setIsSubmitting(true);
-  
+
     try {
       const resCheckExport = await fetch("/api/checkExportDB", {
         method: "POST",
@@ -293,19 +298,21 @@ function ExportTable() {
         },
         body: JSON.stringify({ documentId }),
       });
-  
+
       const { exportDb } = await resCheckExport.json();
       if (exportDb) {
         setError("Document ID already exists!");
         setIsSubmitting(false);
         return;
       }
-  
-      const updatePromises = selectedDocuments.map(async (doc) => {
-        const product = products.find((p) => p.productId === doc.productId);
+
+      const updatePromises = updatedSelectedProduct.map(async (doc) => {
+        const product = products.find((p) => p.productId === doc.exProId);
         if (!product) return null;
-        const newAmount = (parseInt(product.amount) - parseInt(doc.exportQuantity || 0)).toString();
-  
+        const newAmount = (
+          parseInt(product.amount) - parseInt(doc.export || 0)
+        ).toString();
+
         const res = await fetch(`/api/Product/${product._id}`, {
           method: "PUT",
           headers: {
@@ -320,16 +327,16 @@ function ExportTable() {
             newAmount: newAmount,
           }),
         });
-  
+
         if (!res.ok) {
           throw new Error(`Failed to update Product ${product.productId}`);
         }
-  
+
         return res.json();
       });
-  
+
       await Promise.all(updatePromises);
-  
+
       const res_add = await fetch("/api/ExportDB", {
         method: "POST",
         headers: {
@@ -343,15 +350,15 @@ function ExportTable() {
           selectedProduct: updatedSelectedProduct,
         }),
       });
-  
+
       if (!res_add.ok) {
         throw new Error("Failed to add Export");
       }
-  
+
       setError("");
       setSuccess("Export Product has been added successfully!");
       getExport();
-  
+
       setTimeout(() => {
         closeAddModal();
         setSuccess("");
@@ -400,8 +407,40 @@ function ExportTable() {
     }
   };
 
+  //TODO < Function Detail Export >
+  const getDetailById = async (id) => {
+    try {
+      const res_byid = await fetch(`/api/ExportDB/${id}`, {
+        cache: "no-store",
+      });
+
+      if (!res_byid.ok) {
+        throw new Error("Failed to fetch Export");
+      }
+
+      const data = await res_byid.json();
+      return data.exportDb; // Ensure you return the correct data structure
+    } catch (error) {
+      console.error("Failed to fetch Export:", error);
+    }
+  };
+
+  const getDetailValue = async (id) => {
+    try {
+      const exportPD = await getDetailById(id);
+      setSelectedExport(exportPD);
+      setIsDetailModalOpen(true);
+    } catch (error) {
+      console.error("Failed to get Export:", error);
+    }
+  };
+
   const handleRefresh = () => {
     setShouldRefresh(!shouldRefresh);
+  };
+  const SubmitRefresh = () => {
+    getExport();
+    getProducts();
   };
 
   //* Date Custom
@@ -459,6 +498,7 @@ function ExportTable() {
       selectedDocuments.filter((doc) => doc.productId !== productId)
     );
   };
+
   const handleExportQuantityChange = (productId, quantity) => {
     setSelectedDocuments(
       selectedDocuments.map((doc) => {
@@ -466,16 +506,25 @@ function ExportTable() {
           const originalAmount = doc.originalAmount ?? doc.amount;
           const originalQuantity = doc.originalQuantity ?? 0;
 
-          const quantityDifference = parseInt(quantity || 0) - originalQuantity;
-          const newAmount = parseInt(originalAmount) - quantityDifference;
+          let newQuantity = parseInt(quantity) || 0;
+          let newAmount = Math.max(0, parseInt(originalAmount) - newQuantity);
+
+          // ถ้า amount เป็น 0 และพยายามเพิ่ม export มากกว่าที่ทำให้ amount เป็น 0
+          if (newAmount === 0 && newQuantity > parseInt(originalAmount)) {
+            newQuantity = parseInt(originalAmount);
+          }
 
           const isModified = newAmount !== parseInt(originalAmount);
+          const isLowStock = newAmount > 0 && newAmount <= 10;
+          const isOutOfStock = newAmount === 0;
 
           return {
             ...doc,
-            exportQuantity: quantity,
+            exportQuantity: newQuantity.toString(),
             amount: newAmount,
             isModified: isModified,
+            isLowStock: isLowStock,
+            isOutOfStock: isOutOfStock,
             originalAmount: doc.originalAmount ?? doc.amount,
             originalQuantity: doc.originalQuantity ?? 0,
           };
@@ -484,6 +533,7 @@ function ExportTable() {
       })
     );
   };
+
   const sortedProducts = products.sort((a, b) => {
     const isASelected = selectedDocuments.some(
       (doc) => doc.productId === a.productId
@@ -602,13 +652,16 @@ function ExportTable() {
                 <th className="py-3 pr-4 pl-10 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-2/12">
                   Date
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-2/12">
                   Document ID
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
                   Vendor
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-2/12">
+                  Product
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-2/12">
                   Employee
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">
@@ -634,7 +687,7 @@ function ExportTable() {
                     </td>
                     <td className="py-4 px-4 flex items-center w-auto">
                       <Avatar
-                        sx={{ bgcolor: indigo[800], marginRight: "20px" }}
+                        sx={{ bgcolor: teal[400], marginRight: "20px" }}
                         variant="rounded-md"
                       >
                         {exportPd.documentId.charAt(0).toUpperCase()}
@@ -642,24 +695,33 @@ function ExportTable() {
                       {exportPd.documentId}
                     </td>
                     <td className="py-4 px-4">{exportPd.exportVen}</td>
+                    <td className="py-4 px-4">
+                      {exportPd.selectedProduct
+                        ? exportPd.selectedProduct.length
+                        : 0}{" "}
+                      products
+                    </td>
                     <td className="py-4 px-4">{exportPd.exportEm}</td>
                     <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
                       <button
-                        onClick={() => getValue(exportPd._id)}
+                        onClick={() => getDetailValue(exportPd._id)}
                         type="button"
-                        className="text-indigo-600 hover:text-indigo-800"
+                        className="text-blue-600 hover:text-blue-800"
                       >
                         <Eye size={23} />
                       </button>
+
                       <button
                         onClick={() => getValue(exportPd._id)}
                         type="button"
-                        className="text-indigo-600 hover:text-indigo-800"
+                        className="text-amber-600 hover:text-amber-800"
                       >
                         <Edit size={23} />
                       </button>
+
                       <button
                         onClick={() => getDelValue(exportPd._id)}
+                        type="button"
                         className="text-red-500 hover:text-red-700"
                       >
                         <Trash2 size={23} />
@@ -820,10 +882,10 @@ function ExportTable() {
                               <th className="py-2 px-4 border w-3/12">
                                 Product ID
                               </th>
-                              <th className="py-2 px-4 border w-5/12">
+                              <th className="py-2 px-4 border w-4/12">
                                 Product Name
                               </th>
-                              <th className="py-2 px-4 border w-1/12 text-center">
+                              <th className="py-2 px-4 border w-2/12 text-center">
                                 Amount
                               </th>
                               <th className="py-2 px-4 border w-2/12 text-center">
@@ -845,10 +907,20 @@ function ExportTable() {
                                 </td>
                                 <td
                                   className={`py-2 px-4 border text-right ${
-                                    doc.isModified ? "text-green-600" : ""
+                                    doc.isModified ? "text-red-600" : ""
                                   }`}
                                 >
                                   {doc.amount}
+                                  {doc.isLowStock && !doc.isOutOfStock && (
+                                    <span className="ml-2 text-yellow-500">
+                                      Low Stock!
+                                    </span>
+                                  )}
+                                  {doc.isOutOfStock && (
+                                    <span className="ml-2 text-red-500">
+                                      Out of Stock!
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-2 px-4 border">
                                   <input
@@ -925,7 +997,7 @@ function ExportTable() {
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
                         disabled={isSubmitting}
                       >
-                        {isSubmitting ? 'Adding...' : 'Add Export Product'}
+                        {isSubmitting ? "Adding..." : "Add Export Product"}
                       </button>
                     </div>
                   </Dialog.Panel>
@@ -936,21 +1008,28 @@ function ExportTable() {
         </Dialog>
       </Transition>
 
-      {/* // TODO : Edit Product Modal */}
+      {/* // TODO : Edit Modal */}
       <ExportEdit
         isVisible={isEditModalOpen}
         onClose={handleEditModalClose}
         exportPd={selectedExport}
-        refreshExports={getExport}
+        refreshExports={SubmitRefresh}
       />
 
-      {/* // TODO : Delete Product Modal */}
+      {/* // TODO : Delete Modal */}
       <ExportDel
         isVisible={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         exportPd={selectedExport}
-        refreshExports={getExport}
+        refreshExports={SubmitRefresh}
         refreshCount={handleRefresh}
+      />
+
+      {/* //TODO : Detail Modal */}
+      <ExportDetail
+        isVisible={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        exportPd={selectedExport}
       />
     </div>
   );

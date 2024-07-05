@@ -21,6 +21,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   const [newSelectedProduct, setNewSelectedProduct] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (exportPd) {
@@ -50,9 +51,16 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   //! Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!newDateExport || !newDocumentId || !newExportVen) {
       setError("Please complete Export Product details!");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!newSelectedProduct || newSelectedProduct.length === 0) {
+      setError("Please add at least one product!");
       return;
     }
 
@@ -60,13 +68,17 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
       newDocumentId,
       exportPd?._id || ""
     );
+
     if (isDuplicate) {
       setError("Document ID already exists!");
+      setIsSubmitting(false);
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      const res = await fetch(`/api/Export/${exportPd?._id || ""}`, {
+      const res = await fetch(`/api/ExportDB/${exportPd?._id || ""}`, {
         method: "PUT",
         headers: {
           "Content-type": "application/json",
@@ -76,8 +88,62 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
           newDocumentId,
           newExportVen,
           newExportEm,
+          newSelectedProduct,
         }),
       });
+
+      //? Update Export-Product
+      const uniqueProductMap = new Map();
+
+      newSelectedProduct.forEach((prod) => {
+        const key = prod.exProId;
+        if (
+          !uniqueProductMap.has(key) ||
+          (prod.amount !== undefined &&
+            prod.amount !== null &&
+            parseInt(prod.amount) < parseInt(uniqueProductMap.get(key).amount))
+        ) {
+          uniqueProductMap.set(key, prod);
+        }
+      });
+
+      const uniqueSelectedProducts = Array.from(uniqueProductMap.values());
+
+      const updatePromises = uniqueSelectedProducts.map(async (prod) => {
+        const product = products.find((p) => p.productId === prod.exProId);
+        if (!product) return null;
+
+        console.log("Product ID : ", product._id);
+
+        const newAmount =
+          prod.amount !== undefined && prod.amount !== null
+            ? prod.amount.toString()
+            : (
+                parseInt(product.amount) - parseInt(prod.export || 0)
+              ).toString();
+
+        const res = await fetch(`/api/Product/${product._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({
+            newProductId: product.productId,
+            newProductName: product.productName,
+            newProductUnit: product.productUnit,
+            newBrand: product.brand,
+            newStoreHouse: product.storeHouse,
+            newAmount: newAmount,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to update Product ${product.productId}`);
+        }
+
+        return res.json();
+      });
+      //? Update Export-Product >
 
       if (!res.ok) {
         throw new Error("Failed to update Export Product");
@@ -94,6 +160,8 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
     } catch (error) {
       console.log(error);
       setError("Failed to update Export Product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -299,24 +367,39 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
     setNewSelectedProduct((prevSelectedProduct) =>
       prevSelectedProduct.map((prod) => {
         if (prod.exProId === productId) {
-          const originalAmount = prod.originalAmount;
-          const newExportQuantity = parseInt(quantity) || 0;
-          
-          // คำนวณ newAmount โดยไม่ให้ติดลบ
-          const newAmount = Math.max(0, originalAmount - newExportQuantity);
-          
-          // ปรับ exportQuantity ถ้า newAmount เป็น 0
-          const adjustedExportQuantity = originalAmount - newAmount;
-          
-          const isModified = adjustedExportQuantity !== 0;
-          const isLowStock = newAmount < 10;
-          
+          const originalProduct = products.find(
+            (p) => p.productId === productId
+          );
+          const originalAmount = originalProduct
+            ? parseInt(originalProduct.amount) || 0
+            : 0;
+          let newExportQuantity = parseInt(quantity) || 0;
+          const prevExportQuantity = parseInt(prod.export) || 0;
+  
+          // ใช้ amount ปัจจุบันเป็นฐานในการคำนวณ
+          const currentAmount =
+            prod.amount !== undefined ? parseInt(prod.amount) : originalAmount;
+  
+          // คำนวณ amount ใหม่
+          let newAmount = Math.max(0, currentAmount - (newExportQuantity - prevExportQuantity));
+  
+          // ถ้า amount เป็น 0 และพยายามเพิ่ม export มากกว่าที่ทำให้ amount เป็น 0
+          if (newAmount === 0 && newExportQuantity > originalAmount) {
+            newExportQuantity = originalAmount;
+            newAmount = 0;
+          }
+  
+          const isModified = newExportQuantity !== 0;
+          const isLowStock = newAmount > 0 && newAmount <= 10;
+          const isOutOfStock = newAmount === 0;
+  
           return {
             ...prod,
-            export: adjustedExportQuantity.toString(),
+            export: newExportQuantity.toString(),
             amount: newAmount,
             isModified: isModified,
             isLowStock: isLowStock,
+            isOutOfStock: isOutOfStock,
           };
         }
         return prod;
@@ -523,10 +606,21 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                         </thead>
                         <tbody>
                           {newSelectedProduct.map((prod) => {
-                            const displayAmount = prod.amount;
+                            const originalProduct = products.find(
+                              (p) => p.productId === prod.exProId
+                            );
+                            const originalAmount = originalProduct
+                              ? parseInt(originalProduct.amount) || 0
+                              : 0;
                             const exportQuantity = parseInt(prod.export) || 0;
 
+                            const displayAmount =
+                              (prod.amount !== undefined
+                                ? parseInt(prod.amount)
+                                : originalAmount) || 0;
+
                             const isModified = exportQuantity !== 0;
+                            const isOutOfStock = displayAmount === 0;
                             return (
                               <tr key={prod.exProId}>
                                 <td className="py-2 px-4 border">
@@ -541,9 +635,14 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                                   }`}
                                 >
                                   {displayAmount}
-                                  {prod.isLowStock && (
+                                  {prod.isLowStock && !isOutOfStock && (
                                     <span className="ml-2 text-yellow-500">
                                       Low Stock!
+                                    </span>
+                                  )}
+                                  {isOutOfStock && (
+                                    <span className="ml-2 text-red-500">
+                                      Out of Stock!
                                     </span>
                                   )}
                                 </td>
@@ -625,8 +724,9 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                     <button
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      disabled={isSubmitting}
                     >
-                      Update Export Product
+                      {isSubmitting ? "Updating..." : "Update Export Product"}
                     </button>
                   </div>
                 </Dialog.Panel>
