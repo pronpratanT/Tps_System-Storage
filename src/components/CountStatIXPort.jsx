@@ -60,16 +60,16 @@ function CountStatIXPort({ refresh, shouldRefresh }) {
     <div className="flex justify-between items-center mb-6 space-x-5">
       {/* //? Stat */}
       <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-        <div className="text-lg font-semibold text-gray-600 my-1">Imports</div>
-        <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+        <div className="text-lg font-bold text-gray-600 my-1">Imports</div>
+        <div className="flex items-center space-x-2 text-2xl font-bold text-green-600">
           <PackagePlus size={32} />
           <span className="text-2xl font-bold">{imports.length}</span>{" "}
         </div>
       </div>
 
       <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-        <div className="text-lg font-semibold text-gray-600 my-1">Exports</div>
-        <div className="flex items-center space-x-2 text-2xl font-bold text-indigo-800">
+        <div className="text-lg font-bold text-gray-600 my-1">Exports</div>
+        <div className="flex items-center space-x-2 text-2xl font-bold text-red-600">
           <PackageMinus size={32} />
           <span className="text-2xl font-bold">{exports.length}</span>{" "}
         </div>

@@ -4,7 +4,7 @@ import DatePicker, { CalendarContainer } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../styles/ModalForm.css";
 import Select from "react-select";
-import { Calendar, Trash2 } from "lucide-react";
+import { Calendar, RefreshCw, Trash2 } from "lucide-react";
 import { parseISO, format, startOfDay } from "date-fns";
 
 function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
@@ -22,6 +22,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hiddenProducts, setHiddenProducts] = useState([]);
 
   useEffect(() => {
     if (exportPd) {
@@ -32,138 +33,6 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
       setNewSelectedProduct(exportPd.selectedProduct);
     }
   }, [exportPd]);
-
-  const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
-    try {
-      const res = await fetch("/api/ExportDB");
-      const exports = await res.json();
-      return exports.some(
-        (exportPd) =>
-          exportPd.documentId === newDocumentId &&
-          exportPd._id !== currentDocumentId
-      );
-    } catch (error) {
-      console.error("Error checking duplicate Document ID:", error);
-      return false;
-    }
-  };
-
-  //! Submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
-
-    if (!newDateExport || !newDocumentId || !newExportVen) {
-      setError("Please complete Export Product details!");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!newSelectedProduct || newSelectedProduct.length === 0) {
-      setError("Please add at least one product!");
-      return;
-    }
-
-    const isDuplicate = await checkDuplicateDocumentId(
-      newDocumentId,
-      exportPd?._id || ""
-    );
-
-    if (isDuplicate) {
-      setError("Document ID already exists!");
-      setIsSubmitting(false);
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const res = await fetch(`/api/ExportDB/${exportPd?._id || ""}`, {
-        method: "PUT",
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify({
-          newDateExport,
-          newDocumentId,
-          newExportVen,
-          newExportEm,
-          newSelectedProduct,
-        }),
-      });
-
-      //? Update Export-Product
-      const uniqueProductMap = new Map();
-
-      newSelectedProduct.forEach((prod) => {
-        const key = prod.exProId;
-        if (
-          !uniqueProductMap.has(key) ||
-          (prod.amount !== undefined &&
-            prod.amount !== null &&
-            parseInt(prod.amount) < parseInt(uniqueProductMap.get(key).amount))
-        ) {
-          uniqueProductMap.set(key, prod);
-        }
-      });
-
-      const uniqueSelectedProducts = Array.from(uniqueProductMap.values());
-
-      const updatePromises = uniqueSelectedProducts.map(async (prod) => {
-        const product = products.find((p) => p.productId === prod.exProId);
-        if (!product) return null;
-
-        console.log("Product ID : ", product._id);
-
-        const newAmount =
-          prod.amount !== undefined && prod.amount !== null
-            ? prod.amount.toString()
-            : (
-                parseInt(product.amount) - parseInt(prod.export || 0)
-              ).toString();
-
-        const res = await fetch(`/api/Product/${product._id}`, {
-          method: "PUT",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({
-            newProductId: product.productId,
-            newProductName: product.productName,
-            newProductUnit: product.productUnit,
-            newBrand: product.brand,
-            newStoreHouse: product.storeHouse,
-            newAmount: newAmount,
-          }),
-        });
-
-        if (!res.ok) {
-          throw new Error(`Failed to update Product ${product.productId}`);
-        }
-
-        return res.json();
-      });
-      //? Update Export-Product >
-
-      if (!res.ok) {
-        throw new Error("Failed to update Export Product");
-      }
-
-      setError("");
-      setSuccess("Export Product has been updated successfully!");
-
-      setTimeout(() => {
-        onClose();
-        setSuccess("");
-        refreshExports();
-      }, 2000);
-    } catch (error) {
-      console.log(error);
-      setError("Failed to update Export Product");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   //! Fetch Data
   const fetchData = async (url, key, setStateFunction) => {
@@ -215,6 +84,141 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
     fetchAllData();
   }, []);
   //! Fetch Data >
+
+  const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
+    try {
+      const res = await fetch("/api/ExportDB");
+      const exports = await res.json();
+      return exports.some(
+        (exportPd) =>
+          exportPd.documentId === newDocumentId &&
+          exportPd._id !== currentDocumentId
+      );
+    } catch (error) {
+      console.error("Error checking duplicate Document ID:", error);
+      return false;
+    }
+  };
+
+  //! Submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!newDateExport || !newDocumentId || !newExportVen) {
+      setError("Please complete Export Product details!");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const visibleProducts = newSelectedProduct.filter(prod => !hiddenProducts.includes(prod.exProId));
+
+  if (visibleProducts.length === 0) {
+    setError("Please add at least one product!");
+    return;
+  }
+
+    const isDuplicate = await checkDuplicateDocumentId(
+      newDocumentId,
+      exportPd?._id || ""
+    );
+
+    if (isDuplicate) {
+      setError("Document ID already exists!");
+      setIsSubmitting(false);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const visibleProducts = newSelectedProduct.filter(
+        (prod) => !hiddenProducts.includes(prod.exProId)
+      );
+
+      const res = await fetch(`/api/ExportDB/${exportPd?._id || ""}`, {
+        method: "PUT",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({
+          newDateExport,
+          newDocumentId,
+          newExportVen,
+          newExportEm,
+          newSelectedProduct: visibleProducts, // ส่งเฉพาะ products ที่ไม่ได้ถูกซ่อน
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update Export Product");
+      }
+
+      // อัพเดต Product
+      const updatePromises = newSelectedProduct.map(async (prod) => {
+        const product = products.find((p) => p.productId === prod.exProId);
+        if (!product) return null;
+
+        console.log("Product ID : ", product._id);
+
+        const originalExport =
+          exportPd.selectedProduct.find((p) => p.exProId === prod.exProId)
+            ?.export || "0";
+        const newExport = hiddenProducts.includes(prod.exProId)
+          ? "0"
+          : prod.export || "0";
+
+        if (originalExport === newExport) {
+          console.log(`No change for product ${prod.exProId}, skipping update`);
+          return null;
+        }
+
+        const newAmount = (
+          parseInt(product.amount) +
+          parseInt(originalExport) -
+          parseInt(newExport)
+        ).toString();
+
+        const res = await fetch(`/api/Product/${product._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-type": "application/json",
+          },
+          body: JSON.stringify({
+            newProductId: product.productId,
+            newProductName: product.productName,
+            newProductUnit: product.productUnit,
+            newBrand: product.brand,
+            newStoreHouse: product.storeHouse,
+            newAmount: newAmount,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to update Product ${product.productId}`);
+        }
+
+        return res.json();
+      });
+
+      await Promise.all(updatePromises.filter(Boolean));
+
+      setError("");
+      setSuccess("Export Product has been updated successfully!");
+
+      setTimeout(() => {
+        onClose();
+        setSuccess("");
+        refreshExports();
+        getProducts();
+      }, 1500);
+    } catch (error) {
+      console.log(error);
+      setError("Failed to update Export Product");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   //TODO SELECTED
   //? Selected Vendor
@@ -327,7 +331,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
           {
             exProId: selected.productId,
             exProName: selected.productName,
-            export: 0,
+            export: "0",
             amount: selected.amount,
             originalAmount: selected.amount,
           },
@@ -375,24 +379,24 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
             : 0;
           let newExportQuantity = parseInt(quantity) || 0;
           const prevExportQuantity = parseInt(prod.export) || 0;
-  
-          // ใช้ amount ปัจจุบันเป็นฐานในการคำนวณ
+
           const currentAmount =
             prod.amount !== undefined ? parseInt(prod.amount) : originalAmount;
-  
-          // คำนวณ amount ใหม่
-          let newAmount = Math.max(0, currentAmount - (newExportQuantity - prevExportQuantity));
-  
-          // ถ้า amount เป็น 0 และพยายามเพิ่ม export มากกว่าที่ทำให้ amount เป็น 0
+
+          let newAmount = Math.max(
+            0,
+            currentAmount - (newExportQuantity - prevExportQuantity)
+          );
+
           if (newAmount === 0 && newExportQuantity > originalAmount) {
             newExportQuantity = originalAmount;
             newAmount = 0;
           }
-  
+
           const isModified = newExportQuantity !== 0;
           const isLowStock = newAmount > 0 && newAmount <= 10;
           const isOutOfStock = newAmount === 0;
-  
+
           return {
             ...prod,
             export: newExportQuantity.toString(),
@@ -408,17 +412,23 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   };
 
   const handleRemoveProduct = (productId) => {
-    setNewSelectedProduct((prevSelectedProduct) => {
-      const updatedProducts = prevSelectedProduct.filter(
-        (doc) => doc.exProId !== productId
-      );
-
-      if (updatedProducts.length === prevSelectedProduct.length) {
-        console.warn(`Product with ID ${productId} not found in the list.`);
+    const currentVisibleProducts = newSelectedProduct.filter(prod => !hiddenProducts.includes(prod.exProId));
+    
+    if (currentVisibleProducts.length === 1 && currentVisibleProducts[0].exProId === productId) {
+      setError("You must have at least one product selected!");
+      return;
+    }
+  
+    setHiddenProducts(prevHiddenProducts => {
+      if (prevHiddenProducts.includes(productId)) {
+        return prevHiddenProducts.filter(id => id !== productId);
+      } else {
+        return [...prevHiddenProducts, productId];
       }
-
-      return updatedProducts;
     });
+  
+    // Clear error message if it exists
+    setError("");
   };
   //? Selected Product >
   //TODO SELECTED >
@@ -621,8 +631,15 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
 
                             const isModified = exportQuantity !== 0;
                             const isOutOfStock = displayAmount === 0;
+                            const isHidden = hiddenProducts.includes(
+                              prod.exProId
+                            );
+
                             return (
-                              <tr key={prod.exProId}>
+                              <tr
+                                key={prod.exProId}
+                                className={isHidden ? "opacity-50" : ""}
+                              >
                                 <td className="py-2 px-4 border">
                                   {prod.exProId}
                                 </td>
@@ -631,7 +648,9 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                                 </td>
                                 <td
                                   className={`py-2 px-4 border text-right ${
-                                    isModified ? "text-red-600" : ""
+                                    isModified && !isHidden
+                                      ? "text-red-600"
+                                      : ""
                                   }`}
                                 >
                                   {displayAmount}
@@ -656,7 +675,9 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                                         e.target.value
                                       )
                                     }
+                                    min="0"
                                     className="w-full py-1 px-2 border rounded text-right"
+                                    disabled={isHidden}
                                   />
                                 </td>
                                 <td className="py-2 px-4 border text-center">
@@ -665,9 +686,17 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
                                     onClick={() =>
                                       handleRemoveProduct(prod.exProId)
                                     }
-                                    className="text-red-500 hover:text-red-700"
+                                    className={`${
+                                      isHidden
+                                        ? "text-green-500 hover:text-green-700"
+                                        : "text-red-500 hover:text-red-700"
+                                    }`}
                                   >
-                                    <Trash2 size={23} />
+                                    {isHidden ? (
+                                      <RefreshCw size={23} />
+                                    ) : (
+                                      <Trash2 size={23} />
+                                    )}
                                   </button>
                                   {prod.selected && (
                                     <span className="ml-2 text-green-500">

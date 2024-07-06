@@ -1,6 +1,12 @@
 "use client";
 
-import { useState, useEffect, Fragment, useRef, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  Fragment,
+  useRef,
+  useMemo,
+} from "react";
 import {
   Edit,
   Search,
@@ -8,9 +14,11 @@ import {
   PackageMinus,
   Calendar,
   Eye,
+  Filter,
+  Check,
 } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
-import { indigo, teal } from "@mui/material/colors";
+import { teal } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import ExportEdit from "./ExportEdit";
 import ExportDel from "./ExportDel";
@@ -46,163 +54,102 @@ function ExportTable() {
   const [selectedDocuments, setSelectedDocuments] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchType, setSearchType] = useState("documentId");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
-  //TODO < Function to fetch Export to table >
-  const getExport = async () => {
+  //! Fetch Data
+  const fetchData = async (url, key, setStateFunction) => {
     try {
-      const res_get = await fetch("/api/ExportDB", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch Export");
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${key}`);
       }
+      const data = await response.json();
 
-      const newExports = await res_get.json();
-
-      // Check for duplicates
-      const uniqueExports = newExports.filter(
-        (exportPd, index, self) =>
-          index === self.findIndex((t) => t.documentId === exportPd.documentId)
+      const uniqueData = data.filter(
+        (item, index, self) =>
+          index === self.findIndex((t) => t[key] === item[key])
       );
 
-      // Sort Products by vendorId in alphabetical order
-      const sortedExports = uniqueExports.sort((a, b) =>
-        a.documentId.localeCompare(b.documentId)
+      const sortedData = uniqueData.sort((a, b) =>
+        a[key].localeCompare(b[key])
       );
 
-      setExports(sortedExports);
-      console.log(sortedExports);
+      setStateFunction(sortedData);
+      console.log(`Sorted ${key}:`, sortedData);
+      return sortedData;
     } catch (error) {
-      console.log("Error loading Products: ", error);
-    }
-  };
-  //? Reload Products table
-  useEffect(() => {
-    getExport();
-  }, []);
-
-  //TODO < Function to fetch vendors to table >
-  const getVendors = async () => {
-    try {
-      const res_get = await fetch("/api/addVendor", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch Vendor");
-      }
-
-      const newVendors = await res_get.json();
-
-      // Check for duplicates
-      const uniqueVendors = newVendors.filter(
-        (vendor, index, self) =>
-          index === self.findIndex((t) => t.vendorId === vendor.vendorId)
-      );
-
-      // Sort vendors by vendorId in alphabetical order
-      const sortedVendors = uniqueVendors.sort((a, b) =>
-        a.vendorId.localeCompare(b.vendorId)
-      );
-
-      setVendors(sortedVendors);
-      console.log(sortedVendors);
-    } catch (error) {
-      console.log("Error loading Vendors: ", error);
+      console.log(`Error loading ${key}:`, error);
+      throw error;
     }
   };
 
-  //? Reload Vendors table
-  useEffect(() => {
-    getVendors();
-  }, []);
-
-  //TODO < Function to fetch user to table >
-  const getUsers = async () => {
-    try {
-      const res_get = await fetch("/api/User", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch User");
-      }
-
-      const newUsers = await res_get.json();
-
-      // Check for duplicates
-      const uniqueUsers = newUsers.filter(
-        (user, index, self) =>
-          index === self.findIndex((t) => t.email === user.email)
-      );
-
-      // Sort Users by vendorId in alphabetical order
-      const sortedUsers = uniqueUsers.sort((a, b) =>
-        a.email.localeCompare(b.email)
-      );
-
-      setUsers(sortedUsers);
-      console.log("SortedUsers: ", sortedUsers);
-    } catch (error) {
-      console.log("Error loading Users: ", error);
-    }
+  const getExport = () => {
+    return fetchData("/api/ExportDB", "documentId", setExports);
   };
 
-  //? Reload users table
-  useEffect(() => {
-    getUsers();
-  }, []);
-
-  //TODO < Function to fetch product to table >
-  const getProducts = async () => {
-    try {
-      const res_get = await fetch("/api/Product", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch Product");
-      }
-
-      const newProducts = await res_get.json();
-
-      // Check for duplicates
-      const uniqueProducts = newProducts.filter(
-        (product, index, self) =>
-          index === self.findIndex((t) => t.productId === product.productId)
-      );
-
-      // Sort Products by vendorId in alphabetical order
-      const sortedProducts = uniqueProducts.sort((a, b) =>
-        a.productId.localeCompare(b.productId)
-      );
-
-      setProducts(sortedProducts);
-      console.log(sortedProducts);
-    } catch (error) {
-      console.log("Error loading Products: ", error);
-    }
+  const getVendors = () => {
+    return fetchData("/api/addVendor", "vendorId", setVendors);
   };
 
-  //? Reload Products table
+  const getUsers = () => {
+    return fetchData("/api/User", "email", setUsers);
+  };
+
+  const getProducts = () => {
+    return fetchData("/api/Product", "productId", setProducts);
+  };
+
   useEffect(() => {
-    getProducts();
+    const fetchAllData = async () => {
+      try {
+        await Promise.all([
+          getProducts(),
+          getUsers(),
+          getVendors(),
+          getExport(),
+        ]);
+        console.log("All data fetched successfully");
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchAllData();
   }, []);
+  //! Fetch Data >
 
   //TODO <Function Search Document Id
-  const filterExportsByID = (exportPds, searchID) => {
-    if (!searchID) return exportPds; // Return all products if searchID is empty
+  const filterExports = (exportPds, searchTerm, searchType) => {
+    if (!searchTerm) return exportPds; // Return all exports if searchTerm is empty
 
-    // Filter unique products based on searchID
-    const filteredExports = exportPds.filter(
-      (exportPd, index, self) =>
-        exportPd.documentId.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.documentId === exportPd.documentId)
-    );
-
-    return filteredExports;
+    return exportPds.filter((exportPd) => {
+      if (searchType === "documentId") {
+        return exportPd.documentId
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+      } else if (searchType === "dateExport") {
+        // Assuming dateExport is in 'yyyy-MM-dd' format
+        return exportPd.dateExport.includes(searchTerm);
+      }
+      return false;
+    });
   };
+
+  //? Filter Dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isFilterDropdownOpen && !event.target.closest(".filter-dropdown")) {
+        setIsFilterDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isFilterDropdownOpen]);
+
   const sortExportsByDate = (exports) => {
     return exports.sort((a, b) => {
       const dateA = parse(a.dateExport, "yyyy-MM-dd", new Date());
@@ -214,7 +161,6 @@ function ExportTable() {
   //TODO < Function Get Product by Id send to ProductEdit >
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
-    getExport();
   };
 
   const getExportById = async (id) => {
@@ -438,9 +384,12 @@ function ExportTable() {
   const handleRefresh = () => {
     setShouldRefresh(!shouldRefresh);
   };
+
   const SubmitRefresh = () => {
-    getExport();
-    getProducts();
+    setTimeout(() => {
+      getExport();
+      getProducts();
+    }, 500);
   };
 
   //* Date Custom
@@ -506,10 +455,10 @@ function ExportTable() {
           const originalAmount = doc.originalAmount ?? doc.amount;
           const originalQuantity = doc.originalQuantity ?? 0;
 
-          let newQuantity = parseInt(quantity) || 0;
+          let newQuantity = Math.max(0, parseInt(quantity) || 0);
           let newAmount = Math.max(0, parseInt(originalAmount) - newQuantity);
 
-          // ถ้า amount เป็น 0 และพยายามเพิ่ม export มากกว่าที่ทำให้ amount เป็น 0
+          // If amount is 0 and trying to export more than what makes amount 0
           if (newAmount === 0 && newQuantity > parseInt(originalAmount)) {
             newQuantity = parseInt(originalAmount);
           }
@@ -626,15 +575,64 @@ function ExportTable() {
             เบิกสินค้าออก
           </h2>
           <div className="flex justify-between items-center mb-4">
-            <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
-              <input
-                type="text"
-                placeholder="Search Document ID..."
-                className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
-                value={searchID}
-                onChange={(event) => setSearchID(event.target.value)}
-              />
-              <Search size={16} className="text-gray-600 " />
+            <div className="flex items-center max-w-2xl w-full">
+              <div className="flex items-center px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden w-full font-[sans-serif] relative">
+                <Search size={16} className="text-gray-600 mr-2" />
+                <input
+                  type="text"
+                  placeholder={`Search ${
+                    searchType === "documentId" ? "Document ID" : "Date"
+                  }...`}
+                  className="w-full outline-none bg-transparent text-gray-600 text-sm"
+                  value={searchID}
+                  onChange={(event) => setSearchID(event.target.value)}
+                />
+              </div>
+              <div className="relative ml-2">
+                <button
+                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-gray-200"
+                >
+                  <Filter size={16} className="text-gray-600" />
+                </button>
+                {isFilterDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 filter-dropdown">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
+                      <button
+                        onClick={() => {
+                          setSearchType("documentId");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Document ID
+                        {searchType === "documentId" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSearchType("dateExport");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Date Export
+                        {searchType === "dateExport" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <button
               onClick={openAddModal}
@@ -670,66 +668,62 @@ function ExportTable() {
               </tr>
             </thead>
             <tbody>
-              {sortExportsByDate(filterExportsByID(exports, searchID)).map(
-                (exportPd) => (
-                  <tr key={exportPd.documentId} className="border-t">
-                    <td className="py-4 pr-4 pl-10 w-auto">
-                      {exportPd.dateExport
-                        ? format(
-                            parse(
-                              exportPd.dateExport,
-                              "yyyy-MM-dd",
-                              new Date()
-                            ),
-                            "dd/MM/yyyy"
-                          )
-                        : ""}
-                    </td>
-                    <td className="py-4 px-4 flex items-center w-auto">
-                      <Avatar
-                        sx={{ bgcolor: teal[400], marginRight: "20px" }}
-                        variant="rounded-md"
-                      >
-                        {exportPd.documentId.charAt(0).toUpperCase()}
-                      </Avatar>
-                      {exportPd.documentId}
-                    </td>
-                    <td className="py-4 px-4">{exportPd.exportVen}</td>
-                    <td className="py-4 px-4">
-                      {exportPd.selectedProduct
-                        ? exportPd.selectedProduct.length
-                        : 0}{" "}
-                      products
-                    </td>
-                    <td className="py-4 px-4">{exportPd.exportEm}</td>
-                    <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
-                      <button
-                        onClick={() => getDetailValue(exportPd._id)}
-                        type="button"
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Eye size={23} />
-                      </button>
+              {sortExportsByDate(
+                filterExports(exports, searchID, searchType)
+              ).map((exportPd) => (
+                <tr key={exportPd.documentId} className="border-t">
+                  <td className="py-4 pr-4 pl-10 w-auto">
+                    {exportPd.dateExport
+                      ? format(
+                          parse(exportPd.dateExport, "yyyy-MM-dd", new Date()),
+                          "dd/MM/yyyy"
+                        )
+                      : ""}
+                  </td>
+                  <td className="py-4 px-4 flex items-center w-auto">
+                    <Avatar
+                      sx={{ bgcolor: teal[400], marginRight: "20px" }}
+                      variant="rounded-md"
+                    >
+                      {exportPd.documentId.charAt(0).toUpperCase()}
+                    </Avatar>
+                    {exportPd.documentId}
+                  </td>
+                  <td className="py-4 px-4">{exportPd.exportVen}</td>
+                  <td className="py-4 px-4">
+                    {exportPd.selectedProduct
+                      ? exportPd.selectedProduct.length
+                      : 0}{" "}
+                    products
+                  </td>
+                  <td className="py-4 px-4">{exportPd.exportEm}</td>
+                  <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
+                    <button
+                      onClick={() => getDetailValue(exportPd._id)}
+                      type="button"
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      <Eye size={23} />
+                    </button>
 
-                      <button
-                        onClick={() => getValue(exportPd._id)}
-                        type="button"
-                        className="text-amber-600 hover:text-amber-800"
-                      >
-                        <Edit size={23} />
-                      </button>
+                    <button
+                      onClick={() => getValue(exportPd._id)}
+                      type="button"
+                      className="text-amber-600 hover:text-amber-800"
+                    >
+                      <Edit size={23} />
+                    </button>
 
-                      <button
-                        onClick={() => getDelValue(exportPd._id)}
-                        type="button"
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 size={23} />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              )}
+                    <button
+                      onClick={() => getDelValue(exportPd._id)}
+                      type="button"
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={23} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -925,13 +919,14 @@ function ExportTable() {
                                 <td className="py-2 px-4 border">
                                   <input
                                     type="number"
-                                    value={doc.exportQuantity || ""}
+                                    value={doc.exportQuantity || "0"}
                                     onChange={(e) =>
                                       handleExportQuantityChange(
                                         doc.productId,
                                         e.target.value
                                       )
                                     }
+                                    min="0"
                                     className="w-full py-1 px-2 border rounded text-right"
                                   />
                                 </td>
