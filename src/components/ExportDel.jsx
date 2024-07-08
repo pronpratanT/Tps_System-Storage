@@ -15,6 +15,7 @@ function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [products, setProducts] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const datePickerRef = useRef(null);
   const vendorOption = { value: delExportVen, label: delExportVen };
   const employeeOption = { value: delExportEm, label: delExportEm };
@@ -32,6 +33,9 @@ function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount 
   //TODO Submit
   const removeExport = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
 
     try {
       const updatePromises = delSelectedProduct.map(async (prod) => {
@@ -80,9 +84,11 @@ function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount 
         setSuccess("");
         refreshExports();
         refreshCount();
-      }, 2000);
+      }, 1500);
     } catch (error) {
       setError("Failed to delete Export product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   //TODO Submit >
@@ -331,8 +337,9 @@ function ExportDel({ isVisible, onClose, exportPd, refreshExports, refreshCount 
                     <button
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      disabled={isSubmitting}
                     >
-                      Delete Export Product
+                      {isSubmitting ? "Deleting..." : "Delete Export Product"}
                     </button>
                   </div>
                 </Dialog.Panel>

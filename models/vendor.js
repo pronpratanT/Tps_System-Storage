@@ -13,7 +13,7 @@ const vendorSchema = new Schema(
         },
         vendorCountry: {
             type: String,
-            required: true,
+            required: false,
         },
     },
     {timestamps: true},

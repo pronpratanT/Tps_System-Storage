@@ -21,6 +21,7 @@ function ImportDel({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [products, setProducts] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const datePickerRef = useRef(null);
   const vendorOption = { value: delImportVen, label: delImportVen };
   const employeeOption = { value: delImportEm, label: delImportEm };
@@ -37,19 +38,25 @@ function ImportDel({
 
   const removeImport = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
 
     try {
       const updatePromises = delSelectedProduct.map(async (prod) => {
         const product = products.find((p) => p.productId === prod.imProId);
         if (!product) return null;
-      
+
         console.log("Product ID : ", product._id);
-      
+
         const newAmount = Math.max(
           0,
-          parseInt(product.amount) - (prod.amount !== undefined && prod.amount !== null ? parseInt(prod.amount) : parseInt(prod.import || 0))
+          parseInt(product.amount) -
+            (prod.amount !== undefined && prod.amount !== null
+              ? parseInt(prod.amount)
+              : parseInt(prod.import || 0))
         ).toString();
-      
+
         const res = await fetch(`/api/Product/${product._id}`, {
           method: "PUT",
           headers: {
@@ -64,11 +71,11 @@ function ImportDel({
             newAmount: newAmount,
           }),
         });
-      
+
         if (!res.ok) {
           throw new Error(`Failed to update Product ${product.productId}`);
         }
-      
+
         return res.json();
       });
 
@@ -85,14 +92,16 @@ function ImportDel({
         setSuccess("");
         refreshImports();
         refreshCount();
-      }, 2000);
+      }, 1500);
     } catch (error) {
       setError("Failed to delete Import product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-   //TODO < Function to fetch product to table >
-   const getProducts = async () => {
+  //TODO < Function to fetch product to table >
+  const getProducts = async () => {
     try {
       const res_get = await fetch("/api/Product", {
         cache: "no-store",
@@ -335,8 +344,9 @@ function ImportDel({
                     <button
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      disabled={isSubmitting}
                     >
-                      Delete Import Product
+                      {isSubmitting ? "Deleting..." : "Delete Export Product"}
                     </button>
                   </div>
                 </Dialog.Panel>

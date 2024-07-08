@@ -111,12 +111,13 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
       return;
     }
 
-    const visibleProducts = newSelectedProduct.filter(prod => !hiddenProducts.includes(prod.exProId));
-
-  if (visibleProducts.length === 0) {
-    setError("Please add at least one product!");
-    return;
-  }
+    const visibleProducts = newSelectedProduct.filter(
+      (prod) => !hiddenProducts.includes(prod.exProId)
+    );
+    if (visibleProducts.length === 0) {
+      setError("Please add at least one product!");
+      return;
+    }
 
     const isDuplicate = await checkDuplicateDocumentId(
       newDocumentId,
@@ -132,6 +133,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
     setIsSubmitting(true);
 
     try {
+      //? Update Export
       const visibleProducts = newSelectedProduct.filter(
         (prod) => !hiddenProducts.includes(prod.exProId)
       );
@@ -146,7 +148,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
           newDocumentId,
           newExportVen,
           newExportEm,
-          newSelectedProduct: visibleProducts, // ส่งเฉพาะ products ที่ไม่ได้ถูกซ่อน
+          newSelectedProduct: visibleProducts,
         }),
       });
 
@@ -154,7 +156,7 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
         throw new Error("Failed to update Export Product");
       }
 
-      // อัพเดต Product
+      //? Update Export-Product
       const updatePromises = newSelectedProduct.map(async (prod) => {
         const product = products.find((p) => p.productId === prod.exProId);
         if (!product) return null;
@@ -412,22 +414,25 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
   };
 
   const handleRemoveProduct = (productId) => {
-    const currentVisibleProducts = newSelectedProduct.filter(prod => !hiddenProducts.includes(prod.exProId));
-    
-    if (currentVisibleProducts.length === 1 && currentVisibleProducts[0].exProId === productId) {
+    const currentVisibleProducts = newSelectedProduct.filter(
+      (prod) => !hiddenProducts.includes(prod.exProId)
+    );
+
+    if (
+      currentVisibleProducts.length === 1 &&
+      currentVisibleProducts[0].exProId === productId
+    ) {
       setError("You must have at least one product selected!");
       return;
     }
-  
-    setHiddenProducts(prevHiddenProducts => {
+
+    setHiddenProducts((prevHiddenProducts) => {
       if (prevHiddenProducts.includes(productId)) {
-        return prevHiddenProducts.filter(id => id !== productId);
+        return prevHiddenProducts.filter((id) => id !== productId);
       } else {
         return [...prevHiddenProducts, productId];
       }
     });
-  
-    // Clear error message if it exists
     setError("");
   };
   //? Selected Product >

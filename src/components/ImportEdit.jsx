@@ -4,7 +4,7 @@ import DatePicker, { CalendarContainer } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../styles/ModalForm.css";
 import Select from "react-select";
-import { Calendar, Trash2 } from "lucide-react";
+import { Calendar, RefreshCw, Trash2 } from "lucide-react";
 import { parseISO, format, startOfDay } from "date-fns";
 
 function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
@@ -21,6 +21,8 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   const [newSelectedProduct, setNewSelectedProduct] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hiddenProducts, setHiddenProducts] = useState([]);
 
   useEffect(() => {
     if (importPd) {
@@ -31,6 +33,57 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
       setNewSelectedProduct(importPd.selectedProduct);
     }
   }, [importPd]);
+
+  //! Fetch Data
+  const fetchData = async (url, key, setStateFunction) => {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${key}`);
+      }
+      const data = await response.json();
+
+      const uniqueData = data.filter(
+        (item, index, self) =>
+          index === self.findIndex((t) => t[key] === item[key])
+      );
+
+      const sortedData = uniqueData.sort((a, b) =>
+        a[key].localeCompare(b[key])
+      );
+
+      setStateFunction(sortedData);
+      console.log(`Sorted ${key}:`, sortedData);
+      return sortedData;
+    } catch (error) {
+      console.log(`Error loading ${key}:`, error);
+      throw error;
+    }
+  };
+
+  const getVendors = () => {
+    return fetchData("/api/addVendor", "vendorId", setVendors);
+  };
+  const getUsers = () => {
+    return fetchData("/api/User", "email", setUsers);
+  };
+  const getProducts = () => {
+    return fetchData("/api/Product", "productId", setProducts);
+  };
+
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        await Promise.all([getProducts(), getUsers(), getVendors()]);
+        console.log("All data fetched successfully");
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchAllData();
+  }, []);
+  //! Fetch Data >
 
   const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
     try {
@@ -50,12 +103,17 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   //! Edit Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!newDateImport || !newDocumentId || !newImportVen) {
       setError("Please complete Import Product details!");
+      setIsSubmitting(false);
       return;
     }
-    if (!newSelectedProduct || newSelectedProduct.length === 0) {
+    const visibleProducts = newSelectedProduct.filter(
+      (prod) => !hiddenProducts.includes(prod.exProId)
+    );
+    if (visibleProducts.length === 0) {
       setError("Please add at least one product!");
       return;
     }
@@ -66,11 +124,18 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
     );
     if (isDuplicate) {
       setError("Document ID already exists!");
+      setIsSubmitting(false);
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       //? Update Import
+      const visibleProducts = newSelectedProduct.filter(
+        (prod) => !hiddenProducts.includes(prod.imProId)
+      );
+
       const res = await fetch(`/api/ImportDB/${importPd?._id || ""}`, {
         method: "PUT",
         headers: {
@@ -81,9 +146,14 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
           newDocumentId,
           newImportVen,
           newImportEm,
-          newSelectedProduct,
+          newSelectedProduct: visibleProducts,
         }),
       });
+
+      if (!res.ok) {
+        throw new Error("Failed to update Import Product");
+      }
+
       //? Update Import-Product
       const updatePromises = newSelectedProduct.map(async (prod) => {
         const product = products.find((p) => p.productId === prod.imProId);
@@ -91,12 +161,23 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
 
         console.log("Product ID : ", product._id);
 
-        const newAmount =
-          prod.amount !== undefined && prod.amount !== null
-            ? prod.amount.toString()
-            : (
-                parseInt(product.amount) + parseInt(prod.import || 0)
-              ).toString();
+        const originalImport =
+          importPd.selectedProduct.find((p) => p.imProId === prod.imProId)
+            ?.import || "0";
+        const newImport = hiddenProducts.includes(prod.imProId)
+          ? "0"
+          : prod.import || "0";
+
+        if (originalImport === newImport) {
+          console.log(`No change for product ${prod.imProId}, skipping update`);
+          return null;
+        }
+
+        const newAmount = (
+          parseInt(product.amount) -
+          parseInt(originalImport) +
+          parseInt(newImport)
+        ).toString();
 
         const res = await fetch(`/api/Product/${product._id}`, {
           method: "PUT",
@@ -120,9 +201,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
         return res.json();
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to update Import Product");
-      }
+      await Promise.all(updatePromises.filter(Boolean));
 
       setError("");
       setSuccess("Import Product has been updated successfully!");
@@ -131,121 +210,17 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
         onClose();
         setSuccess("");
         refreshImports();
+        getProducts();
       }, 2000);
     } catch (error) {
       console.log(error);
       setError("Failed to update Import Product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  //TODO < Function to fetch user to table >
-  const getUsers = async () => {
-    try {
-      const res_get = await fetch("/api/User", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch User");
-      }
-
-      const newUsers = await res_get.json();
-
-      // Check for duplicates
-      const uniqueUsers = newUsers.filter(
-        (user, index, self) =>
-          index === self.findIndex((t) => t.email === user.email)
-      );
-
-      // Sort Users by vendorId in alphabetical order
-      const sortedUsers = uniqueUsers.sort((a, b) =>
-        a.email.localeCompare(b.email)
-      );
-
-      setUsers(sortedUsers);
-      console.log("SortedUsers: ", sortedUsers);
-    } catch (error) {
-      console.log("Error loading Users: ", error);
-    }
-  };
-
-  //? Reload users table
-  useEffect(() => {
-    getUsers();
-  }, []);
-
-  //TODO < Function to fetch vendors to table >
-  const getVendors = async () => {
-    try {
-      const res_get = await fetch("/api/addVendor", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch Vendor");
-      }
-
-      const newVendors = await res_get.json();
-
-      // Check for duplicates
-      const uniqueVendors = newVendors.filter(
-        (vendor, index, self) =>
-          index === self.findIndex((t) => t.vendorId === vendor.vendorId)
-      );
-
-      // Sort vendors by vendorId in alphabetical order
-      const sortedVendors = uniqueVendors.sort((a, b) =>
-        a.vendorId.localeCompare(b.vendorId)
-      );
-
-      setVendors(sortedVendors);
-      console.log(sortedVendors);
-    } catch (error) {
-      console.log("Error loading Vendors: ", error);
-    }
-  };
-
-  //? Reload Vendors table
-  useEffect(() => {
-    getVendors();
-  }, []);
-
-  //TODO < Function to fetch product to table >
-  const getProducts = async () => {
-    try {
-      const res_get = await fetch("/api/Product", {
-        cache: "no-store",
-      });
-
-      if (!res_get.ok) {
-        throw new Error("Failed to fetch Product");
-      }
-
-      const newProducts = await res_get.json();
-
-      // Check for duplicates
-      const uniqueProducts = newProducts.filter(
-        (product, index, self) =>
-          index === self.findIndex((t) => t.productId === product.productId)
-      );
-
-      // Sort Products by vendorId in alphabetical order
-      const sortedProducts = uniqueProducts.sort((a, b) =>
-        a.productId.localeCompare(b.productId)
-      );
-
-      setProducts(sortedProducts);
-      console.log(sortedProducts);
-    } catch (error) {
-      console.log("Error loading Products: ", error);
-    }
-  };
-
-  //? Reload Products table
-  useEffect(() => {
-    getProducts();
-  }, []);
-
+  //TODO SELECTED
   //? Selected Vendor
   useEffect(() => {
     if (newImportVen && vendors.length > 0) {
@@ -381,7 +356,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
           {
             imProId: selected.productId,
             imProName: selected.productName,
-            import: 0,
+            import: "0",
             amount: selected.amount,
             originalAmount: selected.amount,
           },
@@ -427,23 +402,18 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
           const originalAmount = originalProduct
             ? parseInt(originalProduct.amount) || 0
             : 0;
-          const newImportQuantity = parseInt(quantity) || 0;
-          
-          // ใช้ค่า amount ปัจจุบันหรือ originalAmount ถ้ายังไม่มีการกำหนดค่า amount
-          const currentAmount = prod.amount !== undefined ? parseInt(prod.amount) : originalAmount;
-          
-          // คำนวณผลต่างของ import
+          let newImportQuantity = parseInt(quantity) || 0;
           const prevImportQuantity = parseInt(prod.import) || 0;
-          const importDifference = newImportQuantity - prevImportQuantity;
-          
-          // คำนวณ amount ใหม่โดยเพิ่มผลต่างของ import
-          const newAmount = currentAmount + importDifference;
-          
+          const currentAmount =
+            prod.amount !== undefined ? parseInt(prod.amount) : originalAmount;
+          let newAmount =
+            currentAmount + (newImportQuantity - prevImportQuantity);
+
           const isModified = newImportQuantity !== 0;
-          
+
           return {
             ...prod,
-            import: quantity,
+            import: newImportQuantity.toString(),
             amount: newAmount,
             isModified: isModified,
           };
@@ -454,19 +424,29 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
   };
 
   const handleRemoveProduct = (productId) => {
-    setNewSelectedProduct((prevSelectedProduct) => {
-      const updatedProducts = prevSelectedProduct.filter(
-        (doc) => doc.imProId !== productId
-      );
+    const currentVisibleProducts = newSelectedProduct.filter(
+      (prod) => !hiddenProducts.includes(prod.imProId)
+    );
 
-      if (updatedProducts.length === prevSelectedProduct.length) {
-        console.warn(`Product with ID ${productId} not found in the list.`);
+    if (
+      currentVisibleProducts.length === 1 &&
+      currentVisibleProducts[0].imProId === productId
+    ) {
+      setError("You must have at least one product selected!");
+      return;
+    }
+
+    setHiddenProducts((prevHiddenProducts) => {
+      if (prevHiddenProducts.includes(productId)) {
+        return prevHiddenProducts.filter((id) => id !== productId);
+      } else {
+        return [...prevHiddenProducts, productId];
       }
-
-      return updatedProducts;
     });
+    setError("");
   };
   //? Selected Product >
+  //TODO SELECTED >
 
   return (
     <Transition appear show={isVisible} as={Fragment}>
@@ -613,7 +593,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                             <th className="py-2 px-4 border w-5/12">
                               Product Name
                             </th>
-                            <th className="py-2 px-4 border w-1/12 text-center">
+                            <th className="py-2 px-4 border w-2/12 text-center">
                               Amount
                             </th>
                             <th className="py-2 px-4 border w-2/12 text-center">
@@ -633,12 +613,21 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                               ? parseInt(originalProduct.amount) || 0
                               : 0;
                             const importQuantity = parseInt(prod.import) || 0;
-                            
-                            const displayAmount = (prod.amount !== undefined ? parseInt(prod.amount) : originalAmount) || 0;
-                            
+
+                            const displayAmount =
+                              (prod.amount !== undefined
+                                ? parseInt(prod.amount)
+                                : originalAmount) || 0;
+
                             const isModified = importQuantity !== 0;
+                            const isHidden = hiddenProducts.includes(
+                              prod.imProId
+                            );
                             return (
-                              <tr key={prod.imProId}>
+                              <tr
+                                key={prod.imProId}
+                                className={isHidden ? "opacity-50" : ""}
+                              >
                                 <td className="py-2 px-4 border">
                                   {prod.imProId}
                                 </td>
@@ -647,7 +636,9 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                                 </td>
                                 <td
                                   className={`py-2 px-4 border text-right ${
-                                    isModified ? "text-green-600" : ""
+                                    isModified && !isHidden
+                                      ? "text-green-600"
+                                      : ""
                                   }`}
                                 >
                                   {displayAmount}
@@ -662,7 +653,9 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                                         e.target.value
                                       )
                                     }
+                                    min="0"
                                     className="w-full py-1 px-2 border rounded text-right"
+                                    disabled={isHidden}
                                   />
                                 </td>
                                 <td className="py-2 px-4 border text-center">
@@ -671,9 +664,17 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                                     onClick={() =>
                                       handleRemoveProduct(prod.imProId)
                                     }
-                                    className="text-red-500 hover:text-red-700"
+                                    className={`${
+                                      isHidden
+                                        ? "text-green-500 hover:text-green-700"
+                                        : "text-red-500 hover:text-red-700"
+                                    }`}
                                   >
-                                    <Trash2 size={23} />
+                                    {isHidden ? (
+                                      <RefreshCw size={23} />
+                                    ) : (
+                                      <Trash2 size={23} />
+                                    )}
                                   </button>
                                   {prod.selected && (
                                     <span className="ml-2 text-green-500">
@@ -730,8 +731,9 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
                     <button
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      disabled={isSubmitting}
                     >
-                      Update Import Product
+                      {isSubmitting ? "Updating..." : "Update Import Product"}
                     </button>
                   </div>
                 </Dialog.Panel>

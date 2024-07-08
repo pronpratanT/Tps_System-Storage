@@ -6,6 +6,7 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
   const [newUnitName, setNewUnitName] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (unit) {
@@ -32,6 +33,7 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!newUnitId || !newUnitName) {
       setError("Please complete Unit details!");
@@ -44,6 +46,8 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
       setError("Unit ID already exists!");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       //? Update Unit
@@ -72,10 +76,13 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
         onClose(); // Close the modal after successful update
         setSuccess("");
         refreshUnits(); // Refresh the unit list
-      }, 2000);
+        setError("");
+      }, 1500);
     } catch (error) {
       console.log(error);
       setError("Failed to update unit");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -166,8 +173,9 @@ const UnitEdit = ({ isVisible, onClose, unit, refreshUnits }) => {
                     <button
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      disabled={isSubmitting}
                     >
-                      Update Unit
+                      {isSubmitting ? "Updating..." : "Update Unit"}
                     </button>
                   </div>
                 </Dialog.Panel>

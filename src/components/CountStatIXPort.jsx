@@ -54,24 +54,35 @@ function CountStatIXPort({ refresh, shouldRefresh }) {
   useEffect(() => {
     getImport();
     getExport();
-  }, [refresh, shouldRefresh ]);
+  }, [refresh, shouldRefresh]);
 
   return (
-    <div className="flex justify-between items-center mb-6 space-x-5">
-      {/* //? Stat */}
-      <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-        <div className="text-lg font-bold text-gray-600 my-1">Imports</div>
-        <div className="flex items-center space-x-2 text-2xl font-bold text-green-600">
-          <PackagePlus size={32} />
-          <span className="text-2xl font-bold">{imports.length}</span>{" "}
+    <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className="bg-white shadow-md rounded-lg p-6 relative overflow-hidden flex items-center">
+        <div className="flex flex-col items-start relative z-10">
+          <span className="text-4xl font-bold text-emerald-600">
+            {imports.length}
+          </span>
+          <div className="text-lg font-semibold text-gray-600 mt-1">
+            Imports
+          </div>
+        </div>
+        <div className="absolute right-4 inset-y-0 flex items-center justify-center opacity-10">
+          <PackagePlus size={100} className="text-emerald-500" />
         </div>
       </div>
 
-      <div className="flex-1 bg-white shadow-md rounded-lg p-4 flex flex-col items-center">
-        <div className="text-lg font-bold text-gray-600 my-1">Exports</div>
-        <div className="flex items-center space-x-2 text-2xl font-bold text-red-600">
-          <PackageMinus size={32} />
-          <span className="text-2xl font-bold">{exports.length}</span>{" "}
+      <div className="bg-white shadow-md rounded-lg p-6 relative overflow-hidden flex items-center">
+        <div className="flex flex-col items-start relative z-10">
+          <span className="text-4xl font-bold text-red-600">
+            {exports.length}
+          </span>
+          <div className="text-lg font-semibold text-gray-600 mt-1">
+            Exports
+          </div>
+        </div>
+        <div className="absolute right-4 inset-y-0 flex items-center justify-center opacity-10">
+          <PackageMinus size={100} className="text-red-500" />
         </div>
       </div>
     </div>

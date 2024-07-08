@@ -7,6 +7,7 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
   const [newVendorCountry, setNewVendorCountry] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (vendor) {
@@ -35,9 +36,11 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
   
-    if (!newVendorId || !newVendorName || !newVendorCountry) {
+    if (!newVendorId || !newVendorName) {
       setError("Please complete Vendor details!");
+      setIsSubmitting(false);
       return;
     }
   
@@ -48,8 +51,11 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
     );
     if (isDuplicate) {
       setError("Vendor ID already exists!");
+      setIsSubmitting(false);
       return;
     }
+
+    setIsSubmitting(true);
   
     try {
       //? Update Vendor
@@ -79,6 +85,8 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
     } catch (error) {
       console.log(error);
       setError("Failed to update vendor");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -184,8 +192,9 @@ const VendorEdit = ({ isVisible, onClose, vendor, refreshVendors }) => {
                     <button
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      disabled={isSubmitting}
                     >
-                      Update Vendor
+                      {isSubmitting ? "Updating..." : "Update Vendor"}
                     </button>
                   </div>
                 </Dialog.Panel>

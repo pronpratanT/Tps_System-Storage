@@ -11,6 +11,7 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [units, setUnits] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -39,6 +40,7 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (
       !newProductId ||
@@ -59,6 +61,8 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
       setError("Product ID already exists!");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const res = await fetch(
@@ -90,10 +94,13 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
         onClose();
         setSuccess("");
         refreshProducts();
+        setError("");
       }, 2000);
     } catch (error) {
       console.log(error);
       setError("Failed to update product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -276,8 +283,9 @@ function ProductEdit({ isVisible, onClose, product, refreshProducts }) {
                     <button
                       type="submit"
                       className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                      disabled={isSubmitting}
                     >
-                      Update Product
+                      {isSubmitting ? "Updating..." : "Update Product"}
                     </button>
                   </div>
                 </Dialog.Panel>

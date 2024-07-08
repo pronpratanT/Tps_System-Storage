@@ -10,6 +10,7 @@ function ProductDel({ isVisible, onClose, product, refreshProducts, refreshCount
   const [delAmount, setDelAmount] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -24,6 +25,8 @@ function ProductDel({ isVisible, onClose, product, refreshProducts, refreshCount
 
   const removeProduct = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       const resDelete = await fetch(
@@ -45,6 +48,8 @@ function ProductDel({ isVisible, onClose, product, refreshProducts, refreshCount
       }, 2000);
     } catch (error) {
       setError("Failed to delete product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -177,8 +182,9 @@ function ProductDel({ isVisible, onClose, product, refreshProducts, refreshCount
                       <button
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                        disabled={isSubmitting}
                       >
-                        Delete Product
+                        {isSubmitting ? "Deleting..." : "Delete Product"}
                       </button>
                     </div>
                   </Dialog.Panel>

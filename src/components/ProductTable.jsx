@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { Edit, Search, Trash2, Package } from "lucide-react";
+import {
+  Edit,
+  Search,
+  Trash2,
+  Package,
+  Filter,
+  Check,
+  AlertTriangle,
+} from "lucide-react";
 import Avatar from "@mui/material/Avatar";
-import { indigo } from "@mui/material/colors";
+import { indigo, orange, teal } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import ProductEdit from "./ProductEdit";
 import ProductDel from "./ProductDel";
@@ -16,7 +24,7 @@ export default function ProductTable() {
   const [productUnit, setProductUnit] = useState("");
   const [storeHouse, setStoreHouse] = useState("");
   const [brand, setBrand] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState("0");
   const [products, setProducts] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -28,6 +36,9 @@ export default function ProductTable() {
   const [units, setUnits] = useState([]);
   const [refresh, setRefresh] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+  const [searchType, setSearchType] = useState("productId");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   //TODO < Function to fetch product to table >
   const getProducts = async () => {
@@ -101,19 +112,44 @@ export default function ProductTable() {
     getUnits();
   }, []);
 
-  //TODO <Function Search Product Id
-  const filterProductsByID = (products, searchID) => {
-    if (!searchID) return products; // Return all products if searchID is empty
-
-    // Filter unique products based on searchID
-    const filteredProducts = products.filter(
-      (product, index, self) =>
-        product.productId.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.productId === product.productId)
-    );
-
-    return filteredProducts;
+  //! Table Fetch Data
+  //? <Function Search Document Id / Date Export
+  const filterData = (products, searchTerm, searchType) => {
+    if (!searchTerm) return products; // Return all products if searchTerm is empty
+    return products.filter((product) => {
+      const lowercaseSearchTerm = searchTerm.toLowerCase();
+      if (searchType === "productId") {
+        return product.productId.toLowerCase().includes(lowercaseSearchTerm);
+      } else if (searchType === "productName") {
+        return product.productName.toLowerCase().includes(lowercaseSearchTerm);
+      }
+      return false;
+    });
   };
+  //? Filter Dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isFilterDropdownOpen && !event.target.closest(".filter-dropdown")) {
+        setIsFilterDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isFilterDropdownOpen]);
+  //? <Function Search Document Id / Date Export >
+
+  //? Sorted Data Table
+  const sortExportsByDate = (exports) => {
+    return exports.sort((a, b) => {
+      const dateA = parse(a.dateExport, "yyyy-MM-dd", new Date());
+      const dateB = parse(b.dateExport, "yyyy-MM-dd", new Date());
+      return compareAsc(dateA, dateB);
+    });
+  };
+  //! Table Fetch Data >
 
   //TODO < Function Get Product by Id send to ProductEdit >
   const handleEditModalClose = () => {
@@ -160,26 +196,26 @@ export default function ProductTable() {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!productId || !productName || !productUnit || !storeHouse || !amount) {
       setError("Please complete Product details!");
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      const resCheckProduct = await fetch(
-        "/api/checkProduct",
-        {
-          method: "POST",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({ productId }),
-        }
-      );
+      const resCheckProduct = await fetch("/api/checkProduct", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({ productId }),
+      });
       const { product } = await resCheckProduct.json();
       if (product) {
-        setError("Unit ID already exists!");
+        setError("Product ID already exists!");
         return;
       }
 
@@ -217,10 +253,13 @@ export default function ProductTable() {
         setBrand("");
         setAmount("");
         setRefresh(!refresh);
-      }, 2000);
+        setError("");
+      }, 1500);
     } catch (error) {
       console.log(error);
       setError("Failed to add product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -267,22 +306,71 @@ export default function ProductTable() {
             กำหนดรหัสสินค้า
           </h2>
           <div className="flex justify-between items-center mb-4">
-            <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
-              <input
-                type="text"
-                placeholder="Search Product ID..."
-                className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
-                value={searchID}
-                onChange={(event) => setSearchID(event.target.value)}
-              />
-              <Search size={16} className="text-gray-600 " />
+            <div className="flex items-center max-w-2xl w-full">
+              <div className="flex items-center px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden w-full font-[sans-serif] relative">
+                <Search size={16} className="text-gray-600 mr-2" />
+                <input
+                  type="text"
+                  placeholder={`Search ${
+                    searchType === "productId" ? "Product ID" : "Product Name"
+                  }...`}
+                  className="w-full outline-none bg-transparent text-gray-600 text-sm"
+                  value={searchID}
+                  onChange={(event) => setSearchID(event.target.value)}
+                />
+              </div>
+              <div className="relative ml-2">
+                <button
+                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-gray-200"
+                >
+                  <Filter size={16} className="text-gray-600" />
+                </button>
+                {isFilterDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 filter-dropdown">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
+                      <button
+                        onClick={() => {
+                          setSearchType("productId");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Product ID
+                        {searchType === "productId" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSearchType("productName");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Product Name
+                        {searchType === "productName" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <button
               onClick={openAddModal}
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
               <Package size={20} className="mr-2" />
-              Add Product
+              Add Vendor
             </button>
           </div>
 
@@ -303,7 +391,7 @@ export default function ProductTable() {
                   Unit
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
-                  StoreHouse
+                  WareHouse
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-right w-1/12">
                   Amount
@@ -313,12 +401,13 @@ export default function ProductTable() {
                 </th>
               </tr>
             </thead>
+
             <tbody>
-              {filterProductsByID(products, searchID).map((product) => (
+              {filterData(products, searchID, searchType).map((product) => (
                 <tr key={product.productId} className="border-t">
                   <td className="py-4 pr-4 pl-10 flex items-center w-auto">
                     <Avatar
-                      sx={{ bgcolor: indigo[800], marginRight: "20px" }}
+                      sx={{ bgcolor: teal[400], marginRight: "20px" }}
                       variant="rounded-md"
                     >
                       {product.productId.charAt(0).toUpperCase()}
@@ -329,21 +418,48 @@ export default function ProductTable() {
                   <td className="py-4 px-4">{product.brand}</td>
                   <td className="py-4 px-4">{product.productUnit}</td>
                   <td className="py-4 px-4">{product.storeHouse}</td>
-                  <td className="py-4 px-4 text-right">{product.amount}</td>
-                  <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
-                    <button
-                      onClick={() => getValue(product._id)}
-                      type="button"
-                      className="text-indigo-600 hover:text-indigo-800"
-                    >
-                      <Edit size={23} />
-                    </button>
-                    <button
-                      onClick={() => getDelValue(product._id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={23} />
-                    </button>
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    <div className="flex items-center justify-end space-x-2">
+                      {Number(product.amount) <= 10 && (
+                        <AlertTriangle
+                          size={18}
+                          strokeWidth={2.5}
+                          className={
+                            Number(product.amount) === 0
+                              ? "text-red-500"
+                              : "text-yellow-500"
+                          }
+                        />
+                      )}
+                      <span
+                        className={
+                          Number(product.amount) === 0
+                            ? "text-red-500 font-bold"
+                            : Number(product.amount) <= 10
+                            ? "text-yellow-500 font-bold"
+                            : ""
+                        }
+                      >
+                        {product.amount}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-4 px-4 whitespace-nowrap">
+                    <div className="flex justify-center items-center space-x-2">
+                      <button
+                        onClick={() => getValue(product._id)}
+                        type="button"
+                        className="text-indigo-600 hover:text-indigo-800"
+                      >
+                        <Edit size={20} />
+                      </button>
+                      <button
+                        onClick={() => getDelValue(product._id)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -465,6 +581,7 @@ export default function ProductTable() {
                             className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                             id="amount"
                             type="number"
+                            min="0"
                           />
                         </div>
                         <div className="flex-1 ml-1">
@@ -510,8 +627,9 @@ export default function ProductTable() {
                       <button
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                        disabled={isSubmitting}
                       >
-                        Add Product
+                        {isSubmitting ? "Adding..." : "Add Product"}
                       </button>
                     </div>
                   </Dialog.Panel>

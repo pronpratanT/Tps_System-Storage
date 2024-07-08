@@ -6,12 +6,11 @@ import {
   Search,
   Trash2,
   HeartHandshake,
-  User,
-  Ruler,
-  Package,
+  Filter,
+  Check,
 } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
-import { indigo } from "@mui/material/colors";
+import { indigo, teal } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import VendorEdit from "./VendorEdit";
 import VendorDel from "./VendorDel";
@@ -32,6 +31,9 @@ function VendorTable() {
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+  const [searchType, setSearchType] = useState("vendorId");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   //TODO < Function to fetch vendors to table >
   const getVendors = async () => {
@@ -69,19 +71,44 @@ function VendorTable() {
     getVendors();
   }, []);
 
-  //TODO <Function Search Vendor Id
-  const filterVendorsByID = (vendors, searchID) => {
-    if (!searchID) return vendors; // Return all vendors if searchID is empty
-
-    // Filter unique vendors based on searchID
-    const filteredVendors = vendors.filter(
-      (vendor, index, self) =>
-        vendor.vendorId.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.vendorId === vendor.vendorId)
-    );
-
-    return filteredVendors;
+  //! Table Fetch Data
+  //? <Function Search Document Id / Date Export
+  const filterData = (vendors, searchTerm, searchType) => {
+    if (!searchTerm) return vendors;
+    return vendors.filter((vendor) => {
+      const lowercaseSearchTerm = searchTerm.toLowerCase();
+      if (searchType === "vendorId") {
+        return vendor.vendorId.toLowerCase().includes(lowercaseSearchTerm);
+      } else if (searchType === "vendorName") {
+        return vendor.vendorName.toLowerCase().includes(lowercaseSearchTerm);
+      }
+      return false;
+    });
   };
+  //? Filter Dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isFilterDropdownOpen && !event.target.closest(".filter-dropdown")) {
+        setIsFilterDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isFilterDropdownOpen]);
+  //? <Function Search Document Id / Date Export >
+
+  //? Sorted Data Table
+  const sortExportsByDate = (exports) => {
+    return exports.sort((a, b) => {
+      const dateA = parse(a.dateExport, "yyyy-MM-dd", new Date());
+      const dateB = parse(b.dateExport, "yyyy-MM-dd", new Date());
+      return compareAsc(dateA, dateB);
+    });
+  };
+  //! Table Fetch Data >
 
   //TODO < Function Get Vendor by Id send to VendorEdit >
   const handleEditModalClose = () => {
@@ -91,12 +118,9 @@ function VendorTable() {
 
   const getVendorById = async (id) => {
     try {
-      const res_byid = await fetch(
-        `/api/addVendor/${id}`,
-        {
-          cache: "no-store",
-        }
-      );
+      const res_byid = await fetch(`/api/addVendor/${id}`, {
+        cache: "no-store",
+      });
 
       if (!res_byid.ok) {
         throw new Error("Failed to fetch Vendor");
@@ -119,7 +143,7 @@ function VendorTable() {
     }
   };
 
-  //TODO < Function Add Vendor >
+  //! < Function Add Vendor >
   const openAddModal = () => {
     setIsAddModalOpen(true);
   };
@@ -131,26 +155,27 @@ function VendorTable() {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
-    if (!vendorId || !vendorName || !vendorCountry) {
+    if (!vendorId || !vendorName) {
       setError("Please complete Vendor details!");
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      const resCheckVendor = await fetch(
-        "/api/checkVendor",
-        {
-          method: "POST",
-          headers: {
-            "Content-type": "application/json",
-          },
-          body: JSON.stringify({ vendorId }),
-        }
-      );
+      const resCheckVendor = await fetch("/api/checkVendor", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({ vendorId }),
+      });
       const { vendor } = await resCheckVendor.json();
       if (vendor) {
         setError("Vendor ID already exists!");
+        setIsSubmitting(false);
         return;
       }
 
@@ -177,22 +202,23 @@ function VendorTable() {
         setSuccess("");
         setVendorId("");
         setVendorName("");
-      }, 2000);
+        setVendorCountry("");
+        setError("");
+      }, 1500);
     } catch (error) {
       console.log(error);
       setError("Failed to add vendor");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   //TODO < Function Delete Vendor >
   const getDelById = async (id) => {
     try {
-      const res_byid = await fetch(
-        `/api/addVendor/${id}`,
-        {
-          cache: "no-store",
-        }
-      );
+      const res_byid = await fetch(`/api/addVendor/${id}`, {
+        cache: "no-store",
+      });
 
       if (!res_byid.ok) {
         throw new Error("Failed to fetch Vendor");
@@ -230,15 +256,64 @@ function VendorTable() {
             กำหนดรหัส Vendor
           </h2>
           <div className="flex justify-between items-center mb-4">
-            <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
-              <input
-                type="text"
-                placeholder="Search Vendor ID..."
-                className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
-                value={searchID}
-                onChange={(event) => setSearchID(event.target.value)}
-              />
-              <Search size={16} className="text-gray-600 " />
+            <div className="flex items-center max-w-2xl w-full">
+              <div className="flex items-center px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden w-full font-[sans-serif] relative">
+                <Search size={16} className="text-gray-600 mr-2" />
+                <input
+                  type="text"
+                  placeholder={`Search ${
+                    searchType === "vendorId" ? "Vendor ID" : "Vendor Name"
+                  }...`}
+                  className="w-full outline-none bg-transparent text-gray-600 text-sm"
+                  value={searchID}
+                  onChange={(event) => setSearchID(event.target.value)}
+                />
+              </div>
+              <div className="relative ml-2">
+                <button
+                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-gray-200"
+                >
+                  <Filter size={16} className="text-gray-600" />
+                </button>
+                {isFilterDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 filter-dropdown">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
+                      <button
+                        onClick={() => {
+                          setSearchType("vendorId");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Vendor ID
+                        {searchType === "vendorId" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSearchType("vendorName");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Vendor Name
+                        {searchType === "vendorName" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <button
               onClick={openAddModal}
@@ -262,17 +337,17 @@ function VendorTable() {
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
                   Country
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md w-2/12">
                   Action
                 </th>
               </tr>
             </thead>
             <tbody>
-              {filterVendorsByID(vendors, searchID).map((vendor) => (
+              {filterData(vendors, searchID, searchType).map((vendor) => (
                 <tr key={vendor.vendorId} className="border-t">
                   <td className="py-4 pr-4 pl-20 flex items-center w-auto">
                     <Avatar
-                      sx={{ bgcolor: indigo[800], marginRight: "20px" }}
+                      sx={{ bgcolor: teal[400], marginRight: "20px" }}
                       variant="rounded-md"
                     >
                       {vendor.vendorId.charAt(0).toUpperCase()}
@@ -405,8 +480,9 @@ function VendorTable() {
                       <button
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                        disabled={isSubmitting}
                       >
-                        Add Vendor
+                        {isSubmitting ? "Adding..." : "Add Vendor"}
                       </button>
                     </div>
                   </Dialog.Panel>

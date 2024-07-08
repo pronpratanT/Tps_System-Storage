@@ -6,6 +6,7 @@ function UnitDel({ isVisible, onClose, unit, refreshUnits, refreshCount }) {
   const [delName, setDelName] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (unit) {
@@ -16,6 +17,8 @@ function UnitDel({ isVisible, onClose, unit, refreshUnits, refreshCount }) {
 
   const removeUnit = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       const resDelete = await fetch(
@@ -36,10 +39,12 @@ function UnitDel({ isVisible, onClose, unit, refreshUnits, refreshCount }) {
         setSuccess("");
         refreshUnits();
         refreshCount();
-      }, 2000);
+      }, 1500);
     } catch (error) {
       console.log(unit);
       setError("Failed to delete unit");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -122,8 +127,9 @@ function UnitDel({ isVisible, onClose, unit, refreshUnits, refreshCount }) {
                       <button
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                        disabled={isSubmitting}
                       >
-                        Delete Unit
+                        {isSubmitting ? "Deleting..." : "Delete Unit"}
                       </button>
                     </div>
                   </Dialog.Panel>

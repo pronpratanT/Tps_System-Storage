@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { Edit, Search, Trash2, Ruler } from "lucide-react";
+import { Edit, Search, Trash2, Ruler, Filter, Check } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
-import { indigo } from "@mui/material/colors";
+import { indigo, pink, teal } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import UnitEdit from "./UnitEdit";
 import UnitDel from "./UnitDel";
@@ -23,6 +23,9 @@ export default function UnitTable() {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+  const [searchType, setSearchType] = useState("unitId");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   //TODO < Function to fetch units to table >
   const getUnits = async () => {
@@ -60,19 +63,44 @@ export default function UnitTable() {
     getUnits();
   }, []);
 
-  //TODO <Function Search Unit Id
-  const filterUnitsByID = (units, searchID) => {
-    if (!searchID) return units; // Return all units if searchID is empty
-
-    // Filter unique units based on searchID
-    const filteredUnits = units.filter(
-      (unit, index, self) =>
-        unit.unitId.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.unitId === unit.unitId)
-    );
-
-    return filteredUnits;
+  //! Table Fetch Data
+  //? <Function Search Document Id / Date Export
+  const filterData = (units, searchTerm, searchType) => {
+    if (!searchTerm) return units;
+    return units.filter((unit) => {
+      const lowercaseSearchTerm = searchTerm.toLowerCase();
+      if (searchType === "unitId") {
+        return unit.unitId.toLowerCase().includes(lowercaseSearchTerm);
+      } else if (searchType === "unitName") {
+        return unit.unitName.toLowerCase().includes(lowercaseSearchTerm);
+      }
+      return false;
+    });
   };
+  //? Filter Dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isFilterDropdownOpen && !event.target.closest(".filter-dropdown")) {
+        setIsFilterDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isFilterDropdownOpen]);
+  //? <Function Search Document Id / Date Export >
+
+  //? Sorted Data Table
+  const sortExportsByDate = (exports) => {
+    return exports.sort((a, b) => {
+      const dateA = parse(a.dateExport, "yyyy-MM-dd", new Date());
+      const dateB = parse(b.dateExport, "yyyy-MM-dd", new Date());
+      return compareAsc(dateA, dateB);
+    });
+  };
+  //! Table Fetch Data >
 
   //TODO < Function Get Unit by Id send to UnitEdit >
   const handleEditModalClose = () => {
@@ -119,11 +147,13 @@ export default function UnitTable() {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!unitId || !unitName) {
       setError("Please complete Unit details!");
       return;
     }
+    setIsSubmitting(true);
 
     try {
       const resCheckUnit = await fetch("/api/checkUnit", {
@@ -162,10 +192,13 @@ export default function UnitTable() {
         setSuccess("");
         setUnitId("");
         setUnitName("");
-      }, 2000);
+        setError("");
+      }, 1500);
     } catch (error) {
       console.log(error);
       setError("Failed to add unit");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -212,15 +245,64 @@ export default function UnitTable() {
             กำหนดรหัสหน่วยนับสินค้า
           </h2>
           <div className="flex justify-between items-center mb-4">
-            <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
-              <input
-                type="text"
-                placeholder="Search Unit ID..."
-                className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
-                value={searchID}
-                onChange={(event) => setSearchID(event.target.value)}
-              />
-              <Search size={16} className="text-gray-600 " />
+            <div className="flex items-center max-w-2xl w-full">
+              <div className="flex items-center px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden w-full font-[sans-serif] relative">
+                <Search size={16} className="text-gray-600 mr-2" />
+                <input
+                  type="text"
+                  placeholder={`Search ${
+                    searchType === "unitId" ? "Unit ID" : "Unit Name"
+                  }...`}
+                  className="w-full outline-none bg-transparent text-gray-600 text-sm"
+                  value={searchID}
+                  onChange={(event) => setSearchID(event.target.value)}
+                />
+              </div>
+              <div className="relative ml-2">
+                <button
+                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-gray-200"
+                >
+                  <Filter size={16} className="text-gray-600" />
+                </button>
+                {isFilterDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 filter-dropdown">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
+                      <button
+                        onClick={() => {
+                          setSearchType("unitId");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Unit ID
+                        {searchType === "unitId" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSearchType("unitName");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Unit Name
+                        {searchType === "unitName" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <button
               onClick={openAddModal}
@@ -247,11 +329,11 @@ export default function UnitTable() {
               </tr>
             </thead>
             <tbody>
-              {filterUnitsByID(units, searchID).map((unit) => (
+              {filterData(units, searchID, searchType).map((unit) => (
                 <tr key={unit.unitId} className="border-t">
                   <td className="py-4 pr-4 pl-20 flex items-center w-auto">
                     <Avatar
-                      sx={{ bgcolor: indigo[800], marginRight: "20px" }}
+                      sx={{ bgcolor: teal[400], marginRight: "20px" }}
                       variant="rounded-md"
                     >
                       {unit.unitId.charAt(0).toUpperCase()}
@@ -368,8 +450,9 @@ export default function UnitTable() {
                       <button
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                        disabled={isSubmitting}
                       >
-                        Add Unit
+                        {isSubmitting ? "Adding..." : "Add Unit"}
                       </button>
                     </div>
                   </Dialog.Panel>

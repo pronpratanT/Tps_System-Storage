@@ -1,19 +1,22 @@
 "use client";
 
 import { useState, useEffect, Fragment } from "react";
-import { Edit, Search, Trash2 } from "lucide-react";
+import { Check, Edit, Filter, Search, Trash2, UserPlus } from "lucide-react";
 import Avatar from "@mui/material/Avatar";
-import { indigo } from "@mui/material/colors";
+import { indigo, teal } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import EmployeeEdit from "./EmployeeEdit";
 import EmployeeDel from "./EmployeeDel";
 import CountStat from "./CountStat";
+import Select, { components } from "react-select";
+import { createPortal } from "react-dom";
 
 export default function UserTable() {
   //? State
   const [userId, setUserId] = useState("");
   const [userName, setUserName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
@@ -25,6 +28,9 @@ export default function UserTable() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [shouldRefresh, setShouldRefresh] = useState(false);
+  const [searchType, setSearchType] = useState("userId");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   //TODO < Function to fetch user to table >
   const getUsers = async () => {
@@ -62,19 +68,35 @@ export default function UserTable() {
     getUsers();
   }, []);
 
-  //TODO <Function Search Product Id
-  const filterUsersById = (users, searchID) => {
-    if (!searchID) return users; // Return all products if searchID is empty
-
-    // Filter unique products based on searchID
-    const filteredUsers = users.filter(
-      (user, index, self) =>
-        user.userid.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.userid === user.userid)
-    );
-
-    return filteredUsers;
+  //! Table Fetch Data
+  //? <Function Search Document Id / Date Export
+  const filterData = (users, searchTerm, searchType) => {
+    if (!searchTerm) return users;
+    return users.filter((user) => {
+      const lowercaseSearchTerm = searchTerm.toLowerCase();
+      if (searchType === "userId") {
+        return user.userid.toLowerCase().includes(lowercaseSearchTerm);
+      } else if (searchType === "userName") {
+        return user.name.toLowerCase().includes(lowercaseSearchTerm);
+      }
+      return false;
+    });
   };
+  //? Filter Dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isFilterDropdownOpen && !event.target.closest(".filter-dropdown")) {
+        setIsFilterDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isFilterDropdownOpen]);
+  //? <Function Search Document Id / Date Export >
+  //! Table Fetch Data >
 
   //TODO < Function Get User by Id send to UserEdit >
   const handleEditModalClose = () => {
@@ -121,11 +143,13 @@ export default function UserTable() {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!userId || !userName || !email || !role) {
       setError("Please complete User details!");
       return;
     }
+    setIsSubmitting(true);
 
     try {
       const resCheckUser = await fetch("/api/checkUser", {
@@ -133,10 +157,23 @@ export default function UserTable() {
         headers: {
           "Content-type": "application/json",
         },
-        body: JSON.stringify({ userId }),
+        body: JSON.stringify({ email }),
       });
       const { user } = await resCheckUser.json();
       if (user) {
+        setError("Email already exists!");
+        return;
+      }
+
+      const resCheckUserId = await fetch("/api/checkUserId", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({ userid: userId }),
+      });
+      const { idUser } = await resCheckUserId.json();
+      if (idUser) {
         setError("User ID already exists!");
         return;
       }
@@ -148,9 +185,10 @@ export default function UserTable() {
           "Content-type": "application/json",
         },
         body: JSON.stringify({
-          userId,
-          userName,
+          userid: userId,
+          name: userName,
           email,
+          password,
           role,
         }),
       });
@@ -171,10 +209,12 @@ export default function UserTable() {
         setEmail("");
         setRole("");
         setRefresh(!refresh);
-      }, 2000);
+      }, 1500);
     } catch (error) {
       console.log(error);
       setError("Failed to add user");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -210,6 +250,55 @@ export default function UserTable() {
     setShouldRefresh(!shouldRefresh);
   };
 
+  //? DropDown setting
+  const roleOptions = [
+    { value: "USER", label: "USER" },
+    { value: "MEMBER", label: "MEMBER" },
+    { value: "ADMIN", label: "ADMIN" },
+  ];
+
+  const CustomOption = ({ children, ...props }) => {
+    return (
+      <components.Option {...props}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          {children}
+          {props.isSelected && <Check size={16} className="text-indigo-600" />}
+        </div>
+      </components.Option>
+    );
+  };
+
+  const renderDropdownInPortal = ({ props, isOpen }) => {
+    if (isOpen) {
+      return createPortal(
+        <div {...props.menuProps}>{props.children}</div>,
+        document.body
+      );
+    }
+    return null;
+  };
+  //? DropDown setting >
+
+  // ฟังก์ชันสำหรับกำหนดสีและสไตล์ตาม role
+  const getRoleStyle = (role) => {
+    switch (role) {
+      case "USER":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-200";
+      case "MEMBER":
+        return "bg-purple-100 text-purple-800 hover:bg-purple-200";
+      case "ADMIN":
+        return "bg-red-100 text-red-800 hover:bg-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 hover:bg-gray-200";
+    }
+  };
+
   return (
     <div className="flex-1 p-4">
       <div>
@@ -221,23 +310,72 @@ export default function UserTable() {
             กำหนดรหัสพนักงาน
           </h2>
           <div className="flex justify-between items-center mb-4">
-            <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
-              <input
-                type="text"
-                placeholder="Search Employee ID..."
-                className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
-                value={searchID}
-                onChange={(event) => setSearchID(event.target.value)}
-              />
-              <Search size={16} className="text-gray-600 " />
+            <div className="flex items-center max-w-2xl w-full">
+              <div className="flex items-center px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden w-full font-[sans-serif] relative">
+                <Search size={16} className="text-gray-600 mr-2" />
+                <input
+                  type="text"
+                  placeholder={`Search ${
+                    searchType === "userId" ? "User ID" : "User Name"
+                  }...`}
+                  className="w-full outline-none bg-transparent text-gray-600 text-sm"
+                  value={searchID}
+                  onChange={(event) => setSearchID(event.target.value)}
+                />
+              </div>
+              <div className="relative ml-2">
+                <button
+                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-gray-200"
+                >
+                  <Filter size={16} className="text-gray-600" />
+                </button>
+                {isFilterDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 filter-dropdown">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
+                      <button
+                        onClick={() => {
+                          setSearchType("userId");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        User ID
+                        {searchType === "userId" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSearchType("userName");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        User Name
+                        {searchType === "userName" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            {/* <button
+            <button
               onClick={openAddModal}
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
               <UserPlus size={20} className="mr-2" />
-              Add Role
-            </button> */}
+              Create Account
+            </button>
           </div>
 
           {/* //? Table */}
@@ -245,10 +383,10 @@ export default function UserTable() {
             <thead>
               <tr>
                 <th className="py-3 pr-4 pl-20 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-2/12">
-                  Employee ID
+                  User ID
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
-                  Employee Name
+                  User Name
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-4/12">
                   Email
@@ -262,12 +400,12 @@ export default function UserTable() {
               </tr>
             </thead>
             <tbody>
-              {filterUsersById(users, searchID).map((user) => (
+              {filterData(users, searchID, searchType).map((user) => (
                 <tr key={user.email} className="border-t">
                   <td className="py-4 px-4 pl-20">{user.userid}</td>
                   <td className="py-4 px-4 flex items-center w-auto">
                     <Avatar
-                      sx={{ bgcolor: indigo[800], marginRight: "20px" }}
+                      sx={{ bgcolor: teal[400], marginRight: "20px" }}
                       variant="rounded-md"
                     >
                       {user.name.charAt(0).toUpperCase()}
@@ -275,7 +413,18 @@ export default function UserTable() {
                     {user.name}
                   </td>
                   <td className="py-4 px-4">{user.email}</td>
-                  <td className="py-4 px-4">{user.role}</td>
+                  <td className="py-4 px-4">
+                    <div className="flex justify-center">
+                      {" "}
+                      <span
+                        className={`px-4 py-2 text-sm font-medium rounded-md w-24 text-center ${getRoleStyle(
+                          user.role
+                        )}`}
+                      >
+                        {user.role}
+                      </span>
+                    </div>
+                  </td>
                   <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
                     <button
                       onClick={() => getValue(user._id)}
@@ -326,102 +475,144 @@ export default function UserTable() {
                 >
                   <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                     <Dialog.Title
-                      as="h3"
-                      className="text-lg font-medium leading-6 text-gray-900"
+                      as="h1"
+                      className="text-2xl font-bold my-4 text-center"
                     >
-                      Add Employee Form
+                      Create Account
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Add the details of the Employee below.
+                        Add the details of the User below.
                       </p>
                     </div>
-                    <div className="mt-4">
-                      <div className="mb-4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="name"
-                        >
-                          Employee ID
-                        </label>
-                        <input
-                          onChange={(e) => setUserId(e.target.value)}
-                          value={userId}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="title"
-                          type="text"
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="name"
-                        >
-                          Employee Name
-                        </label>
-                        <input
-                          onChange={(e) => setUserName(e.target.value)}
-                          value={userName}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="name"
-                          type="text"
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label
-                          className="block text-gray-700 text-sm font-bold mb-2"
-                          htmlFor="name"
-                        >
-                          Email
-                        </label>
-                        <input
-                          onChange={(e) => setEmail(e.target.value)}
-                          value={email}
-                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          id="name"
-                          type="text"
-                        />
-                      </div>
-                      <div className="flex justify-between mb-4">
-                        <div className="flex-1 mr-1">
-                          <label
-                            className="block text-gray-700 text-sm font-bold mb-2"
-                            htmlFor="role"
-                          >
-                            Role
-                          </label>
-                          <select
-                            onChange={(e) => setRole(e.target.value)}
-                            value={role}
-                            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                            id="role"
-                          >
-                            <option value="USER">USER</option>
-                            <option value="MEMBER">MEMBER</option>
-                            <option value="ADMIN">ADMIN</option>
-                          </select>
-                        </div>
-                      </div>
+                    <div className="mt-4 flex flex-col gap-4">
+                      <input
+                        onChange={(e) => setUserId(e.target.value)}
+                        value={userId}
+                        className="border border-gray-200 py-3 px-6 bg-zinc-100/40 rounded-md"
+                        type="text"
+                        placeholder="User ID"
+                      />
+                      <input
+                        onChange={(e) => setUserName(e.target.value)}
+                        value={userName}
+                        className="border border-gray-200 py-3 px-6 bg-zinc-100/40 rounded-md"
+                        type="text"
+                        placeholder="Full Name"
+                      />
+                      <input
+                        onChange={(e) => setEmail(e.target.value)}
+                        value={email}
+                        className="border border-gray-200 py-3 px-6 bg-zinc-100/40 rounded-md"
+                        type="text"
+                        placeholder="Email"
+                      />
+                      <input
+                        onChange={(e) => setPassword(e.target.value)}
+                        value={password}
+                        className="border border-gray-200 py-3 px-6 bg-zinc-100/40 rounded-md"
+                        type="password"
+                        placeholder="Password"
+                      />
+                      <Select
+                        options={roleOptions}
+                        onChange={(option) =>
+                          setRole(option ? option.value : "")
+                        }
+                        placeholder="Select Role"
+                        isClearable
+                        className="basic-single shadow focus:shadow-outline focus:outline-none rounded"
+                        classNamePrefix="select"
+                        menuPortalTarget={document.body}
+                        menuPosition="fixed"
+                        maxMenuHeight={200}
+                        components={{ Option: CustomOption }}
+                        styles={{
+                          control: (baseStyles, state) => ({
+                            ...baseStyles,
+                            borderColor: "rgb(229, 231, 235)",
+                            backgroundColor: "rgba(244, 244, 245, 0.4)",
+                            borderRadius: "0.375rem",
+                            minHeight: "50px",
+                            height: "50px",
+                            padding: "0",
+                            paddingRight: "1rem",
+                            alignItems: "center",
+                            "&:hover": {
+                              borderColor: "rgb(229, 231, 235)",
+                            },
+                          }),
+                          valueContainer: (baseStyles) => ({
+                            ...baseStyles,
+                            padding: "0 1.5rem", // เพิ่ม padding ด้านข้าง
+                            margin: "0",
+                            height: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                          }),
+                          singleValue: (baseStyles) => ({
+                            // เพิ่ม style สำหรับ singleValue
+                            ...baseStyles,
+                            display: "flex",
+                            alignItems: "center",
+                            height: "100%",
+                          }),
+                          input: (baseStyles) => ({
+                            ...baseStyles,
+                            margin: "0",
+                            padding: "0",
+                            height: "100%",
+                            alignItems: "center",
+                          }),
+                          indicatorSeparator: () => ({
+                            display: "none",
+                          }),
+                          dropdownIndicator: (baseStyles) => ({
+                            ...baseStyles,
+                            padding: "0 0.5rem",
+                          }),
+                          menu: (baseStyles) => ({
+                            ...baseStyles,
+                            backgroundColor: "white",
+                            borderRadius: "0.375rem",
+                            boxShadow:
+                              "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
+                          }),
+                          option: (baseStyles, { isFocused, isSelected }) => ({
+                            ...baseStyles,
+                            backgroundColor: isFocused
+                              ? "rgba(243, 244, 246, 0.8)"
+                              : isSelected
+                              ? "rgba(243, 244, 246, 0.5)"
+                              : "white",
+                            color: "black",
+                            "&:active": {
+                              backgroundColor: "rgba(243, 244, 246, 1)",
+                            },
+                          }),
+                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
+                      />
                     </div>
 
-                    {/* // TODO : Error & Success */}
                     {error && (
-                      <div className="px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
+                      <div className="mt-4 px-4 py-2 text-sm font-medium text-red-900 bg-red-100 border border-transparent rounded-md hover:bg-red-200">
                         {error}
                       </div>
                     )}
                     {success && (
-                      <div className="px-4 py-2 text-sm font-medium text-green-900 bg-green-100 border border-transparent rounded-md hover:bg-green-200">
+                      <div className="mt-4 px-4 py-2 text-sm font-medium text-green-900 bg-green-100 border border-transparent rounded-md hover:bg-green-200">
                         {success}
                       </div>
                     )}
 
-                    <div className="mt-4 py-2">
+                    <div className="mt-4">
                       <button
                         type="submit"
-                        className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                        className="bg-indigo-600 hover:bg-indigo-800 text-white font-bold cursor-pointer px-6 py-3 rounded-md w-full"
+                        disabled={isSubmitting}
                       >
-                        Add Employee
+                        {isSubmitting ? "Creating..." : "Create Account"}
                       </button>
                     </div>
                   </Dialog.Panel>

@@ -4,9 +4,9 @@ import User from "../../../../../models/user";
 
 export async function PUT(request, {params}){
     const {id} = params;
-    const { newUserId: userid, newName: name, newEmail: email, newRole: role } = await request.json();
+    const { newUserId: userid, newName: name, newEmail: email, newPassword: password, newRole: role } = await request.json();
     await connectMongoDB();
-    await User.findByIdAndUpdate(id, {userid, name, email, role});
+    await User.findByIdAndUpdate(id, {userid, name, email, password, role});
     return NextResponse.json({message: "Product updated"}, {status: 200});
 }
 

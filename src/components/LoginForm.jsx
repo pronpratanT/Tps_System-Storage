@@ -52,7 +52,6 @@ export default function LoginForm() {
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           <input
             className="border border-gray-200 py-3 px-6 bg-zinc-100/40 rounded-md"
-            type="email"
             aria-label="Email"
             placeholder="Email"
             value={email}

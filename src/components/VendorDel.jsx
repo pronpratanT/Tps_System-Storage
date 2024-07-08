@@ -1,12 +1,19 @@
 import React, { Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-function VendorDel({ isVisible, onClose, vendor, refreshVendors, refreshCount }) {
+function VendorDel({
+  isVisible,
+  onClose,
+  vendor,
+  refreshVendors,
+  refreshCount,
+}) {
   const [delId, setDelId] = useState("");
   const [delName, setDelName] = useState("");
   const [delCountry, setDelCountry] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (vendor) {
@@ -18,14 +25,13 @@ function VendorDel({ isVisible, onClose, vendor, refreshVendors, refreshCount })
 
   const removeVendor = async (event) => {
     event.preventDefault(); // Prevent the form from submitting the default way
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
-      const resDelete = await fetch(
-        `/api/addVendor?id=${vendor._id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const resDelete = await fetch(`/api/addVendor?id=${vendor._id}`, {
+        method: "DELETE",
+      });
       if (!resDelete.ok) {
         throw new Error("Failed to delete Vendor");
       }
@@ -42,6 +48,8 @@ function VendorDel({ isVisible, onClose, vendor, refreshVendors, refreshCount })
     } catch (error) {
       console.log(vendor);
       setError("Failed to delete vendor");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -147,8 +155,9 @@ function VendorDel({ isVisible, onClose, vendor, refreshVendors, refreshCount })
                       <button
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                        disabled={isSubmitting}
                       >
-                        Delete Vendor
+                        {isSubmitting ? "Deleting..." : "Delete Vendor"}
                       </button>
                     </div>
                   </Dialog.Panel>

@@ -6,26 +6,26 @@ import "../styles/ModalForm.css";
 import Select from "react-select";
 import { Calendar } from "lucide-react";
 
-function ExportDetail({ isVisible, onClose, exportPd }) {
+function ImportDetail({ isVisible, onClose, importPd }) {
   const [delDate, setDelDate] = useState("");
   const [delDocumentId, setDelDocumentId] = useState("");
-  const [delExportVen, setDelExportVen] = useState("");
-  const [delExportEm, setDelExportEm] = useState("");
+  const [delImportVen, setDelImportVen] = useState("");
+  const [delImportEm, setDelImportEm] = useState("");
   const [delSelectedProduct, setDelSelectedProduct] = useState([]);
   const [products, setProducts] = useState([]);
   const datePickerRef = useRef(null);
-  const vendorOption = { value: delExportVen, label: delExportVen };
-  const employeeOption = { value: delExportEm, label: delExportEm };
+  const vendorOption = { value: delImportVen, label: delImportVen };
+  const employeeOption = { value: delImportEm, label: delImportEm };
 
   useEffect(() => {
-    if (exportPd) {
-      setDelDate(exportPd.dateExport);
-      setDelDocumentId(exportPd.documentId);
-      setDelExportVen(exportPd.exportVen);
-      setDelExportEm(exportPd.exportEm);
-      setDelSelectedProduct(exportPd.selectedProduct);
+    if (importPd) {
+      setDelDate(importPd.dateImport);
+      setDelDocumentId(importPd.documentId);
+      setDelImportVen(importPd.importVen);
+      setDelImportEm(importPd.importEm);
+      setDelSelectedProduct(importPd.selectedProduct);
     }
-  }, [exportPd]);
+  }, [importPd]);
 
   //TODO < Function to fetch product to table >
   const getProducts = async () => {
@@ -93,11 +93,11 @@ function ExportDetail({ isVisible, onClose, exportPd }) {
                   as="h3"
                   className="text-lg font-medium leading-6 text-gray-900"
                 >
-                  Detail Export Product Form
+                  Detail Import Product Form
                 </Dialog.Title>
                 <div className="mt-2">
                   <p className="text-sm text-gray-500">
-                    Details of the Export Product.
+                    Details of the Import Product.
                   </p>
                 </div>
 
@@ -196,22 +196,22 @@ function ExportDetail({ isVisible, onClose, exportPd }) {
                             Product Name
                           </th>
                           <th className="py-2 px-4 border w-2/12 text-center">
-                            Export
+                            Import
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         {delSelectedProduct.map((prod) => {
                           return (
-                            <tr key={prod.exProId}>
+                            <tr key={prod.imProId}>
                               <td className="py-2 px-4 border">
-                                {prod.exProId}
+                                {prod.imProId}
                               </td>
                               <td className="py-2 px-4 border">
-                                {prod.exProName}
+                                {prod.imProName}
                               </td>
                               <td className="py-2 px-4 border text-right">
-                                {prod.export}
+                                {prod.import}
                               </td>
                             </tr>
                           );
@@ -262,4 +262,4 @@ function ExportDetail({ isVisible, onClose, exportPd }) {
   );
 }
 
-export default ExportDetail;
+export default ImportDetail;

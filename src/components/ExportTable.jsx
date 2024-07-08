@@ -119,7 +119,8 @@ function ExportTable() {
   }, []);
   //! Fetch Data >
 
-  //TODO <Function Search Document Id
+  //! Table Fetch Data
+  //? <Function Search Document Id / Date Export 
   const filterExports = (exportPds, searchTerm, searchType) => {
     if (!searchTerm) return exportPds; // Return all exports if searchTerm is empty
 
@@ -135,7 +136,6 @@ function ExportTable() {
       return false;
     });
   };
-
   //? Filter Dropdown
   useEffect(() => {
     function handleClickOutside(event) {
@@ -149,7 +149,9 @@ function ExportTable() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isFilterDropdownOpen]);
+  //? <Function Search Document Id / Date Export >
 
+  //? Sorted Data Table
   const sortExportsByDate = (exports) => {
     return exports.sort((a, b) => {
       const dateA = parse(a.dateExport, "yyyy-MM-dd", new Date());
@@ -157,8 +159,9 @@ function ExportTable() {
       return compareAsc(dateA, dateB);
     });
   };
+  //! Table Fetch Data >
 
-  //TODO < Function Get Product by Id send to ProductEdit >
+  //TODO < Function Get by Id send to Edit 
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
   };
@@ -191,6 +194,7 @@ function ExportTable() {
       console.error("Failed to get Export:", error);
     }
   };
+  //TODO < Function Get by Id send to Edit >
 
   //! < Function Add Export >
   const openAddModal = () => {
@@ -244,7 +248,6 @@ function ExportTable() {
         },
         body: JSON.stringify({ documentId }),
       });
-
       const { exportDb } = await resCheckExport.json();
       if (exportDb) {
         setError("Document ID already exists!");
@@ -316,7 +319,7 @@ function ExportTable() {
         setSelectedProduct([]);
         setSelectedDocuments([]);
         setRefresh(!refresh);
-      }, 2000);
+      }, 1500);
     } catch (error) {
       console.log(error);
       setError("Failed to add Export Product");
@@ -324,6 +327,7 @@ function ExportTable() {
       setIsSubmitting(false);
     }
   };
+  //! < Function Add Export >
 
   //TODO < Function Delete Export >
   const getDelById = async (id) => {
@@ -343,6 +347,7 @@ function ExportTable() {
     }
   };
 
+  //TODO Function Get Data to Del Modal
   const getDelValue = async (id) => {
     try {
       const exportPD = await getDelById(id);
@@ -353,7 +358,7 @@ function ExportTable() {
     }
   };
 
-  //TODO < Function Detail Export >
+  //TODO < Function Detail Modal >
   const getDetailById = async (id) => {
     try {
       const res_byid = await fetch(`/api/ExportDB/${id}`, {
@@ -650,13 +655,13 @@ function ExportTable() {
                 <th className="py-3 pr-4 pl-10 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left rounded-tl-md w-2/12">
                   Date
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-2/12">
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
                   Document ID
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
                   Vendor
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-2/12">
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
                   Product
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-2/12">
@@ -701,7 +706,7 @@ function ExportTable() {
                     <button
                       onClick={() => getDetailValue(exportPd._id)}
                       type="button"
-                      className="text-blue-600 hover:text-blue-800"
+                      className="text-emerald-600 hover:text-emerald-800"
                     >
                       <Eye size={23} />
                     </button>
@@ -709,7 +714,7 @@ function ExportTable() {
                     <button
                       onClick={() => getValue(exportPd._id)}
                       type="button"
-                      className="text-amber-600 hover:text-amber-800"
+                      className="text-indigo-600 hover:text-indigo-800"
                     >
                       <Edit size={23} />
                     </button>

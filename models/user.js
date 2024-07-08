@@ -4,8 +4,7 @@ const userSchema = new Schema(
     {
         userid: {
             type: String,
-            required: false,
-            default: "NONE",
+            required: true,
         },
         name: {
             type: String,
@@ -21,8 +20,7 @@ const userSchema = new Schema(
         },
         role: {
             type: String,
-            required: false,
-            default: "USER",
+            required: true,
         },
     },
     {timestamps: true}

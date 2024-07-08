@@ -1,9 +1,18 @@
 "use client";
 
-import { useState, useEffect, Fragment, useRef, useCallback, useMemo } from "react";
-import { Edit, Search, Trash2, PackagePlus, Calendar, Eye } from "lucide-react";
+import { useState, useEffect, Fragment, useRef, useMemo } from "react";
+import {
+  Edit,
+  Search,
+  Trash2,
+  PackagePlus,
+  Calendar,
+  Eye,
+  Check,
+  Filter,
+} from "lucide-react";
 import Avatar from "@mui/material/Avatar";
-import { indigo } from "@mui/material/colors";
+import { indigo, teal } from "@mui/material/colors";
 import { Dialog, Transition } from "@headlessui/react";
 import ImportEdit from "./ImportEdit";
 import ImportDel from "./ImportDel";
@@ -13,6 +22,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "../styles/ModalForm.css";
 import Select from "react-select";
 import { parse, format, compareAsc } from "date-fns";
+import ImportDetail from "./ImportDetail";
 
 const ImportTable = () => {
   //? State
@@ -25,6 +35,7 @@ const ImportTable = () => {
   const [success, setSuccess] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [searchID, setSearchID] = useState("");
   const [selectedImport, setSelectedImport] = useState(null);
@@ -36,6 +47,9 @@ const ImportTable = () => {
   const datePickerRef = useRef(null);
   const [selectedDocuments, setSelectedDocuments] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchType, setSearchType] = useState("documentId");
+  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
 
   //! Fetch Data
   const fetchData = async (url, key, setStateFunction) => {
@@ -45,41 +59,41 @@ const ImportTable = () => {
         throw new Error(`Failed to fetch ${key}`);
       }
       const data = await response.json();
-      
+
       const uniqueData = data.filter(
         (item, index, self) =>
           index === self.findIndex((t) => t[key] === item[key])
       );
-      
+
       const sortedData = uniqueData.sort((a, b) =>
         a[key].localeCompare(b[key])
       );
-      
+
       setStateFunction(sortedData);
       console.log(`Sorted ${key}:`, sortedData);
       return sortedData;
     } catch (error) {
       console.log(`Error loading ${key}:`, error);
-      throw error; 
+      throw error;
     }
   };
-  
+
   const getImport = () => {
     return fetchData("/api/ImportDB", "documentId", setImports);
   };
-  
+
   const getVendors = () => {
     return fetchData("/api/addVendor", "vendorId", setVendors);
   };
-  
+
   const getUsers = () => {
     return fetchData("/api/User", "email", setUsers);
   };
-  
+
   const getProducts = () => {
     return fetchData("/api/Product", "productId", setProducts);
   };
-  
+
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -87,31 +101,51 @@ const ImportTable = () => {
           getProducts(),
           getUsers(),
           getVendors(),
-          getImport()
+          getImport(),
         ]);
-        console.log('All data fetched successfully');
+        console.log("All data fetched successfully");
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
-  
+
     fetchAllData();
   }, []);
   //! Fetch Data >
 
-  //TODO <Function Search Document Id
-  const filterImportsByID = (importPds, searchID) => {
-    if (!searchID) return importPds; // Return all products if searchID is empty
+  //! Table Fetch Data
+  //? Function Search Document Id / Date
+  const filterImports = (importPds, searchTerm, searchType) => {
+    if (!searchTerm) return importPds; // Return all exports if searchTerm is empty
 
-    // Filter unique products based on searchID
-    const filteredImports = importPds.filter(
-      (importPd, index, self) =>
-        importPd.documentId.toLowerCase().includes(searchID.toLowerCase()) &&
-        index === self.findIndex((t) => t.documentId === importPd.documentId)
-    );
-
-    return filteredImports;
+    return importPds.filter((importPd) => {
+      if (searchType === "documentId") {
+        return importPd.documentId
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+      } else if (searchType === "dateImport") {
+        // Assuming dateExport is in 'yyyy-MM-dd' format
+        return importPd.dateExport.includes(searchTerm);
+      }
+      return false;
+    });
   };
+  //? Filter Dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (isFilterDropdownOpen && !event.target.closest(".filter-dropdown")) {
+        setIsFilterDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isFilterDropdownOpen]);
+  //? Function Search Document Id / Date >
+
+  //? Sorted Data Table
   const sortImportsByDate = (imports) => {
     return imports.sort((a, b) => {
       const dateA = parse(a.dateImport, "yyyy-MM-dd", new Date());
@@ -119,11 +153,11 @@ const ImportTable = () => {
       return compareAsc(dateA, dateB);
     });
   };
+  //! Table Fetch Data >
 
-  //TODO < Function Get Product by Id send to ProductEdit >
+  //TODO < Function Get by Id send to Edit
   const handleEditModalClose = () => {
     setIsEditModalOpen(false);
-    getImport();
   };
 
   const getImportById = async (id) => {
@@ -154,6 +188,7 @@ const ImportTable = () => {
       console.error("Failed to get import:", error);
     }
   };
+  //TODO < Function Get by Id send to Edit >
 
   //! < Function Add Import >
   const openAddModal = () => {
@@ -167,27 +202,37 @@ const ImportTable = () => {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
-    for (let i = 0; i < selectedDocuments.length; i++) {
-      const selDoc = {
-        imProId: selectedDocuments[i].productId,
-        imProName: selectedDocuments[i].productName,
-        import: selectedDocuments[i].importQuantity,
-      };
-      selectedProduct.push(selDoc);
-    }
-    console.log("selectedProduct : ", selectedProduct);
-    console.log("selectedDocuments : ", selectedDocuments);
+    const uniqueProductMap = new Map();
+
+    selectedDocuments.forEach((doc) => {
+      const key = doc.productId;
+      if (
+        !uniqueProductMap.has(key) ||
+        parseInt(doc.importQuantity) >
+          parseInt(uniqueProductMap.get(key).importQuantity)
+      ) {
+        uniqueProductMap.set(key, {
+          imProId: doc.productId,
+          imProName: doc.productName,
+          import: doc.importQuantity,
+        });
+      }
+    });
+
+    const updatedSelectedProduct = Array.from(uniqueProductMap.values());
 
     if (!dateImport || !documentId || !importVen) {
       setError("Please complete Import Product details!");
       return;
     }
-
-    if (!selectedProduct || selectedProduct.length === 0) {
+    if (updatedSelectedProduct.length === 0) {
       setError("Please add at least one product!");
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const resCheckImport = await fetch("/api/checkImportDB", {
@@ -197,14 +242,18 @@ const ImportTable = () => {
         },
         body: JSON.stringify({ documentId }),
       });
+      const { importDb } = await resCheckImport.json();
+      if (importDb) {
+        setError("Document ID already exists!");
+        return;
+      }
 
       //? Product Amount Update
-      const updatePromises = selectedDocuments.map(async (doc) => {
-        const product = products.find((p) => p.productId === doc.productId);
+      const updatePromises = updatedSelectedProduct.map(async (doc) => {
+        const product = products.find((p) => p.productId === doc.imProId);
         if (!product) return null;
-        console.log("Product ID : ", product._id);
         const newAmount = (
-          parseInt(product.amount) + parseInt(doc.importQuantity || 0)
+          parseInt(product.amount) + parseInt(doc.import || 0)
         ).toString();
 
         const res = await fetch(`/api/Product/${product._id}`, {
@@ -229,12 +278,7 @@ const ImportTable = () => {
         return res.json();
       });
 
-      const { importDb } = await resCheckImport.json();
-      if (importDb) {
-        setError("Document ID already exists!");
-        return;
-      }
-      const results = await Promise.all(updatePromises);
+      await Promise.all(updatePromises);
 
       //? Add Product to DB
       const res_add = await fetch("/api/ImportDB", {
@@ -247,7 +291,7 @@ const ImportTable = () => {
           documentId,
           importVen,
           importEm,
-          selectedProduct,
+          selectedProduct: updatedSelectedProduct,
         }),
       });
 
@@ -266,15 +310,19 @@ const ImportTable = () => {
         setDocumentId("");
         setImportVen("");
         setImportEm("");
+        setError("");
         setSelectedProduct([]);
         setSelectedDocuments([]);
         setRefresh(!refresh);
-      }, 2000);
+      }, 1500);
     } catch (error) {
       console.log(error);
       setError("Failed to add Import Product");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+  //! < Function Add Import >
 
   //TODO < Function Delete Import >
   const getDelById = async (id) => {
@@ -294,6 +342,7 @@ const ImportTable = () => {
     }
   };
 
+  //TODO Function Get Data to Del Modal
   const getDelValue = async (id) => {
     try {
       const importPD = await getDelById(id);
@@ -304,17 +353,44 @@ const ImportTable = () => {
     }
   };
 
-  //Refresh CountStatIm-Export
+  //TODO < Function Detail Modal >
+  const getDetailById = async (id) => {
+    try {
+      const res_byid = await fetch(`/api/ImportDB/${id}`, {
+        cache: "no-store",
+      });
+
+      if (!res_byid.ok) {
+        throw new Error("Failed to fetch Export");
+      }
+
+      const data = await res_byid.json();
+      return data.importDb; // Ensure you return the correct data structure
+    } catch (error) {
+      console.error("Failed to fetch Export:", error);
+    }
+  };
+
+  const getDetailValue = async (id) => {
+    try {
+      const importPD = await getDetailById(id);
+      setSelectedImport(importPD);
+      setIsDetailModalOpen(true);
+    } catch (error) {
+      console.error("Failed to get Export:", error);
+    }
+  };
+
   const handleRefresh = () => {
     setShouldRefresh(!shouldRefresh);
   };
 
   const SubmitRefresh = () => {
-    getImport();
-    getProducts();
-  } 
-
-  //? Selected Product
+    setTimeout(() => {
+      getImport();
+      getProducts();
+    }, 500);
+  };
 
   //* Date Custom
   const CustomContainer = ({ className, children }) => (
@@ -332,9 +408,9 @@ const ImportTable = () => {
       setDateImport(null);
     }
   };
-
   //* Date Custom >
 
+  //? Selected Product
   const handleProductIdChange = (selectedOption) => {
     if (!selectedOption) return;
 
@@ -357,14 +433,16 @@ const ImportTable = () => {
 
   const uniqueProductOptions = useMemo(() => {
     const uniqueOptions = products.reduce((acc, product) => {
-      if (!acc.some(option => option.value === product.productId)) {
-        acc.push({ value: product.productId, label: `${product.productId} - ${product.name}` });
+      if (!acc.some((option) => option.value === product.productId)) {
+        acc.push({
+          value: product.productId,
+          label: `${product.productId} - ${product.name}`,
+        });
       }
       return acc;
     }, []);
     return uniqueOptions;
   }, [products]);
-
   const handleRemoveProduct = (productId) => {
     setSelectedDocuments(
       selectedDocuments.filter((doc) => doc.productId !== productId)
@@ -490,15 +568,64 @@ const ImportTable = () => {
             รับสินค้าเข้า
           </h2>
           <div className="flex justify-between items-center mb-4">
-            <div className="flex px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden max-w-2xl w-full font-[sans-serif]">
-              <input
-                type="text"
-                placeholder="Search Document ID..."
-                className="w-full cursor-pointer outline-none bg-transparent text-gray-600 text-sm"
-                value={searchID}
-                onChange={(event) => setSearchID(event.target.value)}
-              />
-              <Search size={16} className="text-gray-600 " />
+            <div className="flex items-center max-w-2xl w-full">
+              <div className="flex items-center px-4 py-3 rounded-md border-2 border-gray-200 hover:border-indigo-800 overflow-hidden w-full font-[sans-serif] relative">
+                <Search size={16} className="text-gray-600 mr-2" />
+                <input
+                  type="text"
+                  placeholder={`Search ${
+                    searchType === "documentId" ? "Document ID" : "Date"
+                  }...`}
+                  className="w-full outline-none bg-transparent text-gray-600 text-sm"
+                  value={searchID}
+                  onChange={(event) => setSearchID(event.target.value)}
+                />
+              </div>
+              <div className="relative ml-2">
+                <button
+                  onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
+                  className="p-2 hover:bg-gray-100 rounded-full border-2 border-gray-200"
+                >
+                  <Filter size={16} className="text-gray-600" />
+                </button>
+                {isFilterDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 filter-dropdown">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
+                      <button
+                        onClick={() => {
+                          setSearchType("documentId");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Document ID
+                        {searchType === "documentId" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSearchType("dateExport");
+                          setIsFilterDropdownOpen(false);
+                        }}
+                        className="flex items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left"
+                        role="menuitem"
+                      >
+                        Date Import
+                        {searchType === "dateExport" && (
+                          <Check size={16} className="text-indigo-600" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             <button
               onClick={openAddModal}
@@ -522,7 +649,10 @@ const ImportTable = () => {
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
                   Vendor
                 </th>
-                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-3/12">
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-1/12">
+                  Product
+                </th>
+                <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-left w-2/12">
                   Employee
                 </th>
                 <th className="py-3 px-4 bg-[#FAFAFA] text-[#5F6868] font-bold uppercase text-sm text-center rounded-tr-md">
@@ -531,57 +661,62 @@ const ImportTable = () => {
               </tr>
             </thead>
             <tbody>
-              {sortImportsByDate(filterImportsByID(imports, searchID)).map(
-                (importPd) => (
-                  <tr key={importPd.documentId} className="border-t">
-                    <td className="py-4 pr-4 pl-10 w-auto">
-                      {importPd.dateImport
-                        ? format(
-                            parse(
-                              importPd.dateImport,
-                              "yyyy-MM-dd",
-                              new Date()
-                            ),
-                            "dd/MM/yyyy"
-                          )
-                        : ""}
-                    </td>
-                    <td className="py-4 px-4 flex items-center w-auto">
-                      <Avatar
-                        sx={{ bgcolor: indigo[800], marginRight: "20px" }}
-                        variant="rounded-md"
-                      >
-                        {importPd.documentId.charAt(0).toUpperCase()}
-                      </Avatar>
-                      {importPd.documentId}
-                    </td>
-                    <td className="py-4 px-4">{importPd.importVen}</td>
-                    <td className="py-4 px-4">{importPd.importEm}</td>
-                    <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
-                      <button
-                        onClick={() => getValue(importPd._id)}
-                        type="button"
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Eye size={23} />
-                      </button>
-                      <button
-                        onClick={() => getValue(importPd._id)}
-                        type="button"
-                        className="text-indigo-600 hover:text-indigo-800"
-                      >
-                        <Edit size={23} />
-                      </button>
-                      <button
-                        onClick={() => getDelValue(importPd._id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 size={23} />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              )}
+              {sortImportsByDate(
+                filterImports(imports, searchID, searchType)
+              ).map((importPd) => (
+                <tr key={importPd.documentId} className="border-t">
+                  <td className="py-4 pr-4 pl-10 w-auto">
+                    {importPd.dateImport
+                      ? format(
+                          parse(importPd.dateImport, "yyyy-MM-dd", new Date()),
+                          "dd/MM/yyyy"
+                        )
+                      : ""}
+                  </td>
+                  <td className="py-4 px-4 flex items-center w-auto">
+                    <Avatar
+                      sx={{ bgcolor: teal[400], marginRight: "20px" }}
+                      variant="rounded-md"
+                    >
+                      {importPd.documentId.charAt(0).toUpperCase()}
+                    </Avatar>
+                    {importPd.documentId}
+                  </td>
+                  <td className="py-4 px-4">{importPd.importVen}</td>
+                  <td className="py-4 px-4">
+                    {importPd.selectedProduct
+                      ? importPd.selectedProduct.length
+                      : 0}{" "}
+                    products
+                  </td>
+                  <td className="py-4 px-4">{importPd.importEm}</td>
+                  <td className="py-4 px-4 text-center flex justify-center items-center space-x-2">
+                    <button
+                      onClick={() => getDetailValue(importPd._id)}
+                      type="button"
+                      className="text-emerald-600 hover:text-emerald-800"
+                    >
+                      <Eye size={23} />
+                    </button>
+
+                    <button
+                      onClick={() => getValue(importPd._id)}
+                      type="button"
+                      className="text-indigo-600 hover:text-indigo-800"
+                    >
+                      <Edit size={23} />
+                    </button>
+
+                    <button
+                      onClick={() => getDelValue(importPd._id)}
+                      type="button"
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 size={23} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -767,13 +902,14 @@ const ImportTable = () => {
                                 <td className="py-2 px-4 border">
                                   <input
                                     type="number"
-                                    value={doc.importQuantity || ""}
+                                    value={doc.importQuantity || "0"}
                                     onChange={(e) =>
                                       handleImportQuantityChange(
                                         doc.productId,
                                         e.target.value
                                       )
                                     }
+                                    min="0"
                                     className="w-full py-1 px-2 border rounded text-right"
                                   />
                                 </td>
@@ -837,8 +973,9 @@ const ImportTable = () => {
                       <button
                         type="submit"
                         className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 w-full"
+                        disabled={isSubmitting}
                       >
-                        Add Import Product
+                        {isSubmitting ? "Adding..." : "Add Import Product"}
                       </button>
                     </div>
                   </Dialog.Panel>
@@ -864,6 +1001,13 @@ const ImportTable = () => {
         importPd={selectedImport}
         refreshImports={SubmitRefresh}
         refreshCount={handleRefresh}
+      />
+
+      {/* //TODO : Detail Modal */}
+      <ImportDetail 
+        isVisible={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        importPd={selectedImport}
       />
     </div>
   );
