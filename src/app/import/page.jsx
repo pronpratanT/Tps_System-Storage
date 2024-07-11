@@ -6,11 +6,11 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import styled from "styled-components";
 import ImportTable from "@/components/ImportTable";
+import dynamic from 'next/dynamic';
 
-const PageContainer = styled.div`
-  display: flex;
-  background-color: #f6f6f6;
-`;
+const PageContainer = dynamic(() => import('../../components/StyledComponents').then(mod => mod.PageContainer), {
+  ssr: false
+});
 
 function ImportPage() {
   const { data: session } = useSession();
@@ -21,7 +21,7 @@ function ImportPage() {
       redirect("/login");
       return null; // Stop rendering content after redirect
     }
-  }, []);
+  }, [session]);
 
   return (
     <PageContainer>

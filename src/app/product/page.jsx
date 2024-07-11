@@ -21,7 +21,7 @@ function ProductID() {
       redirect("/login");
       return null; // Stop rendering content after redirect
     }
-  }, []);
+  }, [session]);
 
   return (
     <PageContainer>

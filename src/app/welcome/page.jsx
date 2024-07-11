@@ -6,6 +6,8 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import styled from 'styled-components';
 import { useEffect } from "react";
+import CountStat from "@/components/CountStat";
+import CountStatIXPort from "@/components/CountStatIXPort";
 
 const PageContainer = styled.div`
   display: flex;
@@ -21,13 +23,17 @@ function WelcomePage() {
       redirect("/login");
       return null; // Stop rendering content after redirect
     }
-  }, []);
+  }, [session]);
 
   return (
     <PageContainer>
       <Sidebar session={session} />
       <div className='flex-1'>
         <div className="bg-white h-16 px-4 shadow-sm"></div>
+        <div className="flex-1 p-4">
+        <CountStat />
+        <CountStatIXPort />
+        </div>
       </div>
     </PageContainer>
   );

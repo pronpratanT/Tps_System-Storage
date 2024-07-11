@@ -1,4 +1,4 @@
-import React, { Fragment, useState, useEffect } from "react";
+import React, { Fragment, useState, useEffect, useMemo } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import Select, { components } from "react-select";
 import { createPortal } from "react-dom";
@@ -21,7 +21,7 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
       setNewUserId(user.userid);
       setNewName(user.name);
       setNewEmail(user.email);
-      setNewPassword(user.password);
+      setNewPassword(""); // ไม่ตั้งค่ารหัสผ่านเดิม
       setNewRole(user.role);
     }
   }, [user]);
@@ -56,7 +56,7 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
     e.preventDefault();
     if (isSubmitting) return;
 
-    if (!newUserId || !newName || !newEmail || !newRole || !newPassword) {
+    if (!newUserId || !newName || !newEmail || !newRole) {
       setError("Please complete User details!");
       return;
     }
@@ -78,18 +78,24 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
     setIsSubmitting(true);
 
     try {
+      const updatedUserData = {
+        newUserId,
+        newName,
+        newEmail,
+        newRole,
+      };
+
+      // เพิ่มรหัสผ่านใหม่เฉพาะเมื่อมีการกรอกข้อมูล
+      if (newPassword) {
+        updatedUserData.newPassword = newPassword;
+      }
+
       const res = await fetch(`/api/User/${user?._id || ""}`, {
         method: "PUT",
         headers: {
           "Content-type": "application/json",
         },
-        body: JSON.stringify({
-          newUserId,
-          newName,
-          newEmail,
-          newPassword,
-          newRole,
-        }),
+        body: JSON.stringify(updatedUserData),
       });
 
       if (!res.ok) {
@@ -113,11 +119,11 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
   };
 
   //? DropDown setting
-  const roleOptions = [
+  const roleOptions = useMemo(() => [
     { value: "USER", label: "USER" },
     { value: "MEMBER", label: "MEMBER" },
     { value: "ADMIN", label: "ADMIN" },
-  ];
+  ], []); // ใส่ empty array เป็น dependencies เพราะค่าไม่เปลี่ยนแปลง
 
   const CustomOption = ({ children, ...props }) => {
     return (
@@ -156,7 +162,7 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
         setSelectedRole(initialOption);
       }
     }
-  }, [newRole]); // dependency เป็น newRole เพื่อให้ทำงานเมื่อ newRole เปลี่ยน
+  }, [newRole, roleOptions]);
 
   return (
     <div>
@@ -225,9 +231,9 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
                           value={newPassword}
                           className="border border-gray-200 py-3 px-6 bg-zinc-100/40 rounded-md w-full pr-10"
                           type={showPassword ? "text" : "password"}
-                          placeholder="Password"
+                          placeholder="Enter new password (leave blank to keep current)"
                         />
-                        <button
+                        {/* <button
                           type="button"
                           className="absolute inset-y-0 right-0 pr-6 flex items-center"
                           onClick={() => setShowPassword(!showPassword)}
@@ -237,7 +243,7 @@ function EmployeeEdit({ isVisible, onClose, user, refreshUsers }) {
                           ) : (
                             <Eye className="w-5 h-5 text-gray-500" />
                           )}
-                        </button>
+                        </button> */}
                       </div>
                       <Select
                         options={roleOptions}

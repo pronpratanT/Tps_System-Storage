@@ -6,11 +6,11 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import styled from 'styled-components';
 import UserTable from "@/components/EmployeeTable";
+import dynamic from 'next/dynamic';
 
-const PageContainer = styled.div`
-  display: flex;
-  background-color: #F6F6F6; /* Apply background color here */
-`;
+const PageContainer = dynamic(() => import('../../components/StyledComponents').then(mod => mod.PageContainer), {
+  ssr: false
+});
 
 function EmployeeID() {
   const { data: session } = useSession();
@@ -21,7 +21,7 @@ function EmployeeID() {
       redirect("/login");
       return null; // Stop rendering content after redirect
     }
-  }, []);
+  }, [session]);
 
   return (
     <PageContainer>

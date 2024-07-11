@@ -119,7 +119,7 @@ function EmployeeDel({ isVisible, onClose, user, refreshUsers, refreshCount }) {
                         placeholder="Email"
                         readOnly
                       />
-                      <div className="relative">
+                      {/* <div className="relative">
                         <input
                           onChange={(e) => setDelPassword(e.target.value)}
                           value={delPassword}
@@ -139,7 +139,7 @@ function EmployeeDel({ isVisible, onClose, user, refreshUsers, refreshCount }) {
                             <Eye className="w-5 h-5 text-gray-500" />
                           )}
                         </button>
-                      </div>
+                      </div> */}
                       <Select
                         value={roleOption}
                         placeholder="Select Role"
@@ -232,7 +232,7 @@ function EmployeeDel({ isVisible, onClose, user, refreshUsers, refreshCount }) {
                     <div className="mt-4">
                       <button
                         type="submit"
-                        className="bg-indigo-600 hover:bg-indigo-800 text-white font-bold cursor-pointer px-6 py-3 rounded-md w-full"
+                        className="bg-red-600 hover:bg-red-800 text-white font-bold cursor-pointer px-6 py-3 rounded-md w-full"
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? "Deleting..." : "Delete Account"}

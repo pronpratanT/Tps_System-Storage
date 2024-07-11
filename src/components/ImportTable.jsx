@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Fragment, useRef, useMemo } from "react";
+import { useState, useEffect, Fragment, useRef, useMemo, useCallback } from "react";
 import {
   Edit,
   Search,
@@ -23,6 +23,7 @@ import "../styles/ModalForm.css";
 import Select from "react-select";
 import { parse, format, compareAsc } from "date-fns";
 import ImportDetail from "./ImportDetail";
+import ChartImport from "./ChartImport";
 
 const ImportTable = () => {
   //? State
@@ -78,39 +79,34 @@ const ImportTable = () => {
     }
   };
 
-  const getImport = () => {
+  const getImport = useCallback(() => {
     return fetchData("/api/ImportDB", "documentId", setImports);
-  };
+  }, []);
 
-  const getVendors = () => {
-    return fetchData("/api/addVendor", "vendorId", setVendors);
-  };
-
-  const getUsers = () => {
-    return fetchData("/api/User", "email", setUsers);
-  };
-
-  const getProducts = () => {
+  const getProducts = useCallback(() => {
     return fetchData("/api/Product", "productId", setProducts);
-  };
+  }, []);
+  
+  const getUsers = useCallback(() => {
+    return fetchData("/api/User", "email", setUsers);
+  }, []);
+  
+  const getVendors = useCallback(() => {
+    return fetchData("/api/addVendor", "vendorId", setVendors);
+  }, []);
 
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        await Promise.all([
-          getProducts(),
-          getUsers(),
-          getVendors(),
-          getImport(),
-        ]);
+        await Promise.all([getProducts(), getUsers(), getVendors(), getImport()]);
         console.log("All data fetched successfully");
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchAllData();
-  }, []);
+  }, [getProducts, getUsers, getVendors, getImport]);
   //! Fetch Data >
 
   //! Table Fetch Data
@@ -561,6 +557,7 @@ const ImportTable = () => {
     <div className="flex-1 p-4">
       <div>
         <CountStatIXPort refresh={refresh} shouldRefresh={shouldRefresh} />
+        <ChartImport refresh={refresh} shouldRefresh={shouldRefresh} />
       </div>
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
@@ -872,7 +869,7 @@ const ImportTable = () => {
                               <th className="py-2 px-4 border w-5/12">
                                 Product Name
                               </th>
-                              <th className="py-2 px-4 border w-1/12 text-center">
+                              <th className="py-2 px-4 border w-2/12 text-center">
                                 Amount
                               </th>
                               <th className="py-2 px-4 border w-2/12 text-center">
@@ -992,6 +989,7 @@ const ImportTable = () => {
         onClose={handleEditModalClose}
         importPd={selectedImport}
         refreshImports={SubmitRefresh}
+        refreshCount={handleRefresh}
       />
 
       {/* // TODO : Delete Product Modal */}

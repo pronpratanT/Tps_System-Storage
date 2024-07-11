@@ -22,7 +22,7 @@ export default function UnitID() {
       redirect("/login");
       return null; // Stop rendering content after redirect
     }
-  }, []);
+  }, [session]);
 
   // if (!session) {
   //   redirect("/login");

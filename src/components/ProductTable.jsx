@@ -370,7 +370,7 @@ export default function ProductTable() {
               className="flex items-center bg-indigo-600 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg ml-4"
             >
               <Package size={20} className="mr-2" />
-              Add Vendor
+              Add Product
             </button>
           </div>
 

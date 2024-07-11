@@ -128,7 +128,7 @@ function CountStat({ refresh, shouldRefresh }) {
 
       <div className="bg-white shadow-md rounded-lg p-6 relative overflow-hidden flex items-center">
         <div className="flex flex-col items-start relative z-10">
-          <span className="text-4xl font-bold text-emerald-600">
+          <span className="text-4xl font-bold text-blue-600">
             {vendors.length}
           </span>
           <div className="text-lg font-semibold text-gray-600 mt-1">
@@ -136,7 +136,7 @@ function CountStat({ refresh, shouldRefresh }) {
           </div>
         </div>
         <div className="absolute right-4 inset-y-0 flex items-center justify-center opacity-10">
-          <HeartHandshake size={100} className="text-emerald-500" />
+          <HeartHandshake size={100} className="text-blue-500" />
         </div>
       </div>
     </div>

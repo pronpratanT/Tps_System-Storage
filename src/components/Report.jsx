@@ -43,8 +43,27 @@ function Report() {
   const exportPdfHandler = () => {
     const doc = new jsPDF();
 
+    doc.addFont("/fonts/Sarabun-Regular.ttf", "Sarabun", "normal");
+    doc.addFont("/fonts/Sarabun-SemiBold.ttf", "Sarabun", "semibold");
+    doc.setFont("Sarabun");
+
+    const titleFontSize = 12; // กำหนดขนาดตัวอักษรให้เท่ากับหัวตาราง
+
+    // เพิ่มหัวข้อรายงานตรงกลาง
+    doc.setFont("Sarabun", "semibold");
+    doc.setFontSize(titleFontSize);
+    const title = "รายงานรายละเอียดสินค้าคงเหลือ";
+    const pageWidth = doc.internal.pageSize.width;
+    const titleWidth = doc.getStringUnitWidth(title) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+    const titleX = (pageWidth - titleWidth) / 2;
+    doc.text(title, titleX, 15);
+
+    // เพิ่มระยะห่างระหว่างหัวข้อและตาราง
+    const startY = 25;
+
     autoTable(doc, {
-      head: [["ลำดับ", "รหัสสินค้า", "ชื่อสินค้า", "หน่วย", "จำนวนหน่วย"]],
+      startY: startY,
+      head: [["ลำดับ", "รหัสสินค้า", "ชื่อสินค้า", "ยี่ห้อ", "หน่วย", "จำนวนหน่วย"]],
       body: products.map((item, index) => [
         index + 1,
         item.productId,
@@ -53,9 +72,31 @@ function Report() {
         item.productUnit,
         Number(item.amount).toFixed(2),
       ]),
+      styles: { 
+        font: "Sarabun", 
+        fontSize: 10,
+        cellPadding: 2,
+        lineColor: 40,
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: false,
+        textColor: 40,
+        font: "Sarabun",
+        fontStyle: 'semibold',
+        halign: 'center',
+        fontSize: titleFontSize,
+      },
+      columnStyles: {
+        0: { halign: 'center' },
+        4: { halign: 'center' },
+        5: { halign: 'right' }
+      },
+      theme: 'grid',
     });
+
     doc.save("products.pdf");
-  };
+};
 
   return (
     <div className="flex-1 p-4">
@@ -104,12 +145,12 @@ function Report() {
                   <td className="border py-4 px-4 text-center w-auto">
                     {index + 1}
                   </td>
-                  <td className="border py-4 px-4">
-                    {product.productId}
-                  </td>
+                  <td className="border py-4 px-4">{product.productId}</td>
                   <td className="border py-4 px-4">{product.productName}</td>
                   <td className="border py-4 px-4">{product.brand}</td>
-                  <td className="border py-4 px-4 text-center">{product.productUnit}</td>
+                  <td className="border py-4 px-4 text-center">
+                    {product.productUnit}
+                  </td>
                   <td className="border py-4 px-4 text-right">
                     {Number(product.amount).toFixed(2)}
                   </td>

@@ -6,6 +6,7 @@ import {
   Fragment,
   useRef,
   useMemo,
+  useCallback,
 } from "react";
 import {
   Edit,
@@ -29,6 +30,7 @@ import "../styles/ModalForm.css";
 import Select from "react-select";
 import { parse, format, compareAsc } from "date-fns";
 import ExportDetail from "./ExportDetail";
+import ChartExport from "./ChartExport";
 
 function ExportTable() {
   //? State
@@ -84,39 +86,34 @@ function ExportTable() {
     }
   };
 
-  const getExport = () => {
+  const getExport = useCallback(() => {
     return fetchData("/api/ExportDB", "documentId", setExports);
-  };
+  }, []);
 
-  const getVendors = () => {
-    return fetchData("/api/addVendor", "vendorId", setVendors);
-  };
-
-  const getUsers = () => {
-    return fetchData("/api/User", "email", setUsers);
-  };
-
-  const getProducts = () => {
+  const getProducts = useCallback(() => {
     return fetchData("/api/Product", "productId", setProducts);
-  };
+  }, []);
+  
+  const getUsers = useCallback(() => {
+    return fetchData("/api/User", "email", setUsers);
+  }, []);
+  
+  const getVendors = useCallback(() => {
+    return fetchData("/api/addVendor", "vendorId", setVendors);
+  }, []);
 
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        await Promise.all([
-          getProducts(),
-          getUsers(),
-          getVendors(),
-          getExport(),
-        ]);
+        await Promise.all([getProducts(), getUsers(), getVendors(), getExport()]);
         console.log("All data fetched successfully");
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchAllData();
-  }, []);
+  }, [getProducts, getUsers, getVendors, getExport]);
   //! Fetch Data >
 
   //! Table Fetch Data
@@ -573,6 +570,7 @@ function ExportTable() {
     <div className="flex-1 p-4">
       <div>
         <CountStatIXPort refresh={refresh} shouldRefresh={shouldRefresh} />
+        <ChartExport refresh={refresh} shouldRefresh={shouldRefresh} />
       </div>
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         <div className="p-6">
@@ -881,14 +879,14 @@ function ExportTable() {
                               <th className="py-2 px-4 border w-3/12">
                                 Product ID
                               </th>
-                              <th className="py-2 px-4 border w-4/12">
+                              <th className="py-2 px-4 border w-5/12">
                                 Product Name
                               </th>
                               <th className="py-2 px-4 border w-2/12 text-center">
                                 Amount
                               </th>
                               <th className="py-2 px-4 border w-2/12 text-center">
-                                Import
+                                Export
                               </th>
                               <th className="py-2 px-4 border w-1/12 text-center">
                                 Actions

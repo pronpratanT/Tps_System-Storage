@@ -1,4 +1,4 @@
-import React, { Fragment, useState, useEffect, useRef, useMemo } from "react";
+import React, { Fragment, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import DatePicker, { CalendarContainer } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -7,7 +7,7 @@ import Select from "react-select";
 import { Calendar, RefreshCw, Trash2 } from "lucide-react";
 import { parseISO, format, startOfDay } from "date-fns";
 
-function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
+function ImportEdit({ isVisible, onClose, importPd, refreshImports, refreshCount }) {
   const [newDateImport, setNewDateImport] = useState("");
   const [newDocumentId, setNewDocumentId] = useState("");
   const [newImportVen, setNewImportVen] = useState("");
@@ -61,15 +61,17 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
     }
   };
 
-  const getVendors = () => {
-    return fetchData("/api/addVendor", "vendorId", setVendors);
-  };
-  const getUsers = () => {
-    return fetchData("/api/User", "email", setUsers);
-  };
-  const getProducts = () => {
+  const getProducts = useCallback(() => {
     return fetchData("/api/Product", "productId", setProducts);
-  };
+  }, []);
+  
+  const getUsers = useCallback(() => {
+    return fetchData("/api/User", "email", setUsers);
+  }, []);
+  
+  const getVendors = useCallback(() => {
+    return fetchData("/api/addVendor", "vendorId", setVendors);
+  }, []);
 
   useEffect(() => {
     const fetchAllData = async () => {
@@ -80,9 +82,9 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
         console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchAllData();
-  }, []);
+  }, [getProducts, getUsers, getVendors]);
   //! Fetch Data >
 
   const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
@@ -211,6 +213,7 @@ function ImportEdit({ isVisible, onClose, importPd, refreshImports }) {
         setSuccess("");
         refreshImports();
         getProducts();
+        refreshCount();
       }, 2000);
     } catch (error) {
       console.log(error);

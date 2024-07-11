@@ -1,4 +1,4 @@
-import React, { Fragment, useState, useEffect, useRef, useMemo } from "react";
+import React, { Fragment, useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import DatePicker, { CalendarContainer } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -61,16 +61,18 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
     }
   };
 
-  const getVendors = () => {
-    return fetchData("/api/addVendor", "vendorId", setVendors);
-  };
-  const getUsers = () => {
-    return fetchData("/api/User", "email", setUsers);
-  };
-  const getProducts = () => {
+  const getProducts = useCallback(() => {
     return fetchData("/api/Product", "productId", setProducts);
-  };
-
+  }, []);
+  
+  const getUsers = useCallback(() => {
+    return fetchData("/api/User", "email", setUsers);
+  }, []);
+  
+  const getVendors = useCallback(() => {
+    return fetchData("/api/addVendor", "vendorId", setVendors);
+  }, []);
+  
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -80,9 +82,9 @@ function ExportEdit({ isVisible, onClose, exportPd, refreshExports }) {
         console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchAllData();
-  }, []);
+  }, [getProducts, getUsers, getVendors]);
   //! Fetch Data >
 
   const checkDuplicateDocumentId = async (newDocumentId, currentDocumentId) => {
