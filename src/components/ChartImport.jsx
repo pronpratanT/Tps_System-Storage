@@ -113,7 +113,6 @@ function ChartImport({ refresh, shouldRefresh }) {
           [lastYear]: [...monthlyData[lastYear]],
         };
 
-        // จำกัดค่าสูงสุดของข้อมูล
         monthlyData[currentYear] = monthlyData[currentYear].map(limitValue);
         monthlyData[lastYear] = monthlyData[lastYear].map(limitValue);
 
