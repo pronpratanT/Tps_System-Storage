@@ -158,35 +158,6 @@ export default function Sidebar({ session, children }) {
           className="h-full flex flex-col bg-white border-r shadow-sm transition-width duration-300 ease-in-out"
           style={{ width: expanded ? "250px" : "60px" }}
         >
-          {/* <div className="p-4 pb-2 flex justify-between items-center">
-            <div
-              className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out ${
-                expanded ? "w-56" : "w-0"
-              }`}
-            >
-              <img
-                src="https://image.makewebeasy.net/makeweb/m_480x240/JLsqGSMsm/DefaultData/TPS.png?v=202405081832"
-                className={`mr-2 transition-all duration-300 ease-in-out ${
-                  expanded ? "w-12 h-12" : "w-0 h-0"
-                }`}
-                alt=""
-              />
-              <div className="flex flex-col">
-                <h1 className="text-xl font-bold text-indigo-800 whitespace-nowrap">
-                  STOCK
-                </h1>
-                <h2 className="text-sm font-semibold text-indigo-600 whitespace-nowrap">
-                  Check System
-                </h2>
-              </div>
-            </div>
-            <button
-              onClick={() => setExpanded((curr) => !curr)}
-              className="p-1.5 rounded-lg bg-gray-50 hover:bg-gray-100"
-            >
-              {expanded ? <ChevronFirst /> : <ChevronLast />}
-            </button>
-          </div> */}
           <div className="p-4 pb-2 flex justify-between items-center">
             <div
               className={`flex items-center overflow-hidden transition-all duration-300 ease-in-out ${
