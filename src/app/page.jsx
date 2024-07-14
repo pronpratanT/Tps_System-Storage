@@ -27,7 +27,6 @@ export default function Home() {
       <Sidebar session={session} />
       <div className="flex-1">
         <div className="bg-white h-16 px-4 shadow-sm"></div>
-        {/* <UserProfile session={session} /> */}
       </div>
     </PageContainer>
   );
