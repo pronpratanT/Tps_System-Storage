@@ -18,7 +18,7 @@ import Avatar from "@mui/material/Avatar";
 import { indigo } from "@mui/material/colors";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { Image } from "@nextui-org/react";
+import Image from "next/image";
 
 // Create a context for the sidebar
 const SidebarContext = createContext();
@@ -165,14 +165,14 @@ export default function Sidebar({ session, children }) {
               }`}
             >
               <Link href="/welcome">
-                <img
+                <Image
                   src="/images/TPS.png"
-                  className={`mr-2 transition-all duration-300 ease-in-out cursor-pointer ${
-                    expanded ? "w-12 h-12" : "w-0 h-0"
-                  }`}
                   width={48}
                   height={48}
                   alt="Go to Welcome Page"
+                  className={`mr-2 transition-all duration-300 ease-in-out cursor-pointer ${
+                    expanded ? "w-12 h-12" : "w-0 h-0"
+                  }`}
                 />
               </Link>
               <Link href="/welcome">

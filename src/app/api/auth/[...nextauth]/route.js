@@ -4,42 +4,55 @@ import { connectMongoDB } from "../../../../../lib/mongodb";
 import User from "../../../../../models/user";
 import bcrypt from 'bcryptjs';
 
-const authOptions = {
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'credentials',
       credentials: {},
-      async authorize(credentials, req) {
+      async authorize(credentials) {
         const { email, password } = credentials;
+
         try {
           await connectMongoDB();
-          console.log("Connected to MongoDB");
-          
           const user = await User.findOne({ email });
-          console.log("User found:", user ? "Yes" : "No");
 
           if (!user) {
-            console.log("User not found");
             return null;
           }
 
           const passwordMatch = await bcrypt.compare(password, user.password);
-          console.log("Password match:", passwordMatch);
 
           if (!passwordMatch) {
-            console.log("Password does not match");
             return null;
           }
 
-          console.log("Login successful");
-          return user;
+          return {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role  // เพิ่ม role ที่นี่
+          };
         } catch (error) {
           console.error("Error in authorize function:", error);
-          throw new Error("Authentication failed");
+          return null;
         }
       }
     })
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;  // เพิ่ม role ใน token
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session?.user) {
+        session.user.role = token.role;  // เพิ่ม role ใน session
+      }
+      return session;
+    }
+  },
   session: {
     strategy: "jwt",
   },
@@ -47,8 +60,7 @@ const authOptions = {
   pages: {
     signIn: "/login"
   },
-  debug: process.env.NODE_ENV === 'development',
-}
+};
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

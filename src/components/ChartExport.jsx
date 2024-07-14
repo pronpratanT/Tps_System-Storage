@@ -8,82 +8,82 @@ function ChartExport({ refresh, shouldRefresh }) {
 
   const limitValue = (value) => Math.min(value, MAX_VALUE);
 
-  const chartConfig = {
-    type: "line",
-    options: {
-      maintainAspectRatio: false,
-      responsive: true,
-      title: {
-        display: false,
-      },
-      tooltips: {
-        mode: "index",
-        intersect: false,
-        callbacks: {
-          label: function (tooltipItem, data) {
-            let label = data.datasets[tooltipItem.datasetIndex].label || "";
-            let value = data.originalData[tooltipItem.datasetIndex][tooltipItem.index];
-            if (value >= MAX_VALUE) {
-              return label + ": " + value + " (Max reached)";
-            }
-            return label + ": " + value;
+  React.useEffect(() => {
+    const chartConfig = {
+      type: "line",
+      options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        title: {
+          display: false,
+        },
+        tooltips: {
+          mode: "index",
+          intersect: false,
+          callbacks: {
+            label: function (tooltipItem, data) {
+              let label = data.datasets[tooltipItem.datasetIndex].label || "";
+              let value = data.originalData[tooltipItem.datasetIndex][tooltipItem.index];
+              if (value >= MAX_VALUE) {
+                return label + ": " + value + " (Max reached)";
+              }
+              return label + ": " + value;
+            },
           },
         },
-      },
-      hover: {
-        mode: "nearest",
-        intersect: true,
-      },
-      legend: {
-        display: true,
-        labels: {
-          fontColor: "rgba(0,0,0,.4)",
+        hover: {
+          mode: "nearest",
+          intersect: true,
         },
-      },
-      scales: {
-        xAxes: [
-          {
-            display: true,
-            scaleLabel: {
-              display: true,
-              labelString: "Month",
-            },
-            gridLines: {
-              display: false,
-            },
+        legend: {
+          display: true,
+          labels: {
+            fontColor: "rgba(0,0,0,.4)",
           },
-        ],
-        yAxes: [
-          {
-            display: true,
-            scaleLabel: {
+        },
+        scales: {
+          xAxes: [
+            {
               display: true,
-              labelString: "Quantity",
-            },
-            ticks: {
-              beginAtZero: true,
-              stepSize: 100,
-              max: MAX_VALUE,
-              callback: function (value) {
-                return value.toFixed(0);
+              scaleLabel: {
+                display: true,
+                labelString: "Month",
+              },
+              gridLines: {
+                display: false,
               },
             },
-            gridLines: {
-              drawBorder: false,
+          ],
+          yAxes: [
+            {
+              display: true,
+              scaleLabel: {
+                display: true,
+                labelString: "Quantity",
+              },
+              ticks: {
+                beginAtZero: true,
+                stepSize: 100,
+                max: MAX_VALUE,
+                callback: function (value) {
+                  return value.toFixed(0);
+                },
+              },
+              gridLines: {
+                drawBorder: false,
+              },
             },
-          },
-        ],
+          ],
+        },
       },
-    },
-  };
+    };
 
-  async function fetchExportData() {
-    const response = await fetch("/api/ExportDB");
-    const data = await response.json();
-    return data;
-  }
+    async function fetchExportData() {
+      const response = await fetch("/api/ExportDB");
+      const data = await response.json();
+      return data;
+    }
 
-  React.useEffect(() => {
     async function setupChart() {
       try {
         const exportData = await fetchExportData();
@@ -112,7 +112,6 @@ function ChartExport({ refresh, shouldRefresh }) {
           [lastYear]: [...monthlyData[lastYear]],
         };
 
-        // จำกัดค่าสูงสุดของข้อมูล
         monthlyData[currentYear] = monthlyData[currentYear].map(limitValue);
         monthlyData[lastYear] = monthlyData[lastYear].map(limitValue);
 
@@ -182,7 +181,6 @@ function ChartExport({ refresh, shouldRefresh }) {
           </div>
         </div>
         <div className="p-4">
-          {/* Chart */}
           <div className="h-96">
             <canvas id="line-chart"></canvas>
           </div>

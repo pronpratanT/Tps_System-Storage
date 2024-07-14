@@ -1,12 +1,11 @@
 "use client";
 
-import React from "react";
-import Sidebar from "../../components/Sidebar";
+import React, { useEffect } from "react";
+import Sidebar from "@/components/Sidebar";
 import styled from "styled-components";
 import VendorTable from "@/components/VendorTable";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 const PageContainer = styled.div`
   display: flex;
@@ -14,22 +13,32 @@ const PageContainer = styled.div`
 `;
 
 export default function VendorPage() {
-  const { data: session } = useSession();
-  console.log(session);
+  const { data: session, status } = useSession();
+  const router = useRouter();
 
   useEffect(() => {
+    if (status === "loading") return;
+
     if (!session) {
-      redirect("/login");
-      return null; // Stop rendering content after redirect
+      router.push("/login");
+    } else {
+      const userRole = session.user?.role;
+      if (userRole !== "MEMBER" && userRole !== "ADMIN") {
+        alert("ขออภัย คุณไม่มีสิทธิ์เข้าถึงหน้านี้");
+        router.push("/welcome");
+      }
     }
-  }, [session]);
+  }, [session, status, router]);
+
+  if (status === "loading" || !session || (session.user?.role !== "MEMBER" && session.user?.role !== "ADMIN")) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <PageContainer>
       <Sidebar session={session} />
       <div className="flex-1">
         <div className="bg-white h-16 px-4 shadow-sm"></div>
-        {/* <UserProfile session={session} /> */}
         <div className="p-4">
           <VendorTable />
         </div>

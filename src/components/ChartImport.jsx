@@ -6,77 +6,7 @@ function ChartImport({ refresh, shouldRefresh }) {
 
   const MAX_VALUE = 500;
 
-  // ฟังก์ชันสำหรับจำกัดค่าสูงสุดของข้อมูล
   const limitValue = (value) => Math.min(value, MAX_VALUE);
-
-  const chartConfig = {
-    type: "line",
-    options: {
-      maintainAspectRatio: false,
-      responsive: true,
-      title: {
-        display: false,
-      },
-      tooltips: {
-        mode: "index",
-        intersect: false,
-        callbacks: {
-          label: function (tooltipItem, data) {
-            let label = data.datasets[tooltipItem.datasetIndex].label || "";
-            let value = data.originalData[tooltipItem.datasetIndex][tooltipItem.index];
-            if (value >= MAX_VALUE) {
-              return label + ": " + value + " (Max reached)";
-            }
-            return label + ": " + value;
-          },
-        },
-      },
-      hover: {
-        mode: "nearest",
-        intersect: true,
-      },
-      legend: {
-        display: true,
-        labels: {
-          fontColor: "rgba(0,0,0,.4)",
-        },
-      },
-      scales: {
-        xAxes: [
-          {
-            display: true,
-            scaleLabel: {
-              display: true,
-              labelString: "Month",
-            },
-            gridLines: {
-              display: false,
-            },
-          },
-        ],
-        yAxes: [
-          {
-            display: true,
-            scaleLabel: {
-              display: true,
-              labelString: "Quantity",
-            },
-            ticks: {
-              beginAtZero: true,
-              stepSize: 100,
-              max: MAX_VALUE,
-              callback: function (value) {
-                return value.toFixed(0);
-              },
-            },
-            gridLines: {
-              drawBorder: false,
-            },
-          },
-        ],
-      },
-    },
-  };
 
   async function fetchImportData() {
     const response = await fetch("/api/ImportDB");
@@ -85,6 +15,75 @@ function ChartImport({ refresh, shouldRefresh }) {
   }
 
   React.useEffect(() => {
+    const chartConfig = {
+      type: "line",
+      options: {
+        maintainAspectRatio: false,
+        responsive: true,
+        title: {
+          display: false,
+        },
+        tooltips: {
+          mode: "index",
+          intersect: false,
+          callbacks: {
+            label: function (tooltipItem, data) {
+              let label = data.datasets[tooltipItem.datasetIndex].label || "";
+              let value = data.originalData[tooltipItem.datasetIndex][tooltipItem.index];
+              if (value >= MAX_VALUE) {
+                return label + ": " + value + " (Max reached)";
+              }
+              return label + ": " + value;
+            },
+          },
+        },
+        hover: {
+          mode: "nearest",
+          intersect: true,
+        },
+        legend: {
+          display: true,
+          labels: {
+            fontColor: "rgba(0,0,0,.4)",
+          },
+        },
+        scales: {
+          xAxes: [
+            {
+              display: true,
+              scaleLabel: {
+                display: true,
+                labelString: "Month",
+              },
+              gridLines: {
+                display: false,
+              },
+            },
+          ],
+          yAxes: [
+            {
+              display: true,
+              scaleLabel: {
+                display: true,
+                labelString: "Quantity",
+              },
+              ticks: {
+                beginAtZero: true,
+                stepSize: 100,
+                max: MAX_VALUE,
+                callback: function (value) {
+                  return value.toFixed(0);
+                },
+              },
+              gridLines: {
+                drawBorder: false,
+              },
+            },
+          ],
+        },
+      },
+    };
+
     async function setupChart() {
       try {
         const importData = await fetchImportData();
