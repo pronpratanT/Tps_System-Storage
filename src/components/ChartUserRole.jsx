@@ -1,13 +1,13 @@
-import React, { useEffect, useMemo, useState } from "react";
-import ApexCharts from "apexcharts";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { HeartHandshake, Package, Ruler, User } from "lucide-react";
+import ApexCharts from 'apexcharts';
 
 function ChartUserRole() {
   const [users, setUsers] = useState([]);
-  const [chart, setChart] = useState(null);
   const [units, setUnits] = useState([]);
   const [products, setProducts] = useState([]);
   const [vendors, setVendors] = useState([]);
+  const chartRef = useRef(null);
 
   const getUsers = async () => {
     try {
@@ -83,139 +83,148 @@ function ChartUserRole() {
 
   const getChartOptions = useMemo(() => {
     return () => {
-      const roleCounts = {
-        ADMIN: users.filter((user) => user.role === "ADMIN").length,
-        MEMBER: users.filter((user) => user.role === "MEMBER").length,
-        USER: users.filter((user) => user.role === "USER").length,
-      };
+    const roleCounts = {
+      ADMIN: users.filter((user) => user.role === "ADMIN").length,
+      MEMBER: users.filter((user) => user.role === "MEMBER").length,
+      USER: users.filter((user) => user.role === "USER").length,
+    };
 
-      return {
-        series: [roleCounts.ADMIN, roleCounts.MEMBER, roleCounts.USER],
-        colors: ["#F55356", "#825FC6", "#009DFF"],
-        chart: {
-          height: 320,
-          width: "100%",
-          type: "donut",
-        },
-        stroke: {
-          colors: ["transparent"],
-          lineCap: "",
-        },
-        plotOptions: {
-          pie: {
-            donut: {
-              labels: {
+    return {
+      series: [roleCounts.ADMIN, roleCounts.MEMBER, roleCounts.USER],
+      colors: ["#F55356", "#825FC6", "#009DFF"],
+      chart: {
+        height: 320,
+        width: "100%",
+        type: "donut",
+      },
+      stroke: {
+        colors: ["transparent"],
+        lineCap: "",
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            labels: {
+              show: true,
+              name: {
                 show: true,
-                name: {
-                  show: true,
-                  fontSize: "16px",
-                  fontFamily: "Inter, sans-serif",
-                  fontWeight: 600,
-                  offsetY: 20,
-                },
-                total: {
-                  showAlways: true,
-                  show: true,
-                  label: "Total Users",
-                  fontSize: "20px",
-                  fontFamily: "Inter, sans-serif",
-                  fontWeight: 700,
-                  color: "#4b5563 ",
-                  formatter: function (w) {
-                    return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
-                  },
-                },
-                value: {
-                  show: true,
-                  fontSize: "28px", // ขยายขนาดของตัวเลข
-                  fontFamily: "Inter, sans-serif",
-                  fontWeight: 700,
-                  offsetY: -20,
-                  color: "#252525",
-                  formatter: function (value) {
-                    return value;
-                  },
+                fontSize: "16px",
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 600,
+                offsetY: 20,
+              },
+              total: {
+                showAlways: true,
+                show: true,
+                label: "Total Users",
+                fontSize: "20px",
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 700,
+                color: "#4b5563 ",
+                formatter: function (w) {
+                  return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
                 },
               },
-              size: "75%",
+              value: {
+                show: true,
+                fontSize: "28px", // ขยายขนาดของตัวเลข
+                fontFamily: "Inter, sans-serif",
+                fontWeight: 700,
+                offsetY: -20,
+                color: "#252525",
+                formatter: function (value) {
+                  return value;
+                },
+              },
             },
+            size: "75%",
           },
         },
-        grid: {
-          padding: {
-            top: -2,
+      },
+      grid: {
+        padding: {
+          top: -2,
+        },
+      },
+      labels: ["ADMIN", "MEMBER", "USER"],
+      dataLabels: {
+        enabled: false,
+      },
+      legend: {
+        position: "bottom",
+        fontFamily: "Inter, sans-serif",
+        fontSize: "14px",
+        fontWeight: 600,
+        markers: {
+          width: 12,
+          height: 12,
+          strokeWidth: 0,
+          strokeColor: "#fff",
+          radius: 12,
+        },
+        itemMargin: {
+          horizontal: 10,
+          vertical: 5,
+        },
+      },
+      yaxis: {
+        labels: {
+          formatter: function (value) {
+            return value;
           },
         },
-        labels: ["ADMIN", "MEMBER", "USER"],
-        dataLabels: {
-          enabled: false,
+      },
+      xaxis: {
+        axisTicks: {
+          show: false,
         },
-        legend: {
-          position: "bottom",
-          fontFamily: "Inter, sans-serif",
-          fontSize: "14px",
-          fontWeight: 600,
-          markers: {
-            width: 12,
-            height: 12,
-            strokeWidth: 0,
-            strokeColor: "#fff",
-            radius: 12,
-          },
-          itemMargin: {
-            horizontal: 10,
-            vertical: 5,
-          },
+        axisBorder: {
+          show: false,
         },
-        yaxis: {
-          labels: {
-            formatter: function (value) {
-              return value;
-            },
-          },
-        },
-        xaxis: {
-          axisTicks: {
-            show: false,
-          },
-          axisBorder: {
-            show: false,
-          },
-        },
-      };
+      },
     };
-  }, [users]);
+  };
+}, [users]);
 
   useEffect(() => {
-    getUsers();
-    getUnits();
-    getProducts();
-    getVendors();
+    if (typeof window !== "undefined") {
+      getUsers();
+      getUnits();
+      getProducts();
+      getVendors();
+    }
   }, []);
 
   useEffect(() => {
     if (
-      document.getElementById("role-chart") &&
-      typeof ApexCharts !== "undefined" &&
-      users.length > 0
+      typeof window === "undefined" ||
+      !document.getElementById("role-chart") ||
+      typeof ApexCharts === "undefined" ||
+      users.length === 0
     ) {
-      if (chart) {
-        chart.destroy();
+      return;
+    }
+
+    const renderChart = () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
       }
       const newChart = new ApexCharts(
         document.getElementById("role-chart"),
         getChartOptions()
       );
       newChart.render();
-      setChart(newChart);
-    }
+      chartRef.current = newChart;
+    };
+
+    renderChart();
 
     return () => {
-      if (chart) {
-        chart.destroy();
+      if (chartRef.current) {
+        chartRef.current.destroy();
       }
     };
-  }, [users, chart, getChartOptions]);
+  }, [users, getChartOptions]);
 
   //   if (users.length === 0) {
   //     return <div>Loading user data...</div>;
